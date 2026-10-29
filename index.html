@@ -7,7 +7,19 @@
   <meta name="description" content="SZF Airport Halı Saha: oyuncu kartları, performans puanları ve 7'ye 7 dengeli takım kurma." />
   <title>SZF Airport Halı Saha</title>
   <link rel="stylesheet" href="styles.css?v=83" />
-</head>
+<style>
+/* v106 compact historical matches and rating preview */
+.szf-live-rating{margin:12px 0 15px;padding:13px 16px;border:1px solid #456748;background:#1b3a29;border-radius:12px;color:#c8eeb6;font-weight:700}.szf-live-rating strong{font-size:24px;color:#b9fa73;padding-left:8px}
+.szf-history-toggle{display:none}
+.szf-history-compact{display:block!important; padding:0!important;overflow:hidden}
+.szf-history-compact .szf-history-toggle{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;padding:18px 20px;background:#1b3526;border:0;color:#f2ffee;text-align:left;cursor:pointer;font-weight:700;flex-wrap:wrap}
+.szf-history-compact .szf-history-toggle strong{font-size:24px;color:#bafa7b}
+.szf-history-compact:not(.szf-history-open)>.match-date-box,.szf-history-compact:not(.szf-history-open)>.match-new-body{display:none!important}
+.szf-history-compact.szf-history-open .szf-history-toggle{border-bottom:1px solid #3d614c}
+.szf-history-compact.szf-history-open .match-new-body{padding:14px}
+.szf-delete{color:#ffc0c0!important;border-color:#944d4d!important}
+@media(max-width:640px){.szf-history-compact .szf-history-toggle strong{font-size:21px}.szf-history-compact .szf-history-toggle{padding:14px}}
+</style></head>
 <body>
   <div id="toast" role="status" aria-live="polite"></div>
   <div class="shell">

@@ -1,0 +1,8 @@
+SZF Airport Hali Saha v106
+- Mac gecmisi kucuk kart, tiklayinca acilir.
+- Kayitli/eslestirilmis oyuncular gol-asist seciminde once.
+- Ikinci Oyuncu Eslestir butonu kaldirildi; ustteki yonetici eslestirme paneli korunur.
+- Degerlendirmede canli Genel Rating gorunur.
+- Mac Sil butonu yalnizca yoneticide; iki kademeli onay.
+- Veritabani tarafinda iki yoneticiye silme yetkisi icin SZF_v106_Yonetici_Mac_Silme.sql bir kez calistirilmalidir.
+- SQL varken bile canli veritabani baglantisi ve cascade davranisi ayrica test edilmelidir.

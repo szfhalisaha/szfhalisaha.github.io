@@ -1,0 +1,5 @@
+SZF Airport Halı Saha v104
+Eşleştirilmiş misafir oyuncuların maçları tekilleştirilerek gerçek oyuncu hesabına sayılır.
+İlk Maç, Deneyimli, Saha Müdavimi, Kazanan, Panter rozetleri ve galibiyet oranı bu geçmişi kullanır.
+Gol/asist istatistikleri linked_user_id üzerinden korunur. Eşleşmiş gol/asist seçimlerinde misafir etiketi kaldırıldı.
+Yeni SQL gerekmiyor. Tek ZIP'i mevcut yükleme yönteminle yükle.

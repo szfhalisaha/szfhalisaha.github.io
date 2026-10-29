@@ -441,3 +441,6 @@ button.szf-simple-person{cursor:pointer}.szf-simple-person.red{background:#43232
 .szf-admin-roster summary{cursor:pointer;font-weight:800;padding:5px 0}
 .szf-admin-roster-body{padding-top:13px}
 .szf-team-ready+.szf-postmatch:empty{display:none}
+
+/* v102: result poster preview */
+.szf-share-overlay{position:fixed;inset:0;z-index:99999;background:rgba(2,12,8,.90);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}.szf-share-dialog{width:min(620px,100%);max-height:96vh;overflow:auto;background:#10281d;border:1px solid #527451;border-radius:19px;padding:16px;box-shadow:0 25px 100px #0009}.szf-share-toolbar,.szf-share-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.szf-share-toolbar strong{color:#eaf5e5;font-size:16px}.szf-share-close{border:1px solid #4d654e;border-radius:10px;padding:8px 14px;background:#203d2b;color:#fff;cursor:pointer}.szf-share-image{display:block;max-height:70vh;max-width:100%;margin:auto;object-fit:contain;border-radius:10px}.szf-share-actions{justify-content:center;flex-wrap:wrap;margin:14px 0 0}@media(max-width:550px){.szf-share-dialog{padding:10px}.szf-share-image{max-height:68vh}.szf-share-actions .btn{font-size:13px}}

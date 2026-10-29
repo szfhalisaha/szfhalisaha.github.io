@@ -1,0 +1,1 @@
+Supabase SQL Editor: önce SZF_v115_Gol_Asist_Baglantisi.sql çalıştırın. Sonra aynı ZIP dosyalarını iki hosta yükleyin. Önceden ayrı kaydedilmiş asistler otomatik olarak gollere bağlanmaz.

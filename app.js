@@ -214,7 +214,7 @@ function renderStatistics(){
 function detail(c){
  if(!c)return renderPlayers();
  const f=getFeatures(c);
- return `<div class="section-head"><button class="btn small ghost" data-back="1">← Oyunculara dön</button></div><div class="detail-layout"><div class="detail-sidebar">${cardHTML(c)}</div><div><h2>${esc(formatPersonName(c.display_name))}</h2><p class="soft">${esc(posName[c.position]||c.position)} · ${rankTier(c).toLocaleUpperCase('tr')} kart</p><div class="detail-abilities">${f.map(([k,abbr,label])=>`<div><strong>${abbr} · ${esc(label)}</strong><span>${ability(c,k)}</span><div class="detail-meter"><i style="width:${Math.max(0,Math.min(99,ability(c,k)))}%"></i></div></div>`).join('')}</div><p class="soft">Değerlendirme sadece yöneticinin Değerlendir bölümünden yapılır.</p></div></div>`;
+ return `<div class="section-head"><button class="btn small ghost" data-back="1">← Oyunculara dön</button></div><div class="detail-layout"><div class="detail-sidebar">${cardHTML(c)}</div><div><h2>${esc(formatPersonName(c.display_name))}</h2><p class="soft">${esc(posName[c.position]||c.position)} · ${rankTier(c).toLocaleUpperCase('tr')} kart</p><div class="detail-abilities">${f.map(([k,abbr,label])=>`<div><strong>${abbr} · ${esc(label)}</strong><span>${publicAbility(c,k)}</span><div class="detail-meter"><i style="width:${publicAbility(c,k)==='?'?0:Math.max(0,Math.min(99,ability(c,k)))}%"></i></div></div>`).join('')}</div></div></div>`;
 }
 function vestStats(playerId){
  let played=0,worn=0;
@@ -315,6 +315,9 @@ function matchBlock(m){
  const declined=matchDeclines.some(x=>String(x.match_id)===String(m.id)&&String(x.player_id)===String(user.id));
  const selfConfirmed=!declined&&people.some(x=>String(x.player_id)===String(user.id)&&x.self_confirmed===true);
  const completed=m.status==='completed',d=matchDay(m.match_date),t=matchTitleInfo(m.title);
+ const creator=publicProfiles.find(p=>String(p.id)===String(m.created_by))||currentCards().find(p=>String(p.id)===String(m.created_by))||(String(profile?.id)===String(m.created_by)?profile:null);
+ const creatorName=formatPersonName(creator?.display_name||'');
+ const mayEditMatch=adminInfo||canDeleteMatch||String(m.created_by)===String(user?.id);
  const players=people.map(x=>currentCards().find(p=>p.id===x.player_id)).filter(Boolean);
  const roster=players.length?players.map(c=>{const entry=people.find(p=>p.player_id===c.id);const locked=entry?.self_confirmed===true;return `<div class="roster-person"><span>${esc(formatPersonName(c.display_name))} ${locked?'<small>✓ Kendi onayı</small>':'<small>Oyuncu Ekle</small>'}</span>${adminInfo?`<select class="team-color-select" aria-label="${attrs(formatPersonName(c.display_name))} takımını seç" data-team-match="${attrs(m.id)}" data-team-player="${attrs(c.id)}" ${completed?'disabled':''}><option value="" ${!entry?.team_color?'selected':''}>Takım seç</option><option value="red" ${entry?.team_color==='red'?'selected':''}>🔴 Kırmızı</option><option value="white" ${entry?.team_color==='white'?'selected':''}>⚪ Beyaz</option></select>`:(entry?.team_color==='red'?' 🔴':entry?.team_color==='white'?' ⚪':'')}${!completed&&(c.id===user.id||!locked||adminInfo||canDeleteMatch)?`<button class="btn small ghost" data-remove-roster="${attrs(m.id)}" data-playerid="${attrs(c.id)}">Çıkar</button>`:''}</div>`}).join(''):'Henüz katılımcı yok.';
  const guestRoster=guests.map(g=>`<div class="roster-person"><span>${esc(formatPersonName(g.display_name))} <small>Misafir · takım dengesi: 70</small></span>${!completed?`<div class="guest-roster-actions">${adminInfo?`<select data-guest-team="${attrs(g.id)}"><option value="">Takım seç</option><option value="red" ${g.team_color==='red'?'selected':''}>🔴 Kırmızı</option><option value="white" ${g.team_color==='white'?'selected':''}>⚪ Beyaz</option></select>`:g.team_color?`<span class="guest-team-badge">${esc(g.team_color==='red'?'🔴 Kırmızı':'⚪ Beyaz')}</span>`:''}<button class="btn small ghost" data-remove-guest="${attrs(g.id)}">Çıkar</button>${adminInfo?`<select data-link-guest="${attrs(g.id)}"><option value="">${g.linked_user_id?'Eşleşti · değiştir':'Hesapla eşleştir'}</option>${currentCards().map(c=>`<option value="${attrs(c.id)}" ${g.linked_user_id===c.id?'selected':''}>${esc(formatPersonName(c.display_name))}</option>`).join('')}</select>`:''}</div>`:`${esc(g.team_color==='red'?'🔴':g.team_color==='white'?'⚪':'')}${adminInfo?`<select data-link-guest="${attrs(g.id)}"><option value="">${g.linked_user_id?'Eşleşti · değiştir':'Hesapla eşleştir'}</option>${currentCards().map(c=>`<option value="${attrs(c.id)}" ${g.linked_user_id===c.id?'selected':''}>${esc(formatPersonName(c.display_name))}</option>`).join('')}</select>`:''}`}</div>`).join('');
@@ -327,13 +330,14 @@ function matchBlock(m){
  const result=completed?({red:'🔴 Kırmızı takım kazandı',draw:'🤝 Beraberlik',white:'⚪ Beyaz takım kazandı'}[m.result]||'Maç tamamlandı'):'';
  return `<article class="match-new-card"><div class="match-date-box"><small>${esc(d.weekday)}</small><strong>${esc(d.day)}</strong><span>${esc(d.month)}</span></div>
  <div class="match-new-body"><div class="match-badges"><span class="match-status ${completed?'ended':''}">${completed?'TAMAMLANDI':m.status==='open'?'KAYIT AÇIK':'KAYIT KAPALI'}</span><span>${esc(matchDateText(m.match_date).split(' ').slice(-1)[0])}</span></div>
- <h3>${esc(t.title)}</h3>${t.venue?`<p class="match-venue">⌖ ${esc(t.venue)}</p>`:''}${completed?`<strong class="match-result">${result}</strong>`:''}
+ <h3>${esc(t.title)}</h3>${t.venue?`<p class="match-venue">⌖ ${esc(t.venue)}</p>`:''}<p class="match-creator">Maçı oluşturan: <span>${esc(creatorName||'Bilinmiyor')}</span></p>${completed?`<strong class="match-result">${result}</strong>`:''}
  <p class="match-count">${people.length+guests.length} / 14 katılımcı ${mine?'· Sen kayıtlısın':myQueue?'· Yedek sırası: '+(queue.indexOf(myQueue)+1):declined?'· Katılamayacağını bildirdin':''}</p>
  <div class="match-new-actions">${!completed&&m.status==='open'?`<button class="btn small ${selfConfirmed?'lime':'ghost'}" data-join="${attrs(m.id)}" aria-pressed="${selfConfirmed}">${selfConfirmed?'Katılıyorum ✓':'Katılıyorum'}</button><button class="btn small ${declined?'lime':'ghost'}" data-decline="${attrs(m.id)}" aria-pressed="${declined}">${declined?'Katılamıyorum ✓':'Katılamıyorum'}</button>`:''}
  ${!completed&&m.status==='open'&&myQueue?`<button class="btn small ghost" data-leave-queue="${attrs(m.id)}">Yedekten çık</button>`:''}<button class="btn small ghost" data-roster="${attrs(m.id)}">⚽ Kadroyu gör</button>
  ${!completed&&m.status==='open'?`<button class="btn small ghost" data-open-roster-picker="${attrs(m.id)}">＋ Oyuncu Ekle</button>`:''}
 
  ${completed?`<button class="btn small lime" data-share-match="${attrs(m.id)}">↗ Sonucu paylaş</button>`:''}
+ ${mayEditMatch?`<button class="btn small ghost" data-edit-match="${attrs(m.id)}">✎ Düzenle</button>`:''}
  ${canDeleteMatch?`<button class="btn small ghost" data-delete-match="${attrs(m.id)}">Maçı Sil</button>`:''}
  ${adminInfo?`${!completed?`<button class="btn small ghost" data-match-complete="${attrs(m.id)}">Maçı sonuçlandır</button>`:''}`:''}${completed&&adminInfo?`<label class="vest-record">🎽 Yelek giyen takım <select data-vest-match="${attrs(m.id)}"><option value="" ${!m.vest_team?'selected':''}>Henüz girilmedi</option><option value="red" ${m.vest_team==='red'?'selected':''}>🔴 Kırmızı</option><option value="white" ${m.vest_team==='white'?'selected':''}>⚪ Beyaz</option></select></label>`:completed&&m.vest_team?`<span class="vest-record">🎽 Yelek: ${m.vest_team==='red'?'Kırmızı':'Beyaz'}</span>`:''}
  </div><div id="roster-${attrs(m.id)}" class="match-roster hidden"><strong>Katılımcılar</strong>${adminInfo&&!completed?'<p class="soft">Galibiyet yüzdesi için maç sonucunu girmeden önce oyuncuların Kırmızı/Beyaz takımını seç.</p>':''}<div>${roster}${guestRoster}</div><div class="szf-queue"><strong>Yedek listesi (${queue.length})</strong>${queue.map((x,i)=>`<p>${i+1}. ${esc(currentCards().find(c=>c.id===x.player_id)?.display_name||'Oyuncu')}</p>`).join('')||'<p>Yedek yok.</p>'}</div>${adminInfo&&!completed?`<div class="szf-inline-forms"><input id="guest-name-${attrs(m.id)}" placeholder="Anonim oyuncunun adı" maxlength="70"><select id="guest-position-${attrs(m.id)}"><option value="KL">Kaleci</option><option value="DEF">Defans</option><option value="ORT">Orta saha</option><option value="FOR">Forvet</option></select><button class="btn small lime" data-guest-add="${attrs(m.id)}">Anonim oyuncuyu ekle</button></div>`:''}${detailHTML}</div></div></article>`;
@@ -415,11 +419,11 @@ function renderMatches(){
  const header=`<div class="match-page-heading"><div><p class="match-overline">MAÇ TAKVİMİ</p><h2>Maç günü tamam.</h2><p>Kaydol, ekibi topla ve dengeli takımlarını kur.</p></div><button id="openMatchDialog" class="btn lime">+ Maç Oluştur</button></div>`;
  const content=`<div class="match-section-title">SIRADAKİ MAÇLAR · ${future.length} KAYIT</div>${future.length?future.map(matchBlock).join(''):'<p class="match-empty">Planlanan maç yok.</p>'}
  <div class="match-section-title past-heading">TAMAMLANAN MAÇLAR · ${past.length}</div>${past.length?past.map(matchBlock).join(''):'<p class="match-empty">Henüz tamamlanan maç yok.</p>'}`;
- const dialog=`<dialog id="matchCreateDialog" class="match-create-dialog"><form id="newMatchForm"><div class="match-dialog-head"><div><small>HAFTAYI PLANLA</small><h2>Yeni maçı ayarla</h2><p>Gün ve saha seç; oyuncular maça kaydolabilsin.</p></div><button type="button" id="closeMatchDialog" class="btn small ghost" aria-label="Kapat">✕</button></div>
+ const dialog=`<dialog id="matchCreateDialog" class="match-create-dialog"><form id="newMatchForm"><div class="match-dialog-head"><div><small>HAFTAYI PLANLA</small><h2 id="matchDialogHeading">Yeni maçı ayarla</h2><p>Gün ve saha seç; oyuncular maça kaydolabilsin.</p></div><button type="button" id="closeMatchDialog" class="btn small ghost" aria-label="Kapat">✕</button></div>
  <label>MAÇ ADI<input class="text-input" id="matchTitle" required maxlength="55" value="Haftalık Maç"></label>
  <label>SAHA<input class="text-input" id="matchVenue" maxlength="35" placeholder="Saha adı veya adres" /></label>
  <label>TARİH VE SAAT<input class="text-input" type="datetime-local" id="matchDate" required></label>
- <p>Maç oluşturulunca takım arkadaşların kaydolabilir.</p><div class="match-dialog-buttons"><button type="button" class="btn ghost" id="cancelMatchDialog">Vazgeç</button><button type="submit" class="btn lime">Maçı oluştur ↗</button></div></form></dialog>`;
+ <p>Maç bilgileri değiştirildiğinde mevcut katılımcılar korunur.</p><div class="match-dialog-buttons"><button type="button" class="btn ghost" id="cancelMatchDialog">Vazgeç</button><button type="submit" id="matchSubmitButton" class="btn lime">Maçı oluştur ↗</button></div></form></dialog>`;
  return `<section class="matches-page">${header}${content}</section>${dialog}${rosterPickerMatch?`<dialog id="rosterPickerDialog" class="match-create-dialog roster-picker-dialog"><div class="match-dialog-head"><div><small>KADROYU TAMAMLA</small><h2>Oyuncu Ekle</h2><p>Oyuncu kartlarından seçerek maça ekle.</p></div><button class="btn small ghost" id="closeRosterPicker">✕</button></div><input id="rosterSearch" class="text-input" placeholder="Oyuncu ismi ara..." value="${attrs(rosterSearch)}"><div class="roster-picker-list">${rosterPickerItems()}</div><div class="guest-picker-section"><button type="button" class="btn ghost" id="toggleGuestPicker">＋ Anonim Oyuncu Ekle</button><div id="guestPickerFields" class="hidden"><p class="soft">Hesabı olmayan oyuncuyu maça ekle.</p><input id="pickerGuestName" class="text-input" maxlength="70" placeholder="Anonim oyuncunun adı"><select id="pickerGuestPosition" class="text-input"><option value="KL">Kaleci</option><option value="DEF">Defans</option><option value="ORT">Orta saha</option><option value="FOR">Forvet</option></select><button type="button" class="btn lime" id="submitPickerGuest">Anonim oyuncuyu ekle</button></div></div></dialog>`:''}`;
 }
 function renderLeague(){
@@ -444,7 +448,7 @@ function bindContent(){
  document.querySelectorAll('[data-login]').forEach(el=>el.addEventListener('click',()=>openAuth()));
  $('v70VoteForm')?.addEventListener('submit',submitV70Vote);
  $('v70Target')?.addEventListener('change',e=>{weeklyIndex=Number(e.target.value);render()});
- document.querySelectorAll('[data-vote]').forEach(el=>el.addEventListener('click',()=>castVote(el.dataset.target,el.dataset.vote,Number(el.dataset.delta))));
+ 
  document.querySelectorAll('[data-team]').forEach(el=>el.addEventListener('change',()=>{teamData=null;el.checked?teamSelections.add(el.dataset.team):teamSelections.delete(el.dataset.team);render()}));
  document.querySelectorAll('[data-mode]').forEach(el=>el.addEventListener('click',()=>{teamMode=el.dataset.mode;teamData=null;render()}));
  document.querySelectorAll('[data-red]').forEach(el=>el.addEventListener('change',()=>{el.checked?manualRed.add(el.dataset.red):manualRed.delete(el.dataset.red);render()}));
@@ -467,10 +471,11 @@ function bindContent(){
  document.querySelectorAll('[data-join]').forEach(el=>el.addEventListener('click',()=>toggleParticipant(el.dataset.join,user.id)));
  document.querySelectorAll('[data-decline]').forEach(el=>el.addEventListener('click',()=>toggleDecline(el.dataset.decline)));
  document.querySelectorAll('[data-participants]').forEach(el=>el.addEventListener('click',()=>manageParticipants(el.dataset.participants)));
+ document.querySelectorAll('[data-edit-match]').forEach(el=>el.addEventListener('click',()=>openMatchEditor(el.dataset.editMatch)));
  document.querySelectorAll('[data-delete-match]').forEach(el=>el.addEventListener('click',()=>deleteMatch(el.dataset.deleteMatch)));
  document.querySelectorAll('[data-match-complete]').forEach(el=>el.addEventListener('click',()=>completeMatch(el.dataset.matchComplete)));
  $('newMatchForm')?.addEventListener('submit',createMatch);
- $('openMatchDialog')?.addEventListener('click',()=>{$('matchCreateDialog')?.showModal()});
+ $('openMatchDialog')?.addEventListener('click',()=>{editingMatchId=null; $('newMatchForm')?.reset();$('matchTitle').value='Haftalık Maç';$('matchDialogHeading').textContent='Yeni maçı ayarla';$('matchSubmitButton').textContent='Maçı oluştur ↗';$('matchCreateDialog')?.showModal()});
  ['closeMatchDialog','cancelMatchDialog'].forEach(id=>$(id)?.addEventListener('click',()=>$('matchCreateDialog')?.close()));
  document.querySelectorAll('[data-roster]').forEach(el=>el.addEventListener('click',()=>{$('roster-'+el.dataset.roster)?.classList.toggle('hidden')}));
  document.querySelectorAll('[data-team-match]').forEach(el=>el.addEventListener('change',()=>assignMatchTeam(el.dataset.teamMatch,el.dataset.teamPlayer,el.value)));
@@ -597,7 +602,7 @@ async function castVote(target,category,delta){
  if(!features.some(([f])=>f===category)||![-2,0,2].includes(delta))return;
  const existing=myVotes.find(v=>String(v.target_id)===String(target)&&v.category===category);
  if(existing?.delta===delta){
-  toast('Bu özelliğe zaten '+(delta>0?'+2':delta<0?'−2':'0')+' verdin. Oyunu değiştirmek için başka bir seçeneğe bas.');
+  return;
   return;
  }
  const snapshotVotes=myVotes.map(v=>({...v}));
@@ -736,10 +741,39 @@ async function submitBet(match){
  if(error)return toast('Tahmin kaydedilemedi: '+formatError(error),true);
  await loadLeagueData();render();toast('Tahmin kaydedildi.');
 }
-async function createMatch(e){e.preventDefault();if(!user)return toast('Maç oluşturmak için giriş yap.',true);
- const venue=$('matchVenue')?.value.trim()||'';const label=$('matchTitle').value.trim();const title=venue?(label.slice(0,Math.max(2,61-venue.length))+' [Saha: '+venue+']'):label;
- const {error}=await db.from('szf_matches').insert({title,match_date:new Date($('matchDate').value).toISOString(),created_by:user.id});
- if(error)return toast('Maç oluşturulamadı: '+formatError(error),true);await loadLeagueData();render();toast('Maç oluşturuldu.');
+let editingMatchId=null;
+function openMatchEditor(id){
+ const m=leagueMatches.find(x=>String(x.id)===String(id));
+ if(!m||!(adminInfo||canDeleteMatch||String(m.created_by)===String(user?.id)))return toast('Bu maçı düzenleme yetkin yok.',true);
+ editingMatchId=m.id;
+ const info=matchTitleInfo(m.title);
+ $('matchTitle').value=info.title||'';
+ $('matchVenue').value=info.venue||'';
+ // datetime-local girdisine kullanıcının yerel saatini taşı.
+ const date=new Date(m.match_date);
+ const local=new Date(date.getTime()-date.getTimezoneOffset()*60000);
+ $('matchDate').value=local.toISOString().slice(0,16);
+ $('matchDialogHeading').textContent='Maç bilgilerini düzenle';
+ $('matchSubmitButton').textContent='Değişiklikleri kaydet';
+ $('matchCreateDialog')?.showModal();
+}
+async function createMatch(e){
+ e.preventDefault();if(!user)return toast('Giriş yapmalısın.',true);
+ const venue=$('matchVenue')?.value.trim()||'';
+ const label=$('matchTitle').value.trim();
+ if(!label||!$('matchDate').value)return toast('Maç adı ve tarih zorunlu.',true);
+ const title=venue?(label.slice(0,Math.max(2,61-venue.length))+' [Saha: '+venue+']'):label;
+ const payload={title,match_date:new Date($('matchDate').value).toISOString()};
+ let result;
+ if(editingMatchId){
+  const m=leagueMatches.find(x=>String(x.id)===String(editingMatchId));
+  if(!m||!(adminInfo||canDeleteMatch||String(m.created_by)===String(user.id)))return toast('Düzenleme yetkin yok.',true);
+  result=await db.from('szf_matches').update(payload).eq('id',editingMatchId).select('id');
+  if(!result.error&&!result.data?.length)return toast('Değişiklik kaydedilemedi. Supabase güncelleme yetkisi (RLS) gerekiyor.',true);
+ }else result=await db.from('szf_matches').insert({...payload,created_by:user.id});
+ if(result.error)return toast('Maç kaydedilemedi: '+formatError(result.error),true);
+ editingMatchId=null;$('matchCreateDialog')?.close();
+ await loadLeagueData();render();toast('Maç bilgileri kaydedildi.');
 }
 async function deleteMatch(match){
  if(!user||!canDeleteMatch)return toast('Maç silme yetkisi sadece ana yöneticiye ait.',true);

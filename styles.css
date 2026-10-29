@@ -349,3 +349,17 @@ dialog.match-create-dialog{width:min(94vw,560px);border:0;border-radius:26px;bac
 
 /* v73: ilk oyuncuda onceki butonunu pasif ve soluk goster */
 .mode-buttons button[data-assess-prev]:disabled{opacity:.32;cursor:not-allowed;filter:grayscale(1);transform:none;pointer-events:none}
+
+/* v79: Detay kartında ölçü ve örtüşme düzeltmesi */
+.detail-sidebar{width:min(100%,290px);min-width:0}
+.detail-sidebar .fut-card{width:100%;max-width:290px;aspect-ratio:0.73;min-height:0;margin:0}
+.detail-sidebar .fut-head{top:20px;left:12px;width:58px;z-index:7}
+.detail-sidebar .fut-overall{font-size:43px}
+.detail-sidebar .fut-pos{font-size:13px}
+.detail-sidebar .fut-photo{position:absolute;top:17%;left:59%;right:auto;transform:translateX(-50%);width:59%;height:49%;aspect-ratio:auto;overflow:hidden;z-index:1;mask-image:linear-gradient(to bottom,#000 78%,transparent 100%)}
+.detail-sidebar .fut-photo img{width:100%;height:100%;object-fit:contain;object-position:center bottom;transform:none}
+.detail-sidebar .fut-name{z-index:5;font-size:16px;white-space:normal;overflow-wrap:anywhere;line-height:1.05;max-height:44px;overflow:hidden}
+@media(max-width:720px){.detail-sidebar{width:min(100%,290px)}.detail-sidebar .fut-card{width:100%;max-width:290px;min-height:0}.detail-sidebar .fut-photo{top:17%;left:59%;width:59%;height:49%;aspect-ratio:auto}}
+
+/* v81: maç kartında maçı oluşturan kişinin adı, küçük ve sade */
+.matches-page .match-creator{margin:5px 0 8px;font-size:11px;line-height:1.5;color:#92a997}.matches-page .match-creator span{color:#cbdccb;font-weight:600}

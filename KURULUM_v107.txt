@@ -1,0 +1,1 @@
+v107: Maçın Adamı oylaması v53 fonksiyonu ile uyumlu hale getirildi. Yeni tablo veya SQL kurulumu yok. Mevcut Supabase RLS/okuma izinleri oylama ve oy görünürlüğünü etkileyebilir. Normal kullanıcı sadece tamamlanmış ve katıldığı maçta oy verir.

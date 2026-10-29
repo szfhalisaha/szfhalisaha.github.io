@@ -1,0 +1,1 @@
+SZF v108: Maç Geçmişi kartlarının kapalı/açık görünümü kompakt hale getirildi. Önceki v107 özellikleri korunur. Yeni SQL gerekmez.

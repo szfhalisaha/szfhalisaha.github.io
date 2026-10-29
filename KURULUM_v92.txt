@@ -1,0 +1,1 @@
+v92: Maçlar > Kadroyu Gör saha dizilişi 1-3-2-1 olarak yapılır. Asıl/ikinci mevki öncelikli; DEF oyuncu FOR olamaz, FOR oyuncu DEF olamaz; OS ara mevki olarak kullanılabilir. Mevki dengesi mümkün olmazsa en az zorlayıcı yerleşim denenir. Elle takım seçimine müdahale edilmez. Ek SQL yok.

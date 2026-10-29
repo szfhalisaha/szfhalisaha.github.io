@@ -417,3 +417,14 @@ button.szf-simple-person{cursor:pointer}.szf-simple-person.red{background:#43232
 .szf-simple-person .szf-simple-name{flex:1;font-weight:700;min-width:0;overflow-wrap:anywhere}.szf-simple-person small{font-size:11px;color:#b3c8b6}
 .szf-simple-person:focus-visible{outline:2px solid #bcf577;outline-offset:2px}
 @media(max-width:620px){.szf-simple-players{grid-template-columns:1fr 1fr;gap:7px}.szf-simple-person{flex-wrap:wrap;padding:9px;gap:5px}.szf-simple-person small{width:100%}}
+
+/* v91 - kaydedilmis takimlarda dogrudan saha gorunumu */
+.szf-team-ready{padding:8px 0 12px}.szf-team-ready>strong{font-size:19px;color:#d8ffb0}.szf-team-ready>.soft{margin:8px 0 16px}.szf-team-ready .szf-pitch{min-height:310px;align-content:space-around;padding:18px;gap:12px;background:repeating-linear-gradient(0deg,#19502e,#19502e 46px,#1c5a34 46px,#1c5a34 92px)}.szf-team-ready .szf-pitch-player{min-width:95px;max-width:145px;font-size:12px;padding:10px 8px}.szf-postmatch{margin-top:20px}@media(max-width:620px){.szf-team-ready .szf-pitch{min-height:230px}.szf-team-ready .szf-pitch-player{min-width:80px;max-width:115px}}
+
+/* v92: 1 kaleci - 3 defans - 2 orta saha - 1 forvet */
+.szf-pitch.szf-formation{display:flex;flex-direction:column;justify-content:space-between;align-items:stretch;flex-wrap:nowrap;min-height:430px;padding:17px 10px;gap:13px;background:repeating-linear-gradient(0deg,#19502e 0px,#19502e 47px,#1e5b36 47px,#1e5b36 94px);position:relative;}
+.szf-formation-line{display:flex;justify-content:space-around;align-items:center;gap:5px;width:100%;z-index:1;}
+.szf-formation-line .szf-pitch-player{min-width:0;flex:0 1 30%;width:30%;max-width:145px;padding:9px 4px;line-height:1.3;overflow-wrap:anywhere;}
+.szf-formation-line-0 .szf-pitch-player,.szf-formation-line-3 .szf-pitch-player{flex-basis:45%;width:45%;}
+.szf-formation-line-1 .szf-pitch-player{flex-basis:39%;width:39%;}
+@media(max-width:620px){.szf-pitch.szf-formation{min-height:390px}.szf-formation-line .szf-pitch-player{font-size:10px;padding:8px 3px;}}

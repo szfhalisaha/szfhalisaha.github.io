@@ -1,0 +1,1 @@
+v90: Takım Kur → Bu kadroları sıradaki maça kaydet (yalnız yönetici). 7 kırmızı ve 7 beyaz mevcut Supabase RPC çağrılarıyla kaydedilir. Maçlar → Kadroyu gör → Takım Kadroları bölümünde görüntülenir. Ek SQL yok. Kaydetme işlemi sırasında ağ/RPC hatası olursa bazı kayıtlar yazılmış olabilir; tekrar kaydetmeden önce kontrol edin.

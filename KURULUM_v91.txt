@@ -1,0 +1,1 @@
+v91: Maçlar > Kadroyu Gör, her takımda 7 atanmış oyuncu varsa doğrudan saha dizilişini gösterir. Katılımcılar listesi gizlidir. Kadrolar henüz tamamlanmamışsa eski katılımcı yönetimi gösterilir. Ek SQL gerektirmez.

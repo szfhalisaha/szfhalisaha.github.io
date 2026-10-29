@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#091810" />
   <meta name="description" content="SZF Airport Halı Saha: oyuncu kartları, performans puanları ve 7'ye 7 dengeli takım kurma." />
   <title>SZF Airport Halı Saha</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=83" />
 </head>
 <body>
   <div id="toast" role="status" aria-live="polite"></div>
@@ -38,8 +38,8 @@
   </div>
   <dialog id="authDialog" class="modal"><form id="authForm" method="post"><button type="button" class="close" id="closeAuth" aria-label="Kapat">×</button><div class="modal-logo">⚽</div><h2 id="authTitle">Oyuncu girişi</h2><p class="soft" id="authDesc">E-posta adresin ve şifrenle giriş yap.</p><label>E-posta adresi<input id="username" type="email" required autocomplete="email" placeholder="ornek@gmail.com" /></label><label>Şifre<input id="password" required type="password" minlength="8" autocomplete="current-password" placeholder="En az 8 karakter" /></label><div id="signupConfirm" class="hidden"><label>Şifre tekrarı<input id="confirmPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Şifreni tekrar yaz" /></label></div><div id="authError" class="auth-error hidden"></div><button type="submit" id="authSubmit" class="btn lime wide">Giriş yap</button><button id="forgotPassword" type="button" class="switch-auth">Şifremi unuttum</button><button id="switchAuth" type="button" class="switch-auth">Hesabın yok mu? Kayıt ol</button><p class="micro">Şifreni unutursan kayıtlı e-postana sıfırlama bağlantısı gönderilir.</p></form></dialog>
   <dialog id="resetDialog" class="modal"><form id="resetForm" method="dialog"><button type="button" class="close" id="closeReset" aria-label="Kapat">×</button><div class="modal-logo">🔐</div><h2>Yeni şifre belirle</h2><p class="soft">E-postandaki bağlantıyla geldin. Yeni şifreni yaz.</p><label>Yeni şifre<input id="newPassword" type="password" required minlength="8" autocomplete="new-password" /></label><div id="resetError" class="auth-error hidden"></div><button type="submit" id="resetSubmit" class="btn lime wide">Şifremi değiştir</button></form></dialog>
-  <script src="config.js"></script>
+  <script src="config.js?v=83"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" async id="supabaseLibrary"></script>
-  <script src="app.js" defer></script>
+  <script src="app.js?v=83" defer></script>
 </body>
 </html>

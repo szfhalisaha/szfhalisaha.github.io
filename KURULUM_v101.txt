@@ -1,0 +1,1 @@
+v101: Sonucu Paylaş premium afiş tasarımı. Gerçek skor, yan yana takım listeleri, gol/asistler. v100 üzerine kurulmuştur. Ek SQL gerekmez.

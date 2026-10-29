@@ -465,43 +465,67 @@ function matchBlock(m){
 }
 async function shareMatchCard(id){
  const m=leagueMatches.find(x=>String(x.id)===String(id));
- if(!m||!Number.isInteger(Number(m.red_score))||!Number.isInteger(Number(m.white_score)))return toast('Önce Maç Geçmişi → Sonuç, Gol ve Asist Düzenle bölümünden skoru kaydet.',true);
- const events=extras.events.filter(e=>String(e.match_id)===String(id));
+ const red=Number(m?.red_score),white=Number(m?.white_score);
+ if(!m||m.red_score==null||m.white_score==null||!Number.isInteger(red)||!Number.isInteger(white)||red<0||white<0)return toast('Önce maç skorunu kaydet.',true);
  const guests=extras.guests.filter(g=>String(g.match_id)===String(id));
  const people=weeklyPlayers.filter(p=>String(p.match_id)===String(id));
- const name=e=>e.guest_id?(guests.find(g=>g.id===e.guest_id)?.display_name||'Misafir'):(currentCards().find(c=>c.id===e.player_id)?.display_name||'Oyuncu');
- const goals=events.filter(e=>e.kind==='goal'), assists=events.filter(e=>e.kind==='assist');
- const counts=new Map();
- for(const x of goals)counts.set(name(x),(counts.get(name(x))||0)+1);
- const leaders=[...counts].sort((a,b)=>b[1]-a[1]).slice(0,3);
- const votes=extras.mvp.filter(x=>String(x.match_id)===String(id));const vc=new Map();
- for(const v of votes)vc.set(v.target_id,(vc.get(v.target_id)||0)+1);
- const top=[...vc].sort((a,b)=>b[1]-a[1])[0];
- const mvp=top?currentCards().find(c=>c.id===top[0])?.display_name||'Oyuncu':'Henüz seçilmedi';
+ const allCards=currentCards();
+ const registeredName=pid=>allCards.find(c=>String(c.id)===String(pid))?.display_name||'Oyuncu';
+ const guestName=g=>g.linked_player_id?registeredName(g.linked_player_id):g.display_name||'Misafir';
+ const roster=color=>[
+  ...people.filter(p=>p.team_color===color).map(p=>({id:String(p.player_id),name:registeredName(p.player_id)})),
+  ...guests.filter(g=>g.team_color===color).map(g=>({id:String(g.id),name:guestName(g)}))
+ ];
+ const redRoster=roster('red'),whiteRoster=roster('white');
+ const events=extras.events.filter(e=>String(e.match_id)===String(id));
+ const eventName=e=>e.guest_id?guestName(guests.find(g=>String(g.id)===String(e.guest_id))||{display_name:'Misafir'}):registeredName(e.player_id);
+ const tally=kind=>{const map=new Map();for(const e of events.filter(x=>x.kind===kind)){const n=eventName(e);map.set(n,(map.get(n)||0)+1);}return [...map].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'tr'));};
+ const goals=tally('goal'),assists=tally('assist');
  const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1350;
  const ctx=canvas.getContext('2d');if(!ctx)return toast('Görsel oluşturulamadı.',true);
- const bg=ctx.createLinearGradient(0,0,1080,1350);bg.addColorStop(0,'#173e2a');bg.addColorStop(1,'#07170f');ctx.fillStyle=bg;ctx.fillRect(0,0,1080,1350);
- ctx.strokeStyle='#47674b';ctx.lineWidth=3;ctx.strokeRect(54,55,972,1240);
- const txt=(t,x,y,size,color='#f5fff1',bold=true,align='center')=>{ctx.textAlign=align;ctx.fillStyle=color;ctx.font=`${bold?'800':'500'} ${size}px system-ui,Arial,sans-serif`;ctx.fillText(String(t),x,y,925)};
- txt('SZF AIRPORT  •  HALI SAHA',540,160,43,'#bbf475');txt('MAÇ SONUCU',540,258,65);
- ctx.fillStyle='#214631';ctx.fillRect(100,320,880,355);
- txt('KIRMIZI',310,413,52,'#ffaaa3');txt('BEYAZ',770,413,52);
- txt('VS',540,450,44,'#b9f46d');
- const result={red:'KIRMIZI TAKIM KAZANDI',white:'BEYAZ TAKIM KAZANDI',draw:'BERABERLİK'}[m.result]||'MAÇ TAMAMLANDI';
- txt(result,540,548,47,'#b9f46d');
- txt('Skor kaydı yerine resmi maç sonucu gösterilmektedir',540,617,22,'#c4d6c7',false);
- txt('MAÇ ÖZETİ',540,775,44,'#b9f46d');
- txt(`${goals.length} gol kaydı   •   ${assists.length} asist kaydı`,540,830,33);
- txt('GOLLER',135,920,31,'#b9f46d',true,'left');
- if(leaders.length){leaders.forEach(([n,k],i)=>txt(`${n}  ·  ${k} gol`,135,981+i*50,29,'#f0f9ef',false,'left'));}
- else txt('Henüz gol kaydı yok',135,981,28,'#b7c8b9',false,'left');
- txt('MAÇIN ADAMI',135,1160,30,'#b9f46d',true,'left');txt(mvp,135,1212,32,'#fff',true,'left');
+ const W=1080,H=1350;
+ const rect=(x,y,w,h,r,fill,stroke)=>{ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}};
+ const line=(x,y,x2,y2,color)=>{ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();};
+ const txt=(v,x,y,size=28,color='#f3f8ee',weight=600,align='left',maxWidth)=>{ctx.font=`${weight} ${size}px system-ui, Arial, sans-serif`;ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline='middle';const t=String(v??'');if(maxWidth&&ctx.measureText(t).width>maxWidth){let val=t;while(val.length>1&&ctx.measureText(val+'…').width>maxWidth)val=val.slice(0,-1);ctx.fillText(val+'…',x,y);}else ctx.fillText(t,x,y);};
+ const gradient=ctx.createLinearGradient(0,0,W,H);gradient.addColorStop(0,'#123823');gradient.addColorStop(.52,'#0b241a');gradient.addColorStop(1,'#071811');ctx.fillStyle=gradient;ctx.fillRect(0,0,W,H);
+ ctx.save();ctx.globalAlpha=.06;ctx.strokeStyle='#b9f56c';ctx.lineWidth=2;for(let i=-500;i<1500;i+=75){line(i,0,i+850,H,'#b9f56c');}ctx.restore();
+ rect(34,34,1012,1282,38,'rgba(5,21,14,.28)','#385f42');
+ rect(76,77,928,75,20,'#173e29','#356347');
+ txt('SZF  /  AIRPORT HALI SAHA',540,114,28,'#c6f27f',800,'center');
+ txt('MAÇ SONUCU',540,202,53,'#fbfff6',850,'center');
+ const matchTitle=(m.title||'Haftalık Maç').split('[Saha:')[0].trim();
+ txt(matchTitle,540,256,25,'#becfc1',500,'center',800);
+ txt(matchDateText(m.match_date),540,295,22,'#92ac9b',500,'center');
+ rect(76,334,928,258,28,'#163927','#41664b');
+ rect(97,354,274,215,22,'#502c31','#85535c');
+ rect(709,354,274,215,22,'#d7d8d6','#fbffff');
+ txt('KIRMIZI',235,402,32,'#ffb9b4',850,'center');
+ txt('BEYAZ',845,402,32,'#26372e',850,'center');
+ txt(red,442,469,103,'#ffffff',850,'center');txt('–',540,470,58,'#a7d267',700,'center');txt(white,638,469,103,'#ffffff',850,'center');
+ const summary=red>white?'KIRMIZI KAZANDI':white>red?'BEYAZ KAZANDI':'BERABERLİK';
+ txt(summary,540,556,24,'#c5f585',800,'center');
+ const drawRoster=(list,x,title,color)=>{
+  rect(x,615,450,351,22,'rgba(25,57,39,.95)','#42614a');
+  rect(x+18,634,7,29,4,color);
+  txt(title,x+42,650,26,'#f4fff0',800);
+  txt(`${list.length} OYUNCU`,x+424,650,18,'#99b3a2',650,'right');
+  line(x+24,683,x+426,683,'#385940');
+  list.slice(0,7).forEach((p,i)=>{txt(String(i+1).padStart(2,'0'),x+27,718+i*34,18,'#88aa93',650);txt(p.name,x+73,718+i*34,22,'#f5faf1',600,'left',335);});
+  if(!list.length)txt('Takım kadrosu bulunamadı',x+24,750,22,'#a3baa8',500);
+ };
+ drawRoster(redRoster,76,'KIRMIZI TAKIM','#ec5361');drawRoster(whiteRoster,554,'BEYAZ TAKIM','#f1f1f3');
+ rect(76,991,928,240,24,'#112f21','#41634b');
+ txt('⚽ GOLLER',104,1030,25,'#c7f88e',800);txt('🎯 ASİSTLER',567,1030,25,'#c7f88e',800);
+ line(540,1047,540,1203,'#395943');
+ const drawStats=(list,x)=>{if(!list.length){txt('Henüz kayıt yok',x,1091,21,'#a6bbaa',500);return;}list.slice(0,4).forEach(([name,n],i)=>{txt(name,x,1083+i*37,21,'#edf6eb',600,'left',315);txt(`×${n}`,x+375,1083+i*37,22,'#c5f487',800,'right');});if(list.length>4)txt(`+ ${list.length-4} oyuncu daha`,x,1215,17,'#9eb8a5',500);};
+ drawStats(goals,104);drawStats(assists,567);
+ txt('SZF AIRPORT HALI SAHA  •  MAÇ GÜNÜ',540,1276,20,'#799e86',700,'center');
  canvas.toBlob(async blob=>{
   if(!blob)return toast('Paylaşım kartı oluşturulamadı.',true);
   const file=new File([blob],`SZF-Mac-Sonucu-${String(id).slice(0,8)}.png`,{type:'image/png'});
   try{if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'SZF Airport Halı Saha · Maç Sonucu'});return;}}catch(e){if(e.name==='AbortError')return;}
   const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);
-  toast('Paylaşım kartı PNG olarak hazır. WhatsApp’a gönderebilirsin.');
+  toast('Premium maç afişi PNG olarak hazır.');
  },'image/png');
 }
 

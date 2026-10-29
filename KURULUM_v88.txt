@@ -1,0 +1,1 @@
+v88: En yakin yaklasan macin kadrosu otomatik gelir. Elle dagit: 7 kirmizi secilir, kalani beyaz. Sadece takim onizlemesi, maca veritabaninda yazmaz. Onceki SQL kurulumlari korunur.

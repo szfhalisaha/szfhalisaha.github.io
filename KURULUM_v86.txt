@@ -1,0 +1,1 @@
+v86: v85 istatistik sekmeleri ve kart detayi basari rozetleri. SQL degisikligi yoktur. v84 SQL kurulu olmalidir. Maçın Adamı rozeti sadece tamamlanmış oylama sonuçları sunucudan dönerse sayılır. Her iki hosting için aynı dosyaları kullanın.

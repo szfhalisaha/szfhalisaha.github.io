@@ -1,0 +1,13 @@
+SZF Airport Halı Saha — v84 Maçın Adamı
+
+1. Supabase Dashboard > SQL Editor'a girin.
+2. SZF_v84_Macin_Adami_Supabase.sql dosyasının tamamını yapıştırıp Run yapın.
+3. ZIP içindeki site dosyalarını GitHub Pages ve Cloudflare Pages yayınlarına yükleyin.
+4. Test: Yeni bir maçı sonuçlandırın. Maçta oynayan hesaptan oy verin.
+5. İkinci oy, kendine oy ve maç dışından oy denemeleri reddedilmelidir.
+6. Sonuçlar 24 saat bitene kadar gizlidir; bitince otomatik görünür.
+
+ÖNEMLİ: Bu ZIP henüz canlı sitelere yüklenmedi. SQL de Supabase'e uygulanmadı.
+Bu sürüm, önceki tamamlanmış maçlar için otomatik oylama başlatmaz.
+İşlevsel sınır: Kazanan sayısı geçmiş maçın içinde görünür, oyuncu profili
+üzerindeki toplam MVP rozeti sonraki bir geliştirmedir.

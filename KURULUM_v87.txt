@@ -1,0 +1,1 @@
+v87: Maçlar > Yaklaşan Maçlar / Maç Geçmişi / Rekabet. Rozetler: Deneyimli 10 maç, Saha Müdavimi 25 maç. Kaleci Panter: bir maçta 5 gol altı, yalnızca kayıtlı takım skorlarından doğrulandığında. Mevcut maç veritabanında red_score/white_score alanları bulunmuyorsa Panter kazanılmaz. Önceki v84 SQL kurulumu gerekliliği sürer.

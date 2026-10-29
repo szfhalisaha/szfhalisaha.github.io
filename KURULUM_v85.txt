@@ -1,0 +1,5 @@
+SZF Airport Hali Saha v85 - Istatistikler sekmeli gorunum
+
+Ilk sekme: Galibiyet Yuzdesi. Diger sekmeler Gol Kralligi ve Asist Kralligi.
+Mevcut Supabase tablolari ve veri hesaplamalari degistirilmedi. v84 kurulum SQL dosyasi arsivde aynen korunmustur.
+Her iki barindirmada ayni dosyalari yayimlayin.

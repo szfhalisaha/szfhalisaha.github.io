@@ -1,0 +1,1 @@
+SZF Airport Hali Saha v89. Elle Dağıt: 7 kırmızı oyuncu seçilir, kalan 7 beyaz olur; mevki kısıtlaması ve mevki uyarısı kesinlikle yoktur. Otomatik Dengeli: mevki kontenjanları aynen devam eder. Önceki v88 özellikleri korunmuştur. Ek SQL gerektirmez. İki barındırma adresine aynı site dosyalarını yükleyin.

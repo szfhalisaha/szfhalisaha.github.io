@@ -5,6 +5,7 @@ const C = window.SZF_CONFIG || {};
 const configured = Boolean(C.supabaseUrl && /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(C.supabaseUrl) && C.supabasePublishableKey && !C.supabasePublishableKey.startsWith('BURAYA_'));
 let manualRed=new Set(), leagueMatches=[], leagueWallet=null, leagueBets=[], leagueStandings=[], weeklyPlayers=[], matchDeclines=[], assessments=[], teamMode='auto', adminInfo=false, canDeleteMatch=false, weeklyIndex=0, selectedStakes=100, currentResult='red';
 let extras={guests:[],waitlist:[],events:[],mvp:[]}, extraReady=true;
+let mvpStates={}, mvpEnabled=false;
 let playerSort='rating_desc', rankingSort='rating_desc', rosterPickerMatch=null, rosterSearch='';
 let assessmentFlash=null;
 let v70Ready=false;
@@ -202,20 +203,64 @@ function renderRanking(){
  +(!configured?'<p class="soft">Örnek veriler gösteriliyor.</p>':'')
  +(arr.length?`<div class="table-wrap"><table><thead><tr><th>#</th>${h('OYUNCU','name')}${h('MEVKİ','position')}${h('RATING','rating')}${h('HIZ','hiz')}${h('ŞUT','sut')}${h('PAS','pas')}${h('DRİ','dripling')}${h('DEF','defans')}${h('FİZ','dayaniklilik')}</tr></thead><tbody>${arr.map((p,i)=>`<tr><td class="rank">${i+1}</td><td class="${activeCol==='name'?'active-col':''}">${esc(formatPersonName(p.display_name))}</td><td class="${activeCol==='position'?'active-col':''}">${esc(posName[p.position]||p.position)}</td><td class="${activeCol==='rating'?'active-col accent':'accent'}">${publicRating(p)}</td>${features.map(([key])=>`<td class="${activeCol===key?'active-col':''}">${publicAbility(p,key)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'<div class="empty">Henüz onaylı oyuncu yok.</div>');
 }
+let selectedStatsTab='wins';
 function renderStatistics(){
  const stats=currentCards().map(p=>({player:p,...playerWinStats(p.id)})).sort((a,b)=>(b.played?b.pct:-1)-(a.played?a.pct:-1)||b.played-a.played||String(a.player.display_name).localeCompare(String(b.player.display_name),'tr'));
- return sectionHead('İstatistikler','Tüm zamanlar · Gol ve Asist Krallığı · Galibiyet Yüzdesi')
- + `<div class="szf-stats-grid"><section class="szf-stats-panel"><h3>⚽ Gol Krallığı</h3><p class="soft">Maç başına yönetici tarafından girilen goller. Misafirlerin golleri eşleştirilene kadar rating sıralamalarına girmez.</p>${(()=>{const tally=new Map();extras.events.filter(x=>x.kind==='goal').forEach(e=>{const id=e.player_id||extras.guests.find(g=>g.id===e.guest_id)?.linked_user_id;if(id)tally.set(id,(tally.get(id)||0)+1)});return [...tally.entries()].sort((a,b)=>b[1]-a[1]).map(([id,n],i)=>`<div class="szf-event-line">${i+1}. ${esc(currentCards().find(p=>p.id===id)?.display_name||'Oyuncu')} <b>${n} gol</b></div>`).join('')||'<p>Henüz gol kaydı yok.</p>'})()}</section>
- <section class="szf-stats-panel"><h3>🎯 Asist Krallığı</h3><p class="soft">Maçlarda kaydedilen asistler. Eşleştirilmemiş misafirler listelenmez.</p>${(()=>{const tally=new Map();extras.events.filter(x=>x.kind==='assist').forEach(e=>{const id=e.player_id||extras.guests.find(g=>g.id===e.guest_id)?.linked_user_id;if(id)tally.set(id,(tally.get(id)||0)+1)});return [...tally.entries()].sort((a,b)=>b[1]-a[1]).map(([id,n],i)=>`<div class="szf-event-line">${i+1}. ${esc(currentCards().find(p=>p.id===id)?.display_name||'Oyuncu')} <b>${n} asist</b></div>`).join('')||'<p>Henüz asist kaydı yok.</p>'})()}</section>
- <section class="szf-stats-panel"><h3>🏆 Galibiyet Yüzdesi</h3><p class="soft">Yalnızca tamamlanmış ve oyuncunun takımı kaydedilmiş maçlar hesaplanır.</p>
- <div class="table-wrap"><table><thead><tr><th>#</th><th>OYUNCU</th><th>MAÇ</th><th>GALİBİYET</th><th>ORAN</th></tr></thead>
- <tbody>${stats.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(formatPersonName(x.player.display_name))}</td><td>${x.played}</td><td>${x.wins}</td><td class="accent">${x.played?x.pct.toLocaleString('tr-TR',{maximumFractionDigits:1})+'%':'—'}</td></tr>`).join('')}</tbody></table></div></section></div>`;
+ const tallyFor=kind=>{
+  const tally=new Map();
+  extras.events.filter(x=>x.kind===kind).forEach(e=>{
+   const id=e.player_id||extras.guests.find(g=>g.id===e.guest_id)?.linked_user_id;
+   if(id)tally.set(id,(tally.get(id)||0)+1);
+  });
+  return [...tally.entries()].sort((a,b)=>b[1]-a[1]);
+ };
+ const board=(kind,label)=>{const entries=tallyFor(kind);
+  return `<div class="szf-leader-list">${entries.map(([id,n],i)=>`<div class="szf-leader-row"><span class="szf-leader-rank">${i+1}</span><span class="szf-leader-name">${esc(formatPersonName(currentCards().find(p=>p.id===id)?.display_name||'Oyuncu'))}</span><strong>${n} ${label}</strong></div>`).join('')||`<div class="szf-stats-empty">Henüz ${label} kaydı yok.</div>`}</div>`;
+ };
+ const tabs=[['wins','🏆 Galibiyet Yüzdesi'],['goals','⚽ Gol Krallığı'],['assists','🎯 Asist Krallığı']];
+ const active=tabs.some(t=>t[0]===selectedStatsTab)?selectedStatsTab:'wins';
+ const content=active==='wins'
+ ? `<p class="soft">Yalnızca tamamlanmış ve oyuncunun takımı kaydedilmiş maçlar hesaplanır.</p><div class="table-wrap szf-win-table"><table><thead><tr><th>#</th><th>OYUNCU</th><th>MAÇ</th><th>GALİBİYET</th><th>ORAN</th></tr></thead><tbody>${stats.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(formatPersonName(x.player.display_name))}</td><td>${x.played}</td><td>${x.wins}</td><td class="accent">${x.played?x.pct.toLocaleString('tr-TR',{maximumFractionDigits:1})+'%':'—'}</td></tr>`).join('')}</tbody></table></div>`
+ :active==='goals'?`<p class="soft">Maçlarda yönetici tarafından girilen goller. Eşleştirilmemiş misafirler listelenmez.</p>${board('goal','gol')}`
+ :`<p class="soft">Maçlarda kaydedilen asistler. Eşleştirilmemiş misafirler listelenmez.</p>${board('assist','asist')}`;
+ return sectionHead('İstatistikler','Tüm zamanların oyuncu performansları')
+ + `<section class="szf-stats-single"><div class="szf-stats-tabs" role="tablist" aria-label="İstatistik türü">${tabs.map(([key,label])=>`<button type="button" role="tab" aria-selected="${active===key}" class="szf-stats-tab ${active===key?'active':''}" data-stats-tab="${key}">${label}</button>`).join('')}</div><div class="szf-stats-body" role="tabpanel">${content}</div></section>`;
+}
+function achievementData(c){
+ const id=String(c.id), stat=playerWinStats(c.id);
+ const eventCount=kind=>extras.events.reduce((n,e)=>{
+   if(e.kind!==kind)return n;
+   const linked=extras.guests.find(g=>String(g.id)===String(e.guest_id))?.linked_user_id;
+   return n+(String(e.player_id||linked)===id?1:0);
+ },0);
+ const goals=eventCount('goal'),assists=eventCount('assist');
+ // Panter: yalnızca doğrulanmış takım skoru bulunan maçlarda sayılır.
+ // Eski maç kayıtlarında skor alanı yoksa ödül yanlışlıkla verilmez.
+ const pantherMatches=leagueMatches.filter(m=>{
+  if(m.status!=='completed')return false;
+  const entry=weeklyPlayers.find(p=>String(p.match_id)===String(m.id)&&String(p.player_id)===id);
+  if(!entry||!['red','white'].includes(entry.team_color)||c.position!=='KL')return false;
+  const against=entry.team_color==='red'?m.white_score:m.red_score;
+  return against!==null&&against!==undefined&&against!==''&&Number.isInteger(Number(against))&&Number(against)>=0&&Number(against)<5;
+ }).length;
+ const mvp=Object.values(mvpStates).filter(v=>v&&!v.open&&Array.isArray(v.winners)&&v.winners.some(w=>String(typeof w==='object'?(w.player_id||w.id||w.target_id):w)===id)).length;
+ return [
+  {emoji:'⚽',name:'İlk Maç',value:stat.played,target:1,unit:'maç'},
+  {emoji:'🏅',name:'Deneyimli',value:stat.played,target:10,unit:'maç'},
+  {emoji:'🎖️',name:'Saha Müdavimi',value:stat.played,target:25,unit:'maç'},
+  {emoji:'🔥',name:'Golcü',value:goals,target:10,unit:'gol'},
+  {emoji:'🎯',name:'Asist Ustası',value:assists,target:10,unit:'asist'},
+  {emoji:'🏆',name:'Kazanan',value:stat.wins,target:10,unit:'galibiyet'},
+  {emoji:'👑',name:'Maçın Adamı',value:mvp,target:1,unit:'ödül'},
+  ...(c.position==='KL'?[{emoji:'🐆',name:'Panter',value:pantherMatches,target:1,unit:'maç'}]:[])
+ ];
 }
 function detail(c){
  if(!c)return renderPlayers();
- const f=getFeatures(c);
- return `<div class="section-head"><button class="btn small ghost" data-back="1">← Oyunculara dön</button></div><div class="detail-layout"><div class="detail-sidebar">${cardHTML(c)}</div><div><h2>${esc(formatPersonName(c.display_name))}</h2><p class="soft">${esc(posName[c.position]||c.position)} · ${rankTier(c).toLocaleUpperCase('tr')} kart</p><div class="detail-abilities">${f.map(([k,abbr,label])=>`<div><strong>${abbr} · ${esc(label)}</strong><span>${publicAbility(c,k)}</span><div class="detail-meter"><i style="width:${publicAbility(c,k)==='?'?0:Math.max(0,Math.min(99,ability(c,k)))}%"></i></div></div>`).join('')}</div></div></div>`;
+ const badges=achievementData(c);
+ return `<div class="section-head"><button class="btn small ghost" data-back="1">← Oyunculara dön</button></div><div class="detail-layout"><div class="detail-sidebar">${cardHTML(c)}</div><div class="szf-achievements"><h2>${esc(formatPersonName(c.display_name))}</h2><p class="soft">${esc(posName[c.position]||c.position)} · ${rankTier(c).toLocaleUpperCase('tr')} kart</p><div class="szf-achievements-heading"><h3>🏅 Başarı Rozetleri</h3><span>${badges.filter(b=>b.value>=b.target).length} / ${badges.length} kazanıldı</span></div><div class="szf-achievements-grid">${badges.map(b=>{const unlocked=b.value>=b.target;return `<div class="szf-achievement ${unlocked?'unlocked':'locked'}" title="${esc(b.name)}: ${b.target} ${b.unit}"><div class="szf-achievement-icon">${unlocked?b.emoji:'🔒'}</div><div class="szf-achievement-name">${esc(b.name)}</div><div class="szf-achievement-progress">${unlocked?'Kazanıldı':`${Math.min(b.value,b.target)} / ${b.target} ${esc(b.unit)}`}</div></div>`}).join('')}</div><p class="micro">Rozetler kaydedilmiş maç, gol, asist ve sonuçlandırılmış Maçın Adamı verilerinden otomatik hesaplanır.</p></div></div>`;
 }
+
 function vestStats(playerId){
  let played=0,worn=0;
  const byMatch=new Map(leagueMatches.filter(m=>m.status==='completed'&&['red','white'].includes(m.vest_team)).map(m=>[String(m.id),m]));
@@ -242,21 +287,47 @@ function vestSuggestion(teams){
  return `<section class="vest-recommendation"><h3>🎽 Bu maç yeleği kim giysin?</h3><p>🔴 Kırmızı: ${info(a)}</p><p>⚪ Beyaz: ${info(b)}</p><strong>${chosen===null?'Geçmiş eşit: bu hafta kura çekin.':'Bu hafta '+(chosen===0?'Kırmızı':'Beyaz')+' takım yelek giysin.'}</strong><p class="soft">Her oyuncunun yelek giydiği maç sayısı, oynadığı ve yelek kaydı bulunan maçlarla karşılaştırılır. İlk kez gelen oyuncular 0 geçmiş maçla taraf tutmaz. Tavsiye, maçın resmî kaydı değildir.</p></section>`;
 }
 // Misafirlerin 70 puani yalnizca takim dengeleme icindir; kalici rating degildir.
+function nextTeamMatch(){
+ const pending=leagueMatches.filter(m=>m.status!=='completed'&&Number.isFinite(new Date(m.match_date).getTime()));
+ const future=pending.filter(m=>new Date(m.match_date).getTime()>=Date.now());
+ return (future.length?future:pending).sort((a,b)=>new Date(a.match_date)-new Date(b.match_date))[0]||null;
+}
 function teamBuilderCandidates(){
+ const m=nextTeamMatch();
+ if(!m)return [];
+ const attendees=weeklyPlayers.filter(p=>String(p.match_id)===String(m.id));
  const registered=currentCards();
- const guestPlayers=extras.guests
-  .filter(g=>leagueMatches.some(m=>String(m.id)===String(g.match_id)&&m.status!=='completed'))
-  .map(g=>({id:'guest:'+g.id,display_name:g.display_name,position:g.position||'ORT',secondary_position:null,overall_rating:70,is_guest:true}));
- return [...registered,...guestPlayers];
+ const ids=new Set();
+ const result=[];
+ attendees.forEach(a=>{
+  const card=registered.find(p=>String(p.id)===String(a.player_id));
+  if(card&&!ids.has(String(card.id))){result.push(card);ids.add(String(card.id))}
+ });
+ extras.guests.filter(g=>String(g.match_id)===String(m.id)).forEach(g=>{
+  // Aynı kullanıcı misafir olarak eşleştirilmişse iki kez gösterme
+  if(g.linked_user_id&&ids.has(String(g.linked_user_id)))return;
+  result.push({id:'guest:'+g.id,display_name:g.display_name,position:g.position||'ORT',secondary_position:null,overall_rating:70,is_guest:true});
+ });
+ return result;
+}
+function syncTeamSelection(){
+ const arr=teamBuilderCandidates(),key=String(nextTeamMatch()?.id||'');
+ if(window._teamMatchKey!==key){
+  window._teamMatchKey=key;
+  manualRed.clear();teamData=null;
+ }
+ teamSelections=new Set(arr.map(p=>p.id));
+ for(const id of [...manualRed])if(!teamSelections.has(id))manualRed.delete(id);
 }
 function renderTeams(){
- const arr=teamBuilderCandidates();
- const candidates=arr.map(c=>`<label class="check-line"><input type="checkbox" data-team="${attrs(c.id)}" ${teamSelections.has(c.id)?'checked':''}/><span>${esc(formatPersonName(c.display_name))} <span class="soft">· ${esc(c.position)} · ${c.is_guest?70:publicRating(c)}${c.is_guest?' (Misafir · varsayılan)':''}</span></span></label>`).join('');
- return sectionHead('7’ye 7 takım kur','',`<button id="buildTeams" class="btn lime" ${teamSelections.size!==14?'disabled':''}>Takımları oluştur (${teamSelections.size}/14)</button>`)
- +(!configured?'<p class="soft">Önizlemede yalnızca 4 örnek oyuncu bulunuyor. Gerçek oyuncular eklendiğinde 14 kişi seçilebilecek.</p>':'')
+ syncTeamSelection();
+ const m=nextTeamMatch(),arr=teamBuilderCandidates();
+ const ready=arr.length===14;
+ const selection=teamMode==='manual'?`<div class="szf-team-hint">🔴 <b>${manualRed.size}/7 kırmızı</b> · Kalan oyuncular otomatik beyaz. Oyuncuya dokunarak takımını değiştir.</div><div class="szf-simple-players">${arr.map(p=>`<button type="button" class="szf-simple-person ${manualRed.has(p.id)?'red':'white'}" data-toggle-red="${attrs(p.id)}" aria-pressed="${manualRed.has(p.id)}"><span>${manualRed.has(p.id)?'🔴':'⚪'}</span><span class="szf-simple-name">${esc(formatPersonName(p.display_name))}</span><small>${esc(p.position||'—')}${p.is_guest?' · Misafir':''}</small></button>`).join('')}</div>`:`<div class="szf-simple-players">${arr.map(p=>`<div class="szf-simple-person"><span>⚽</span><span class="szf-simple-name">${esc(formatPersonName(p.display_name))}</span><small>${esc(p.position||'—')}${p.is_guest?' · Misafir':''}</small></div>`).join('')}</div>`;
+ return sectionHead('7’ye 7 takım kur',m?'📅 Sıradaki maç: '+matchDateText(m.match_date):'Yaklaşan maç bulunamadı.',`<button id="buildTeams" class="btn lime" ${!ready||(teamMode==='manual'&&manualRed.size!==7)?'disabled':''}>${teamMode==='manual'?'Takımları onayla':'Takımları oluştur'} (${arr.length}/14)</button>`)
  + `<div class="mode-buttons"><button class="btn small ${teamMode==='auto'?'lime':'ghost'}" data-mode="auto">⚖ Otomatik dengeli</button><button class="btn small ${teamMode==='manual'?'lime':'ghost'}" data-mode="manual">✋ Elle dağıt</button></div>`
- + `<div class="teams-list">${arr.length?candidates:'<div class="soft">Oyuncular giriş ve onaydan sonra listelenecek.</div>'}</div>`
- + (teamMode==='manual'?`<div class="teams-list"><strong>Kırmızı takıma alınacak 7 oyuncu:</strong>${arr.filter(p=>teamSelections.has(p.id)).map(p=>`<label class="check-line"><input type="checkbox" data-red="${attrs(p.id)}" ${manualRed.has(p.id)?'checked':''}/>${esc(formatPersonName(p.display_name))}</label>`).join('')}</div>`:'')
+ + (!ready?`<p class="notice">Sıradaki maçın kadrosunda ${arr.length} kişi var. Takım kurmak için 14 katılımcı gerekli.</p>`:'')
+ + selection
  + (teamData?vestSuggestion(teamData):'')
  + (teamData?`<div class="team-cols">${teamData.map((t,i)=>`<div class="team-result"><h3>${i===0?'🔴 Kırmızı takım':'⚪ Beyaz takım'}</h3><p>Toplam rating: ${t.reduce((n,x)=>n+x.overall_rating,0)} · Ortalama: ${(t.reduce((n,x)=>n+x.overall_rating,0)/7).toFixed(1)}</p><ol>${t.map(p=>`<li><b>${esc(p.assigned_role||p.position)}</b> · ${esc(formatPersonName(p.display_name))} <span>${p.overall_rating}</span></li>`).join('')}</ol></div>`).join('')}</div>`:'');
 }
@@ -325,8 +396,15 @@ function matchBlock(m){
  const events=extras.events.filter(x=>x.match_id===m.id);const goals=events.filter(x=>x.kind==='goal');const assists=events.filter(x=>x.kind==='assist');
  const playerName=(id,guest)=>guest?guests.find(x=>x.id===id)?.display_name||'Misafir':currentCards().find(x=>x.id===id)?.display_name||'Oyuncu';
  const eventHTML=(arr)=>arr.map(x=>`<div class="szf-event-line">${esc(playerName(x.player_id||x.guest_id,!!x.guest_id))} ${adminInfo?`<button class="btn small ghost" data-delete-event="${attrs(x.id)}">Sil</button>`:''}</div>`).join('')||'<p class="soft">Henüz kayıt yok.</p>';
- const mvpVotes=extras.mvp.filter(x=>x.match_id===m.id);const counts={};mvpVotes.forEach(x=>counts[x.target_id]=(counts[x.target_id]||0)+1);const mvpWinner=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
- const detailHTML=`<div class="szf-extra-details"><h4>⚽ Saha dizilişi</h4><div class="szf-pitches">${positionHTML('red')}${positionHTML('white')}</div><h4>Gol ve asistler</h4><div class="szf-stats-columns"><div><b>⚽ Goller (${goals.length})</b>${eventHTML(goals)}</div><div><b>🎯 Asistler (${assists.length})</b>${eventHTML(assists)}</div></div>${adminInfo?`<div class="szf-inline-forms"><select id="event-person-${attrs(m.id)}"><option value="">Oyuncu seç</option>${[...people.map(x=>({value:'p:'+x.player_id,name:playerName(x.player_id,false)})),...guests.map(x=>({value:'g:'+x.id,name:x.display_name+' (misafir)'}))].map(x=>`<option value="${attrs(x.value)}">${esc(formatPersonName(x.name))}</option>`).join('')}</select><select id="event-kind-${attrs(m.id)}"><option value="goal">Gol</option><option value="assist">Asist</option></select><button class="btn small lime" data-add-event="${attrs(m.id)}">İstatistik ekle</button></div>`:''}${completed?`<h4>🏅 Maçın Adamı</h4><p>${mvpWinner?esc(playerName(mvpWinner[0],false))+' · '+mvpWinner[1]+' oy':'Henüz oy kullanılmadı.'}</p><div class="szf-inline-forms"><select id="mvp-person-${attrs(m.id)}"><option value="">Oy vereceğin oyuncu</option>${people.filter(x=>x.player_id!==user.id).map(x=>`<option value="${attrs(x.player_id)}">${esc(playerName(x.player_id,false))}</option>`).join('')}</select><button class="btn small ghost" data-mvp="${attrs(m.id)}">Oy ver</button></div>`:''}</div>`;
+ const mv=mvpStates[String(m.id)]||{};
+ const mvpOpen=completed&&mv.open===true;
+ const mvpVoted=mv.voted===true;
+ const mvpEligible=mv.eligible===true;
+ const mvpCount=Number(mv.vote_count||0);
+ const mvpDeadline=mv.deadline?matchDateText(mv.deadline):'';
+ const mvpWinnerNames=(mv.winners||[]).map(x=>playerName(x,false));
+ const mvpMarkup=completed?`<section class="szf-mvp-panel"><h4>🏆 Maçın Adamı</h4>${!mvpEnabled?`<p class="soft">Güvenli oylamayı etkinleştirmek için v84 SQL kurulumu gerekli.</p>`:mvpOpen?`<p class="soft">Oylama ${esc(mvpDeadline)} tarihine kadar açık. Kullanılan oy: ${mvpCount} / ${people.length}</p>${mvpVoted?`<p>✓ Oyun kaydedildi. Sonuçlar oylama bitince açıklanacak.</p>`:mvpEligible?`<div class="szf-mvp-options">${people.filter(x=>String(x.player_id)!==String(user.id)).map(x=>`<label class="szf-mvp-option"><input type="radio" name="mvp-${attrs(m.id)}" value="${attrs(x.player_id)}"><span>${esc(playerName(x.player_id,false))}</span></label>`).join('')}</div><button class="btn lime" data-mvp="${attrs(m.id)}">Oyumu Onayla</button>`:`<p class="soft">Oy vermek için bu maçın kayıtlı oyuncusu olmalısın.</p>`}`:`<p>${mvpCount===0?'Oylama sona erdi; oy kullanılmadı.':mvpWinnerNames.length>1?'Beraberlik: '+esc(mvpWinnerNames.join(', '))+' · '+mv.winning_votes+' oy':'🏆 '+esc(mvpWinnerNames[0]||'Sonuç bekleniyor')+' · '+mv.winning_votes+' oy'}</p><p class="soft">Toplam ${mvpCount} oy kullanıldı.</p>`}</section>`:'';
+ const detailHTML=`<div class="szf-extra-details"><h4>⚽ Saha dizilişi</h4><div class="szf-pitches">${positionHTML('red')}${positionHTML('white')}</div><h4>Gol ve asistler</h4><div class="szf-stats-columns"><div><b>⚽ Goller (${goals.length})</b>${eventHTML(goals)}</div><div><b>🎯 Asistler (${assists.length})</b>${eventHTML(assists)}</div></div>${adminInfo?`<div class="szf-inline-forms"><select id="event-person-${attrs(m.id)}"><option value="">Oyuncu seç</option>${[...people.map(x=>({value:'p:'+x.player_id,name:playerName(x.player_id,false)})),...guests.map(x=>({value:'g:'+x.id,name:x.display_name+' (misafir)'}))].map(x=>`<option value="${attrs(x.value)}">${esc(formatPersonName(x.name))}</option>`).join('')}</select><select id="event-kind-${attrs(m.id)}"><option value="goal">Gol</option><option value="assist">Asist</option></select><button class="btn small lime" data-add-event="${attrs(m.id)}">İstatistik ekle</button></div>`:''}${mvpMarkup}</div>`;
  const result=completed?({red:'🔴 Kırmızı takım kazandı',draw:'🤝 Beraberlik',white:'⚪ Beyaz takım kazandı'}[m.result]||'Maç tamamlandı'):'';
  return `<article class="match-new-card"><div class="match-date-box"><small>${esc(d.weekday)}</small><strong>${esc(d.day)}</strong><span>${esc(d.month)}</span></div>
  <div class="match-new-body"><div class="match-badges"><span class="match-status ${completed?'ended':''}">${completed?'TAMAMLANDI':m.status==='open'?'KAYIT AÇIK':'KAYIT KAPALI'}</span><span>${esc(matchDateText(m.match_date).split(' ').slice(-1)[0])}</span></div>
@@ -412,13 +490,34 @@ async function removeRosterPlayer(match,player){
  if(error)return toast('Oyuncu çıkarılamadı: '+formatError(error),true);
  await loadLeagueData();render();toast('Oyuncu kadrodan çıkarıldı.');
 }
+let selectedMatchTab='upcoming';
+function matchRivalry(){
+ const names=new Map(currentCards().map(p=>[String(p.id),formatPersonName(p.display_name)]));
+ const finished=new Map(leagueMatches.filter(m=>m.status==='completed'&&['red','white','draw'].includes(m.result)).map(m=>[String(m.id),m]));
+ const grouped=new Map();
+ for(const [id,m] of finished){
+  const players=weeklyPlayers.filter(p=>String(p.match_id)===id&&p.player_id&&['red','white'].includes(p.team_color));
+  for(let i=0;i<players.length;i++)for(let j=i+1;j<players.length;j++){
+   if(players[i].team_color===players[j].team_color)continue;
+   const [a,b]=[players[i],players[j]].sort((x,y)=>String(x.player_id).localeCompare(String(y.player_id)));
+   const key=a.player_id+'|'+b.player_id;
+   const t=grouped.get(key)||{a:String(a.player_id),b:String(b.player_id),played:0,aw:0,bw:0,draws:0};
+   t.played++;
+   if(m.result==='draw')t.draws++;else if(m.result===a.team_color)t.aw++;else t.bw++;
+   grouped.set(key,t);
+  }
+ }
+ const list=[...grouped.values()].sort((a,b)=>b.played-a.played);
+ if(!list.length)return '<p class="match-empty">Rekabet için tamamlanan maçlarda oyuncuların takımları kaydedilmiş olmalı.</p>';
+ return `<div class="szf-rivals-grid">${list.map(t=>`<div class="szf-rival-card"><div class="szf-rival-people"><strong>${esc(names.get(t.a)||'Oyuncu')}</strong><span>VS</span><strong>${esc(names.get(t.b)||'Oyuncu')}</strong></div><div class="szf-rival-score"><b>${t.aw}</b><span>${t.draws} beraberlik · ${t.played} maç</span><b>${t.bw}</b></div></div>`).join('')}</div>`;
+}
 function renderMatches(){
  if(!user)return sectionHead('Maçlar','Planlanan ve tamamlanan maçlar')+'<p class="empty">Maçları görmek için giriş yap.</p>';
  const future=leagueMatches.filter(m=>m.status!=='completed').sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
  const past=leagueMatches.filter(m=>m.status==='completed').sort((a,b)=>new Date(b.match_date)-new Date(a.match_date));
  const header=`<div class="match-page-heading"><div><p class="match-overline">MAÇ TAKVİMİ</p><h2>Maç günü tamam.</h2><p>Kaydol, ekibi topla ve dengeli takımlarını kur.</p></div><button id="openMatchDialog" class="btn lime">+ Maç Oluştur</button></div>`;
- const content=`<div class="match-section-title">SIRADAKİ MAÇLAR · ${future.length} KAYIT</div>${future.length?future.map(matchBlock).join(''):'<p class="match-empty">Planlanan maç yok.</p>'}
- <div class="match-section-title past-heading">TAMAMLANAN MAÇLAR · ${past.length}</div>${past.length?past.map(matchBlock).join(''):'<p class="match-empty">Henüz tamamlanan maç yok.</p>'}`;
+ const tabs=[['upcoming','📅 Yaklaşan Maçlar'],['history','🕘 Maç Geçmişi'],['rivalry','⚔️ Rekabet']];
+ const content=`<div class="szf-match-tabs" role="tablist" aria-label="Maçlar alt bölümleri">${tabs.map(([key,title])=>`<button class="szf-match-tab ${selectedMatchTab===key?'active':''}" type="button" role="tab" aria-selected="${selectedMatchTab===key}" data-match-tab="${key}">${title}</button>`).join('')}</div><div class="szf-match-tab-body" role="tabpanel">${selectedMatchTab==='history'?`<div class="match-section-title">MAÇ GEÇMİŞİ · ${past.length} MAÇ</div>${past.length?past.map(matchBlock).join(''):'<p class="match-empty">Henüz tamamlanan maç yok.</p>'}`:selectedMatchTab==='rivalry'?`<div class="match-section-title">OYUNCULAR ARASI REKABET</div><p class="soft">Karşılıklı galibiyetler, beraberlikler ve toplam rakip karşılaşmalar.</p>${matchRivalry()}`:`<div class="match-section-title">SIRADAKİ MAÇLAR · ${future.length} KAYIT</div>${future.length?future.map(matchBlock).join(''):'<p class="match-empty">Planlanan maç yok.</p>'}`}</div>`;
  const dialog=`<dialog id="matchCreateDialog" class="match-create-dialog"><form id="newMatchForm"><div class="match-dialog-head"><div><small>HAFTAYI PLANLA</small><h2 id="matchDialogHeading">Yeni maçı ayarla</h2><p>Gün ve saha seç; oyuncular maça kaydolabilsin.</p></div><button type="button" id="closeMatchDialog" class="btn small ghost" aria-label="Kapat">✕</button></div>
  <label>MAÇ ADI<input class="text-input" id="matchTitle" required maxlength="55" value="Haftalık Maç"></label>
  <label>SAHA<input class="text-input" id="matchVenue" maxlength="35" placeholder="Saha adı veya adres" /></label>
@@ -442,6 +541,8 @@ function render(){
  bindContent();
 }
 function bindContent(){
+ document.querySelectorAll('[data-match-tab]').forEach(btn=>btn.addEventListener('click',()=>{selectedMatchTab=btn.dataset.matchTab;render()}));
+ document.querySelectorAll('[data-stats-tab]').forEach(btn=>btn.addEventListener('click',()=>{selectedStatsTab=btn.dataset.statsTab;render()}));
  document.querySelectorAll('[data-home-nav]').forEach(el=>el.addEventListener('click',()=>{view=el.dataset.homeNav;selectedPlayer=null;render();window.scrollTo({top:0,behavior:'smooth'});}));
  document.querySelectorAll('[data-player]').forEach(el=>el.addEventListener('click',()=>{selectedPlayer=el.dataset.player;render();document.querySelector('#content').scrollIntoView({behavior:'smooth',block:'start'});}));
  document.querySelectorAll('[data-back]').forEach(el=>el.addEventListener('click',()=>{selectedPlayer=null;render()}));
@@ -451,6 +552,13 @@ function bindContent(){
  
  document.querySelectorAll('[data-team]').forEach(el=>el.addEventListener('change',()=>{teamData=null;el.checked?teamSelections.add(el.dataset.team):teamSelections.delete(el.dataset.team);render()}));
  document.querySelectorAll('[data-mode]').forEach(el=>el.addEventListener('click',()=>{teamMode=el.dataset.mode;teamData=null;render()}));
+ document.querySelectorAll('[data-toggle-red]').forEach(el=>el.addEventListener('click',()=>{
+ const id=el.dataset.toggleRed;
+ if(manualRed.has(id))manualRed.delete(id);
+ else if(manualRed.size>=7)return toast('Kırmızı takımda en fazla 7 oyuncu olabilir.',true);
+ else manualRed.add(id);
+ teamData=null;render();
+}));
  document.querySelectorAll('[data-red]').forEach(el=>el.addEventListener('change',()=>{el.checked?manualRed.add(el.dataset.red):manualRed.delete(el.dataset.red);render()}));
  document.querySelector('[data-assess-prev]')?.addEventListener('click',()=>{weeklyIndex=Math.max(0,weeklyIndex-1);render()});
  document.querySelector('[data-assess-next]')?.addEventListener('click',()=>{weeklyIndex++;render()});
@@ -542,10 +650,17 @@ function buildTeams(){
   manualIds=new Set(picked.filter(p=>manualRed.has(p.id)).map(p=>p.id));
   if(manualIds.size!==7)return toast('Kırmızı takım için tam 7 oyuncu seç.',true);
  }
- const teams=balancedRoleTeams(picked,manualIds);
- if(!teams)return toast('Mevkilere uygun iki takım kurulamıyor. 2 kaleci, 6 defans, 4 orta saha ve 2 forvet kontenjanını karşılayacak oyuncular seç. İkinci mevkiler de sayılır.',true);
+ let teams;
+ if(teamMode==='manual'){
+  // Elle dağıt: mevki kontrolü yok. 7 kırmızı, kalan 7 beyaz.
+  teams=[picked.filter(p=>manualIds.has(p.id)),picked.filter(p=>!manualIds.has(p.id))];
+ }else{
+  // Mevki kontenjanları yalnızca Otomatik Dengeli modunda geçerli.
+  teams=balancedRoleTeams(picked);
+  if(!teams)return toast('Mevkilere uygun iki takım kurulamıyor. 2 kaleci, 6 defans, 4 orta saha ve 2 forvet gereklidir. İkinci mevkiler de sayılır.',true);
+ }
  teamData=teams;
- render();toast('Takımlar hazır: her takımda 1 KL, 3 DEF, 2 ORT, 1 FOR!');
+ render();toast(teamMode==='manual'?'Takımlar hazır: 7 kırmızı, 7 beyaz.':'Takımlar hazır: her takımda 1 KL, 3 DEF, 2 ORT, 1 FOR!');
 }
 function openAuth(register=false){if(user)return toast('Zaten giriş yaptın.');if(!configured)return toast('Önce config.js dosyasına Supabase publishable anahtarını girmelisin.',true);signup=register;$('authDialog').showModal();drawAuth()}
 function drawAuth(){ $('authTitle').textContent=signup?'Yeni oyuncu kaydı':'Oyuncu girişi';$('authDesc').textContent=signup?'Gerçek e-posta adresinle kayıt ol.':'E-posta adresin ve şifrenle giriş yap.';$('signupConfirm').classList.toggle('hidden',!signup);$('confirmPassword').required=signup;$('authSubmit').textContent=signup?'Hesap oluştur':'Giriş yap';$('switchAuth').textContent=signup?'Zaten hesabın var mı? Giriş yap':'Hesabın yok mu? Kayıt ol';$('password').autocomplete=signup?'new-password':'current-password';$('forgotPassword').classList.toggle('hidden',signup);$('authError').classList.add('hidden')}
@@ -721,9 +836,13 @@ async function loadLeagueData(){
  if(!db||!user)return;
  const calls=await Promise.all([db.from('szf_admins').select('user_id').eq('user_id',user.id).maybeSingle(),db.from('szf_matches').select('*').order('match_date',{ascending:false}),db.from('szf_participants').select('*'),db.from('szf_match_declines').select('*'),db.from('szf_assessments').select('*'),db.rpc('szf_claim_weekly_credits'),db.from('szf_wallets').select('balance').eq('user_id',user.id).maybeSingle(),db.from('szf_leaderboard').select('*').order('balance',{ascending:false}),db.from('szf_match_deleters').select('user_id').eq('user_id',user.id).maybeSingle()]);
  adminInfo=!!calls[0].data;canDeleteMatch=!!calls[8]?.data;leagueMatches=calls[1].data||[];weeklyPlayers=calls[2].data||[];matchDeclines=calls[3].data||[];assessments=calls[4].data||[];leagueWallet=calls[6].data||null;leagueStandings=calls[7].data||[];
- const extraCalls=await Promise.all(['szf_guest_players_v53','szf_waitlist_v53','szf_match_events_v53','szf_mvp_votes_v53'].map(t=>db.from(t).select('*')));
+ const extraCalls=await Promise.all(['szf_guest_players_v53','szf_waitlist_v53','szf_match_events_v53'].map(t=>db.from(t).select('*')));
  extraReady=extraCalls.every(r=>!r.error);
- extras={guests:extraCalls[0].data||[],waitlist:extraCalls[1].data||[],events:extraCalls[2].data||[],mvp:extraCalls[3].data||[]};
+ extras={guests:extraCalls[0].data||[],waitlist:extraCalls[1].data||[],events:extraCalls[2].data||[],mvp:[]};
+ const completedMatches=leagueMatches.filter(m=>m.status==='completed');
+ const results=await Promise.all(completedMatches.map(m=>db.rpc('szf_mvp_status_v84',{p_match:m.id})));
+ mvpEnabled=results.length===0?mvpEnabled:results.some(r=>!r.error);
+ mvpStates={};results.forEach((r,i)=>{if(!r.error&&r.data)mvpStates[String(completedMatches[i].id)]=r.data;});
  if(!extraReady)console.warn('Bazı v53 ek özellikleri okunamadı (katılım yine denenebilir):',extraCalls.filter(r=>r.error).map(r=>r.error));
  if(calls[5].error)console.warn('Kredi tanımlama:',calls[4].error.message);
 }
@@ -823,7 +942,14 @@ async function leaveQueue(match){if(!user)return;const {error}=await db.rpc('szf
 async function addGuest(match,fromPicker=false){const name=formatPersonName((fromPicker?$('pickerGuestName'):$('guest-name-'+match))?.value),position=(fromPicker?$('pickerGuestPosition'):$('guest-position-'+match))?.value;if(!name)return toast('Misafir adı gerekli.',true);const {error}=await db.rpc('szf_add_guest_v53',{p_match:match,p_name:name,p_position:position});if(error)return toast(formatError(error),true);if(fromPicker)rosterPickerMatch=null;await loadLeagueData();render();$('roster-'+match)?.classList.remove('hidden');toast('Anonim oyuncu kadroya eklendi.');}
 async function guestAction(id,action,value){let call=action==='remove'?db.rpc('szf_remove_guest_v53',{p_guest:id}):action==='team'?db.rpc('szf_guest_team_v53',{p_guest:id,p_team:value||null}):db.rpc('szf_link_guest_v53',{p_guest:id,p_player:value});const {error}=await call;if(error)return toast(formatError(error),true);await loadLeagueData();render();toast('Misafir kaydı güncellendi.');}
 async function addEvent(match){const val=$('event-person-'+match)?.value,kind=$('event-kind-'+match)?.value;if(!val)return toast('Oyuncu seç.',true);const [type,id]=val.split(':');const {error}=await db.rpc('szf_add_event_v53',{p_match:match,p_person:id,p_is_guest:type==='g',p_kind:kind});if(error)return toast(formatError(error),true);await loadLeagueData();render();toast('İstatistik kaydedildi.');}
-async function voteMvp(match){const target=$('mvp-person-'+match)?.value;if(!target)return toast('Oyuncu seç.',true);const {error}=await db.rpc('szf_vote_mvp_v53',{p_match:match,p_target:target});if(error)return toast(formatError(error),true);await loadLeagueData();render();toast('Maçın Adamı oyun kaydedildi.');}
+async function voteMvp(match){
+ const target=document.querySelector(`input[name="mvp-${CSS.escape(match)}"]:checked`)?.value;
+ if(!target)return toast('Bir oyuncu seç.',true);
+ if(!confirm('Oyun kaydedilsin mi? Sonradan değiştirilemez.'))return;
+ const {error}=await db.rpc('szf_cast_mvp_v84',{p_match:match,p_target:target});
+ if(error)return toast(formatError(error),true);
+ await loadLeagueData();render();toast('Oyun güvenle kaydedildi.');
+}
 function manageParticipants(match){
  const ids=cards.map(p=>`${p.display_name} ${weeklyPlayers.some(w=>w.player_id===p.id&&w.match_id===match)?'✓':''}`).join('\n');
  const name=prompt('Oynayan oyuncunun tam adını yaz (tekrar seçilirse katılımı kaldırır):\n'+ids);

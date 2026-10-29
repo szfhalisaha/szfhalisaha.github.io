@@ -1,0 +1,1 @@
+v99: Kadroyu Gör normal üyelerde doğrudan saha dizilişi gösterir. Katılımcı ve eşleştirme alanı sadece szf_admins yöneticilerine görünür. Yeni takım kayıtları mevcut v98 Supabase RPC ile kaydedilir. Ek SQL gerekmez.

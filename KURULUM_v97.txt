@@ -1,0 +1,13 @@
+SZF Airport Halı Saha – v97 tek paket
+
+1) Önce Supabase SQL Editor'a girin. ZIP içindeki SZF_v97_Yonetici_Duzeltmeleri.sql komutlarını çalıştırın.
+2) Daha önce yapılmadıysa v94 skor SQL kurulumunu da çalıştırın.
+3) ZIP içeriğini Cloudflare Pages ve GitHub Pages'e yükleyin. İki adres aynı Supabase verisini kullanır.
+4) Maçlar > Maç Geçmişi'ne girin.
+5) Anonim Oyuncu Eşleştir paneli yönetici hesabında en üstte görünür.
+6) Kadroyu gör: 7+7 dağılım kayıtlıysa doğrudan iki saha görüntülenir. 0/7 ise tarihi maç takım seçicisiyle takım bilgisini kaydedin; sahalar ardından görünür.
+7) Sonuç, Gol ve Asist Düzenle: önce skoru kaydedin; ardından golleri/asistleri girip Maçı Sonuçlandır'ı kullanın. Maçı sonuçlandırmak sanal kredi ödüllerini etkileyebilir.
+8) Maç adı ve saati güncellemesi için eklenen RLS policy mevcut verileri silmez. Başarılı kayıtta düzenleme penceresi kapanır.
+9) Dış test ortamında gerçek Supabase işlem testi yapılmadı. Önce örnek bir geçmiş maçta doğrulayın.
+
+NOT: Daha önce kaydedilmemiş kırmızı/beyaz takım dağılımı otomatik olarak tahmin edilmez; yönetici tarafından belirlenmelidir. Anonim oyuncu bağlantısı silme/taşıma yerine mevcut v53 ilişkilendirme fonksiyonu ile yapılır.

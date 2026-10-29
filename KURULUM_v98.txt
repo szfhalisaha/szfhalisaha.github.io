@@ -1,0 +1,1 @@
+v98: 29 Ekim kadrosu ve oyuncu eşleştirme görünümü. Önce SZF_29_Ekim_Takim_Kayit.sql Supabase SQL Editor; sonra site ZIP bir kez yüklenir. SQL isimler belirsizse hata vererek işlemi geri alır. Diğer maçlar Takım Kurdan otomatik kaydedilir. Canlı test yapılmadı.

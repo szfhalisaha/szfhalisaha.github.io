@@ -428,3 +428,16 @@ button.szf-simple-person{cursor:pointer}.szf-simple-person.red{background:#43232
 .szf-formation-line-0 .szf-pitch-player,.szf-formation-line-3 .szf-pitch-player{flex-basis:45%;width:45%;}
 .szf-formation-line-1 .szf-pitch-player{flex-basis:39%;width:39%;}
 @media(max-width:620px){.szf-pitch.szf-formation{min-height:390px}.szf-formation-line .szf-pitch-player{font-size:10px;padding:8px 3px;}}
+/* v97 admin: history lineup recovery and anonymous link */
+.szf-admin-link,.szf-historic-assign{border:1px solid #476b50;border-radius:18px;padding:18px;margin:16px 0 22px;background:#183426}
+.szf-admin-link h3,.szf-historic-assign h4{margin:0 0 10px;color:#d3f5c8}
+.szf-admin-link select,.szf-history-player select{padding:10px;border:1px solid #496753;border-radius:10px;color:#eaf8ee;background:#10281b;min-width:180px;max-width:100%}
+.szf-history-player{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #365541}
+.szf-team-missing{padding:13px;border-radius:12px;background:#294932;margin-top:12px}
+@media(max-width:650px){.szf-history-player{flex-direction:column;align-items:stretch}.szf-history-player select{width:100%}}
+
+/* v99: admin-only roster controls */
+.szf-admin-roster{margin-top:18px;border:1px solid #3d6149;border-radius:14px;padding:12px 16px;background:#10271b}
+.szf-admin-roster summary{cursor:pointer;font-weight:800;padding:5px 0}
+.szf-admin-roster-body{padding-top:13px}
+.szf-team-ready+.szf-postmatch:empty{display:none}

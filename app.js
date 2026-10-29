@@ -324,7 +324,7 @@ function renderTeams(){
  const m=nextTeamMatch(),arr=teamBuilderCandidates();
  const ready=arr.length===14;
  const selection=teamMode==='manual'?`<div class="szf-team-hint">🔴 <b>${manualRed.size}/7 kırmızı</b> · Kalan oyuncular otomatik beyaz. Oyuncuya dokunarak takımını değiştir.</div><div class="szf-simple-players">${arr.map(p=>`<button type="button" class="szf-simple-person ${manualRed.has(p.id)?'red':'white'}" data-toggle-red="${attrs(p.id)}" aria-pressed="${manualRed.has(p.id)}"><span>${manualRed.has(p.id)?'🔴':'⚪'}</span><span class="szf-simple-name">${esc(formatPersonName(p.display_name))}</span><small>${esc(p.position||'—')}${p.is_guest?' · Misafir':''}</small></button>`).join('')}</div>`:`<div class="szf-simple-players">${arr.map(p=>`<div class="szf-simple-person"><span>⚽</span><span class="szf-simple-name">${esc(formatPersonName(p.display_name))}</span><small>${esc(p.position||'—')}${p.is_guest?' · Misafir':''}</small></div>`).join('')}</div>`;
- return sectionHead('7’ye 7 takım kur',m?'📅 Sıradaki maç: '+matchDateText(m.match_date):'Yaklaşan maç bulunamadı.',`<button id="buildTeams" class="btn lime" ${!ready||(teamMode==='manual'&&manualRed.size!==7)?'disabled':''}>${teamMode==='manual'?'Takımları onayla':'Takımları oluştur'} (${arr.length}/14)</button>`)
+ return sectionHead('7’ye 7 takım kur',m?'📅 Sıradaki maç: '+matchDateText(m.match_date):'Yaklaşan maç bulunamadı.',`<button id="buildTeams" class="btn lime" ${!ready||(teamMode==='manual'&&manualRed.size!==7)?'disabled':''}>${teamMode==='manual'?'Takımları onayla ve maça kaydet':'Takımları oluştur ve maça kaydet'} (${arr.length}/14)</button>`)
  + `<div class="mode-buttons"><button class="btn small ${teamMode==='auto'?'lime':'ghost'}" data-mode="auto">⚖ Otomatik dengeli</button><button class="btn small ${teamMode==='manual'?'lime':'ghost'}" data-mode="manual">✋ Elle dağıt</button></div>`
  + (!ready?`<p class="notice">Sıradaki maçın kadrosunda ${arr.length} kişi var. Takım kurmak için 14 katılımcı gerekli.</p>`:'')
  + selection
@@ -681,7 +681,7 @@ function balancedRoleTeams(picked,manualIds=null){
  solve(slots);
  return best;
 }
-async function saveTeamsToNextMatch(){
+async function saveTeamsToNextMatch({automatic=false}={}){
  if(!adminInfo||!db)return toast('Takımları yalnızca yönetici kaydedebilir.',true);
  const m=nextTeamMatch();
  if(!m||m.status==='completed'||!teamData||teamData.length!==2||teamData.some(t=>t.length!==7))return toast('Önce sıradaki maç için 7 kişilik iki takım oluştur.',true);
@@ -702,7 +702,7 @@ async function saveTeamsToNextMatch(){
    changes.push({type:'registered',id:p.id,color});
   }
  }
- if(!confirm('Kırmızı ve Beyaz takım kadroları sıradaki maça kaydedilsin mi?'))return;
+ if(!automatic&&!confirm('Kırmızı ve Beyaz takım kadroları sıradaki maça kaydedilsin mi?'))return;
  const button=$('saveTeamsToMatch');if(button)button.disabled=true;
  try{
   for(const x of changes){
@@ -711,10 +711,17 @@ async function saveTeamsToNextMatch(){
     :await db.rpc('szf_assign_match_team_v32',{p_match:m.id,p_player:x.id,p_team:x.color});
    if(result.error)throw result.error;
   }
-  await loadLeagueData();render();toast('14 oyuncu sıradaki maça kaydedildi. Maçlar → Kadroyu gör bölümünden inceleyebilirsin.');
+  await loadLeagueData();
+  const savedPeople=weeklyPlayers.filter(x=>String(x.match_id)===String(m.id));
+  const savedGuests=extras.guests.filter(x=>String(x.match_id)===String(m.id));
+  const counts={red:0,white:0};
+  for(const item of [...savedPeople,...savedGuests])if(item.team_color==='red'||item.team_color==='white')counts[item.team_color]++;
+  render();
+  if(counts.red!==7||counts.white!==7)throw new Error(`Kayıt doğrulanamadı: Kırmızı ${counts.red}/7, Beyaz ${counts.white}/7. Supabase yetkilerini kontrol et.`);
+  toast('Kadrolar kaydedildi! Maçlar → Kadroyu gör bölümünde sahada görüntülenebilir.');
  }catch(err){await loadLeagueData();render();toast('Bazı takım kayıtları kaydedilemedi: '+formatError(err),true);}
 }
-function buildTeams(){
+async function buildTeams(){
  const picked=teamBuilderCandidates().filter(p=>teamSelections.has(p.id));
  if(picked.length!==14)return toast('Tam 14 oyuncu seçmelisin.',true);
  let manualIds=null;
@@ -732,7 +739,12 @@ function buildTeams(){
   if(!teams)return toast('Mevkilere uygun iki takım kurulamıyor. 2 kaleci, 6 defans, 4 orta saha ve 2 forvet gereklidir. İkinci mevkiler de sayılır.',true);
  }
  teamData=teams;
- render();toast(teamMode==='manual'?'Takımlar hazır: 7 kırmızı, 7 beyaz.':'Takımlar hazır: her takımda 1 KL, 3 DEF, 2 ORT, 1 FOR!');
+ render();
+ if(adminInfo&&db){
+  await saveTeamsToNextMatch({automatic:true});
+ }else{
+  toast('Takımlar hazır, ancak maça kaydedilemedi: yönetici hesabıyla giriş yapılmalı.',true);
+ }
 }
 function openAuth(register=false){if(user)return toast('Zaten giriş yaptın.');if(!configured)return toast('Önce config.js dosyasına Supabase publishable anahtarını girmelisin.',true);signup=register;$('authDialog').showModal();drawAuth()}
 function drawAuth(){ $('authTitle').textContent=signup?'Yeni oyuncu kaydı':'Oyuncu girişi';$('authDesc').textContent=signup?'Gerçek e-posta adresinle kayıt ol.':'E-posta adresin ve şifrenle giriş yap.';$('signupConfirm').classList.toggle('hidden',!signup);$('confirmPassword').required=signup;$('authSubmit').textContent=signup?'Hesap oluştur':'Giriş yap';$('switchAuth').textContent=signup?'Zaten hesabın var mı? Giriş yap':'Hesabın yok mu? Kayıt ol';$('password').autocomplete=signup?'new-password':'current-password';$('forgotPassword').classList.toggle('hidden',signup);$('authError').classList.add('hidden')}

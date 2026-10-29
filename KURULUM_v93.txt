@@ -1,0 +1,1 @@
+v93: Takım Kur > Takımları onayla artık yönetici için otomatik olarak ilk yaklaşan maçın takım renklerini Supabase'e kaydeder. Kaydı yeniden okuyup 7/7 doğrular. Başarısız işlemde hata gösterir. Ek SQL eklenmedi; ilgili Supabase RPC izinleri mevcut olmalıdır. İki hosting platformunda aynı dosyaları yayınlayın.

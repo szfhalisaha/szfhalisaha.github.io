@@ -1,0 +1,1 @@
+v111: Rekabet sekmesinde iki oyuncu seçilip Karşılaştır butonuna basılmadan karşılaşmalar gösterilmez. Seçim değişince sonuç gizlenir. Her iki barındırma ortamında aynı dosyalar kullanılabilir.

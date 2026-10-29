@@ -456,3 +456,12 @@ button.szf-simple-person{cursor:pointer}.szf-simple-person.red{background:#43232
 .szf-history-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .szf-history-actions select{min-width:0;flex:1;width:100%;padding:7px;font-size:12px}
 @media(max-width:650px){.szf-history-columns{gap:6px}.szf-history-red,.szf-history-white{padding:7px}.szf-history-actions .btn{font-size:11px;padding:6px}.szf-history-player{flex-direction:column}}
+
+/* v111: player-selected rivalry comparison */
+.szf-rival-picker{display:flex;align-items:end;gap:14px;flex-wrap:wrap;margin:20px 0 22px}
+.szf-rival-picker label{display:flex;flex-direction:column;gap:8px;flex:1 1 205px;font-weight:700}
+.szf-rival-picker .text-input{width:100%;min-height:48px}
+.szf-rival-versus{padding-bottom:14px;color:#b2f66c;font-weight:900}
+.szf-rival-picker .btn{min-height:48px}
+.szf-rival-picker .btn:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:650px){.szf-rival-picker{display:grid;grid-template-columns:1fr 1fr;gap:10px}.szf-rival-versus{display:none}.szf-rival-picker label{min-width:0}.szf-rival-picker .btn{grid-column:1/-1}}

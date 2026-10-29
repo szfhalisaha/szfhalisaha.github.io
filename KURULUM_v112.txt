@@ -1,0 +1,1 @@
+v112: Panter rozeti yalnızca kaleci için, 5 farklı tamamlanmış maçın her birinde en fazla 4 gol yediğinde açılır. Eksik skorlu maçlar sayılmaz. Bütün rozetlerin üzerine gelince şartları görünür; klavye odağı ile de açıklama erişilebilir. Ek SQL gerekmez. Önceki v111 özellikleri korunur.

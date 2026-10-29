@@ -254,8 +254,8 @@ function achievementData(c){
    return n+(String(e.player_id||linked)===id?1:0);
  },0);
  const goals=eventCount('goal'),assists=eventCount('assist');
- // Panter: yalnızca doğrulanmış takım skoru bulunan maçlarda sayılır.
- // Eski maç kayıtlarında skor alanı yoksa ödül yanlışlıkla verilmez.
+ // Panter: kalecinin oynadığı, doğrulanmış skorlu ve 5'ten az gol yediği 5 ayrı maç gerekir.
+ // Eski maçlarda skor bilinmiyorsa sayılmaz.
  const pantherMatches=leagueMatches.filter(m=>{
   if(m.status!=='completed')return false;
   const entry=playerMatchEntries(id).find(p=>String(p.match_id)===String(m.id));
@@ -265,20 +265,20 @@ function achievementData(c){
  }).length;
  const mvp=Object.values(mvpStates).filter(v=>v&&!v.open&&Array.isArray(v.winners)&&v.winners.some(w=>String(typeof w==='object'?(w.player_id||w.id||w.target_id):w)===id)).length;
  return [
-  {emoji:'⚽',name:'İlk Maç',value:stat.played,target:1,unit:'maç'},
-  {emoji:'🏅',name:'Deneyimli',value:stat.played,target:10,unit:'maç'},
-  {emoji:'🎖️',name:'Saha Müdavimi',value:stat.played,target:25,unit:'maç'},
-  {emoji:'🔥',name:'Golcü',value:goals,target:10,unit:'gol'},
-  {emoji:'🎯',name:'Asist Ustası',value:assists,target:10,unit:'asist'},
-  {emoji:'🏆',name:'Kazanan',value:stat.wins,target:10,unit:'galibiyet'},
-  {emoji:'👑',name:'Maçın Adamı',value:mvp,target:1,unit:'ödül'},
-  ...(c.position==='KL'?[{emoji:'🐆',name:'Panter',value:pantherMatches,target:1,unit:'maç'}]:[])
+  {emoji:'⚽',name:'İlk Maç',value:stat.played,target:1,unit:'maç',description:'En az 1 tamamlanmış maçta oyna.'},
+  {emoji:'🏅',name:'Deneyimli',value:stat.played,target:10,unit:'maç',description:'En az 10 tamamlanmış maçta oyna.'},
+  {emoji:'🎖️',name:'Saha Müdavimi',value:stat.played,target:25,unit:'maç',description:'En az 25 tamamlanmış maçta oyna.'},
+  {emoji:'🔥',name:'Golcü',value:goals,target:10,unit:'gol',description:'Maçlarda toplam en az 10 normal gol at. Kendi kalene attığın goller sayılmaz.'},
+  {emoji:'🎯',name:'Asist Ustası',value:assists,target:10,unit:'asist',description:'Maçlarda toplam en az 10 asist yap.'},
+  {emoji:'🏆',name:'Kazanan',value:stat.wins,target:10,unit:'galibiyet',description:'Son kaydedilen maç sonuçlarına göre en az 10 galibiyet kazan.'},
+  {emoji:'👑',name:'Maçın Adamı',value:mvp,target:1,unit:'ödül',description:'Tamamlanmış Maçın Adamı oylamasında en az 1 kez seçil.'},
+  ...(c.position==='KL'?[{emoji:'🐆',name:'Panter',value:pantherMatches,target:5,unit:'maç',description:'Kaleci olarak oynadığın 5 ayrı tamamlanmış maçın her birinde 5’ten az (en fazla 4) gol ye. Skoru kayıtlı olmayan maçlar sayılmaz.'}]:[])
  ];
 }
 function detail(c){
  if(!c)return renderPlayers();
  const badges=achievementData(c);
- return `<div class="section-head"><button class="btn small ghost" data-back="1">← Oyunculara dön</button></div><div class="detail-layout"><div class="detail-sidebar">${cardHTML(c)}</div><div class="szf-achievements"><h2>${esc(formatPersonName(c.display_name))}</h2><p class="soft">${esc(posName[c.position]||c.position)} · ${rankTier(c).toLocaleUpperCase('tr')} kart</p><div class="szf-achievements-heading"><h3>🏅 Başarı Rozetleri</h3><span>${badges.filter(b=>b.value>=b.target).length} / ${badges.length} rozet</span></div><div class="szf-achievements-grid">${badges.map(b=>{const unlocked=b.value>=b.target;return `<div class="szf-achievement ${unlocked?'unlocked':'locked'}" title="${esc(b.name)}: ${b.target} ${b.unit}"><div class="szf-achievement-icon">${unlocked?b.emoji:'🔒'}</div><div class="szf-achievement-name">${esc(b.name)}</div><div class="szf-achievement-progress">${Math.min(b.value,b.target)} / ${b.target} ${esc(b.unit)}</div></div>`}).join('')}</div><p class="micro">Rozetler kaydedilmiş maç, gol, asist ve sonuçlandırılmış Maçın Adamı verilerinden otomatik hesaplanır.</p></div></div>`;
+ return `<div class="section-head"><button class="btn small ghost" data-back="1">← Oyunculara dön</button></div><div class="detail-layout"><div class="detail-sidebar">${cardHTML(c)}</div><div class="szf-achievements"><h2>${esc(formatPersonName(c.display_name))}</h2><p class="soft">${esc(posName[c.position]||c.position)} · ${rankTier(c).toLocaleUpperCase('tr')} kart</p><div class="szf-achievements-heading"><h3>🏅 Başarı Rozetleri</h3><span>${badges.filter(b=>b.value>=b.target).length} / ${badges.length} rozet</span></div><div class="szf-achievements-grid">${badges.map(b=>{const unlocked=b.value>=b.target;return `<div class="szf-achievement ${unlocked?'unlocked':'locked'}" title="${attrs(b.name+': '+b.description)}" aria-label="${attrs(b.name+': '+b.description)}" tabindex="0"><div class="szf-achievement-icon">${unlocked?b.emoji:'🔒'}</div><div class="szf-achievement-name">${esc(b.name)}</div><div class="szf-achievement-progress">${Math.min(b.value,b.target)} / ${b.target} ${esc(b.unit)}</div></div>`}).join('')}</div><p class="micro">Rozetler kaydedilmiş maç, gol, asist ve sonuçlandırılmış Maçın Adamı verilerinden otomatik hesaplanır.</p></div></div>`;
 }
 
 function vestStats(playerId){
@@ -585,25 +585,24 @@ async function removeRosterPlayer(match,player){
  await loadLeagueData();render();toast('Oyuncu kadrodan çıkarıldı.');
 }
 let selectedMatchTab='upcoming';
+let rivalryLeft='',rivalryRight='',rivalryCompared=false;
 function matchRivalry(){
- const names=new Map(currentCards().map(p=>[String(p.id),formatPersonName(p.display_name)]));
- const finished=new Map(leagueMatches.filter(m=>m.status==='completed'&&['red','white','draw'].includes(m.result)).map(m=>[String(m.id),m]));
- const grouped=new Map();
- for(const [id,m] of finished){
-  const players=weeklyPlayers.filter(p=>String(p.match_id)===id&&p.player_id&&['red','white'].includes(p.team_color));
-  for(let i=0;i<players.length;i++)for(let j=i+1;j<players.length;j++){
-   if(players[i].team_color===players[j].team_color)continue;
-   const [a,b]=[players[i],players[j]].sort((x,y)=>String(x.player_id).localeCompare(String(y.player_id)));
-   const key=a.player_id+'|'+b.player_id;
-   const t=grouped.get(key)||{a:String(a.player_id),b:String(b.player_id),played:0,aw:0,bw:0,draws:0};
-   t.played++;
-   if(m.result==='draw')t.draws++;else if(m.result===a.team_color)t.aw++;else t.bw++;
-   grouped.set(key,t);
-  }
+ const cards=currentCards().filter(p=>p.id&&p.display_name).sort((a,b)=>formatPersonName(a.display_name).localeCompare(formatPersonName(b.display_name),'tr'));
+ const names=new Map(cards.map(p=>[String(p.id),formatPersonName(p.display_name)]));
+ const choices=cards.map(p=>`<option value="${attrs(p.id)}">${esc(formatPersonName(p.display_name))}</option>`).join('');
+ const picker=`<div class="szf-rival-picker"><label>Birinci oyuncu<select class="text-input" id="rivalryLeft"><option value="">Oyuncu seç</option>${choices}</select></label><span class="szf-rival-versus">VS</span><label>İkinci oyuncu<select class="text-input" id="rivalryRight"><option value="">Oyuncu seç</option>${choices}</select></label><button type="button" class="btn lime" id="rivalryCompare" ${!rivalryLeft||!rivalryRight||rivalryLeft===rivalryRight?'disabled':''}>Karşılaştır</button></div>`;
+ if(!rivalryCompared||!rivalryLeft||!rivalryRight||rivalryLeft===rivalryRight)return picker;
+ let played=0,leftWins=0,rightWins=0,draws=0;
+ for(const m of leagueMatches){
+  if(m.status!=='completed'||!['red','white','draw'].includes(m.result))continue;
+  const players=weeklyPlayers.filter(p=>String(p.match_id)===String(m.id)&&p.player_id&&['red','white'].includes(p.team_color));
+  const left=players.find(p=>String(p.player_id)===rivalryLeft),right=players.find(p=>String(p.player_id)===rivalryRight);
+  if(!left||!right||left.team_color===right.team_color)continue;
+  played++;
+  if(m.result==='draw')draws++;else if(m.result===left.team_color)leftWins++;else if(m.result===right.team_color)rightWins++;
  }
- const list=[...grouped.values()].sort((a,b)=>b.played-a.played);
- if(!list.length)return '<p class="match-empty">Rekabet için tamamlanan maçlarda oyuncuların takımları kaydedilmiş olmalı.</p>';
- return `<div class="szf-rivals-grid">${list.map(t=>`<div class="szf-rival-card"><div class="szf-rival-people"><strong>${esc(names.get(t.a)||'Oyuncu')}</strong><span>VS</span><strong>${esc(names.get(t.b)||'Oyuncu')}</strong></div><div class="szf-rival-score"><b>${t.aw}</b><span>${t.draws} beraberlik · ${t.played} maç</span><b>${t.bw}</b></div></div>`).join('')}</div>`;
+ const result=played?`<div class="szf-rivals-grid"><div class="szf-rival-card"><div class="szf-rival-people"><strong>${esc(names.get(rivalryLeft)||'Oyuncu')}</strong><span>VS</span><strong>${esc(names.get(rivalryRight)||'Oyuncu')}</strong></div><div class="szf-rival-score"><b>${leftWins}</b><span>${draws} beraberlik · ${played} maç</span><b>${rightWins}</b></div></div></div>`:'<p class="match-empty">Bu iki oyuncu tamamlanmış maçlarda rakip olarak karşılaşmamış.</p>';
+ return picker+result;
 }
 function renderMatches(){
  if(!user)return sectionHead('Maçlar','Planlanan ve tamamlanan maçlar')+'<p class="empty">Maçları görmek için giriş yap.</p>';
@@ -639,6 +638,14 @@ function render(){
 }
 function bindContent(){
  document.querySelectorAll('[data-match-tab]').forEach(btn=>btn.addEventListener('click',()=>{selectedMatchTab=btn.dataset.matchTab;render()}));
+ const rivalryA=$('rivalryLeft'),rivalryB=$('rivalryRight');
+ if(rivalryA&&rivalryB){
+  rivalryA.value=rivalryLeft;rivalryB.value=rivalryRight;
+  const onChoice=()=>{rivalryLeft=rivalryA.value;rivalryRight=rivalryB.value;rivalryCompared=false;render()};
+  rivalryA.addEventListener('change',onChoice);rivalryB.addEventListener('change',onChoice);
+  $('rivalryCompare')?.addEventListener('click',()=>{if(!rivalryLeft||!rivalryRight||rivalryLeft===rivalryRight)return;rivalryCompared=true;render()});
+ }
+
  document.querySelectorAll('[data-stats-tab]').forEach(btn=>btn.addEventListener('click',()=>{selectedStatsTab=btn.dataset.statsTab;render()}));
  document.querySelectorAll('[data-home-nav]').forEach(el=>el.addEventListener('click',()=>{view=el.dataset.homeNav;selectedPlayer=null;render();window.scrollTo({top:0,behavior:'smooth'});}));
  document.querySelectorAll('[data-player]').forEach(el=>el.addEventListener('click',()=>{selectedPlayer=el.dataset.player;render();document.querySelector('#content').scrollIntoView({behavior:'smooth',block:'start'});}));

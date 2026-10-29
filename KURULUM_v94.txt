@@ -1,0 +1,7 @@
+SZF Airport Halı Saha v94
+1) Supabase > SQL Editor > New query: SZF_v94_Skor_Kurulumu.sql dosyasını çalıştırın.
+2) Bu ZIP'i hem Cloudflare Pages hem GitHub Pages ortamına aynı sürüm olarak yükleyin.
+3) Yönetici hesabıyla Maçlar > Maç Geçmişi > Sonuç, Gol ve Asist Düzenle.
+4) Skoru kaydetmek için v94 SQL gereklidir. Gol/asist işlemleri mevcut v53 RPC altyapısını kullanır.
+5) Maç başladığında geçmiş bölümüne taşınması istemci saatine göre otomatik yapılır. Veritabanındaki status alanı kendiliğinden değiştirilmez; Maçı sonuçlandır işleviyle resmileşir.
+6) Fizik -> Kondisyon yalnızca görünen etikettir; dayaniklilik verisi korunur.

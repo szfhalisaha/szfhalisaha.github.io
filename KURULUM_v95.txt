@@ -1,0 +1,1 @@
+v95: Oyuncu değerlendirme sayfasında ilk oyuncuda Önceki ve son oyuncuda Sonraki pasif. Döngü kaldırıldı. v94 üzerine kurulur. SQL değişikliği yok.

@@ -1,0 +1,1 @@
+v96: Otomatik Dengeli tek dokunusta 14 oyuncuyu 1 KL / 3 DEF / 2 ORT / 1 FOR kuralina gore iki takima ayirir, admin ise kaydeder. Elle dagit serbest. Gecmis mac takim kurma ekraninda siradaki mac olarak secilmez. v94 SQL ihtiyaci devam eder.

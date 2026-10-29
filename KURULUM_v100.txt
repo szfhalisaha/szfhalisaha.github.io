@@ -1,0 +1,1 @@
+v100: Tek saha; yöneticiye Oyuncu Eşleştir; ayrı Maçı Sonuçlandır butonu kaldırıldı. Skor kaydı sonrası sonuçlandırma denenir. Yeni SQL yok.

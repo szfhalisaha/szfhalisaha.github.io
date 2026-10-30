@@ -1,0 +1,1 @@
+v119: Golcü ve asist listeleri aynı oyuncu kaynağından oluşturulur. Hesap eşleşmiş eski misafirler kayıtlı oyuncu olarak görünür; eşleşmemiş konuklar (misafir) etiketi alır. Aynı hesaba eşleşmiş iki kadro satırının listede tekrarı engellenir. Gol ve asist kayıt yöntemleri değiştirilmedi. Yeni SQL gerekmez.

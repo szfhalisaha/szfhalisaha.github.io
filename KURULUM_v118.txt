@@ -1,0 +1,1 @@
+SZF v118: Maç kartındaki Oyuncu Eşleştir butonu herkesten kaldırıldı; yönetici sekmesindeki eşleştirme alanı korundu. Sonuç, Gol ve Asist Düzenle butonu yalnızca adminInfo yetkili yöneticilerde görünür ve açılışta da yetki kontrol edilir. v117 Maçın Adamı 24 saat kuralı aynen korunmuştur. v118 için yeni SQL yok; v117 SQL henüz yüklenmediyse önce onu uygulayın.

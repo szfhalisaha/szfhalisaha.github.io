@@ -465,3 +465,16 @@ button.szf-simple-person{cursor:pointer}.szf-simple-person.red{background:#43232
 .szf-rival-picker .btn{min-height:48px}
 .szf-rival-picker .btn:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:650px){.szf-rival-picker{display:grid;grid-template-columns:1fr 1fr;gap:10px}.szf-rival-versus{display:none}.szf-rival-picker label{min-width:0}.szf-rival-picker .btn{grid-column:1/-1}}
+
+/* v116 - Oyuncu karşılaştırmalarında rekabet ve takım arkadaşlığı */
+.szf-comparison-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.szf-comparison-tab{flex:1 1 155px;border:1px solid #3b6447;background:#10271b;color:#b9ccbc;border-radius:12px;padding:13px 12px;font:inherit;font-weight:800;cursor:pointer}
+.szf-comparison-tab.active{background:#c4fa76;color:#142315;border-color:#c4fa76}
+.szf-comparison-tab:focus-visible{outline:2px solid #c4fa76;outline-offset:3px}
+.szf-teammate-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:16px}
+.szf-teammate-summary>div{display:flex;flex-direction:column;align-items:center;gap:4px;background:#0a1e13;border-radius:10px;padding:12px 4px;text-align:center}
+.szf-teammate-summary strong{color:#d7ffab;font-size:25px}
+.szf-teammate-summary span{color:#b6cbb7;font-size:11px}
+.szf-teammate-rate{margin-top:13px;text-align:center;color:#bdd4c1}
+.szf-teammate-rate strong{color:#d7ffab}
+@media(max-width:390px){.szf-teammate-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}

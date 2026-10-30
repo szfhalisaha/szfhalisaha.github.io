@@ -1,0 +1,1 @@
+v117: Supabase SQL Editor'da SZF_v117_MVP_24_Saat.sql dosyasını çalıştırın. Ardından ZIP'i sitenize yükleyin. Süre maç tamamlandı statüsüne geçtiği anda başlar. Eskiden tamamlanmış olup mvp_started_at değeri olmayan maçlarda oylama kapalıdır. Önceki oylar korunur.

@@ -1,0 +1,1 @@
+v116: Maçlar > Karşılaştırmalar içinde önce Rekabet, sonra Takım Arkadaşlığı. İki oyuncu seçip Karşılaştır tuşuna basılır. Rekabet rakip maçları, Takım Arkadaşlığı aynı takımda oynanan tamamlanmış maçları sayar; galibiyet/beraberlik/mağlubiyet ve galibiyet oranı gerçek skorlarla hesaplanır. Yeni SQL gerekmez. Her iki barındırma ortamına aynı ZIP yüklenebilir.

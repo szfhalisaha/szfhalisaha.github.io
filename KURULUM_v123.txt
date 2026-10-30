@@ -1,0 +1,4 @@
+SZF Airport Halı Saha v123
+Ana sayfada canlı geri sayım ve mevcut Supabase katılım fonksiyonlarına bağlı butonlar.
+Maç geçmişinde yöneticiye misafir istatistik özeti. Aynı tam isimli geçmiş misafirler gruplanır; farklı kişilerde ayırt edici ad girilmelidir.
+Yeni SQL gerekmez. Canlı veri test edilmedi.

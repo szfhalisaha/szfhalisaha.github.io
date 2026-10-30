@@ -1,0 +1,7 @@
+SZF Airport Halı Saha v122
+- Oyuncu detayında galibiyet serileri rozetlerin üzerinde.
+- 7 yeni rozet; Sadık Takım Arkadaşı eklenmedi.
+- PWA manifest, ikonlar ve güvenli ağ-öncelikli önbellek.
+- Yeni SQL gerekmiyor; kayıtlar mevcut Supabase verisinden hesaplanır.
+- Tüm ZIP içeriğini mevcut barındırma ortamına yükleyin.
+- Gerçek Supabase üzerinde canlı test yapılmadı.

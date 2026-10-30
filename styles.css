@@ -478,3 +478,16 @@ button.szf-simple-person{cursor:pointer}.szf-simple-person.red{background:#43232
 .szf-teammate-rate{margin-top:13px;text-align:center;color:#bdd4c1}
 .szf-teammate-rate strong{color:#d7ffab}
 @media(max-width:390px){.szf-teammate-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* v122: Galibiyet serileri rozetlerin üstünde */
+.szf-streaks{margin-top:25px;padding:19px;border:1px solid #35523c;background:#10251a;border-radius:16px}
+.szf-streaks h3{margin:0 0 15px;font-size:19px}
+.szf-streak-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.szf-streak-grid>div{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:12px;background:#1b3424;border:1px solid #36553b}
+.szf-streak-grid small{color:#a1bba5}.szf-streak-grid strong{color:#b9f46d;font-size:21px}
+.szf-streaks .soft{margin:17px 0 9px;font-size:12px}
+.szf-results{display:flex;gap:9px;flex-wrap:wrap}
+.szf-result-pill{display:grid;place-items:center;min-width:43px;height:42px;border-radius:9px;font-weight:850;background:#28462f;color:#baf68d}
+.szf-result-pill.loss{background:#482626;color:#ffb4ad}.szf-result-pill.draw{background:#49452f;color:#f5db93}
+.szf-streaks .micro{margin:13px 0 0}
+@media(max-width:480px){.szf-streak-grid strong{font-size:17px}.szf-streaks{padding:13px}}

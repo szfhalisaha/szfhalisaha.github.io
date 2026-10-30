@@ -251,6 +251,34 @@ function renderStatistics(){
  return sectionHead('İstatistikler','Tüm zamanların oyuncu performansları')
  + `<section class="szf-stats-single"><div class="szf-stats-tabs" role="tablist" aria-label="İstatistik türü">${tabs.map(([key,label])=>`<button type="button" role="tab" aria-selected="${active===key}" class="szf-stats-tab ${active===key?'active':''}" data-stats-tab="${key}">${label}</button>`).join('')}</div><div class="szf-stats-body" role="tabpanel">${content}</div></section>`;
 }
+function playerStreakData(playerId){
+ const entries=new Map(playerMatchEntries(playerId).map(e=>[String(e.match_id),e]));
+ const history=leagueMatches.filter(m=>m.status==='completed'&&entries.has(String(m.id))).sort((a,b)=>new Date(a.match_date)-new Date(b.match_date)||String(a.id).localeCompare(String(b.id)));
+ let current=0,best=0;const results=[];
+ for(const m of history){
+  const e=entries.get(String(m.id));
+  if(!['red','white'].includes(e.team_color))continue;
+  const red=m.red_score,white=m.white_score;
+  const valid=red!==null&&red!==undefined&&red!==''&&white!==null&&white!==undefined&&white!==''&&Number.isFinite(Number(red))&&Number.isFinite(Number(white));
+  const result=valid?(Number(red)>Number(white)?'red':Number(red)<Number(white)?'white':'draw'):m.result;
+  if(!['red','white','draw'].includes(result))continue;
+  const outcome=result==='draw'?'B':result===e.team_color?'G':'M';
+  current=outcome==='G'?current+1:0;best=Math.max(best,current);
+  results.push({outcome,date:m.match_date});
+ }
+ return {current,best,results};
+}
+function playerEventCountsByMatch(id,kind){
+ const tally=new Map();
+ for(const e of extras.events){
+  if(e.kind!==kind)continue;
+  const linked=extras.guests.find(g=>String(g.id)===String(e.guest_id))?.linked_user_id;
+  if(String(e.player_id||linked)!==String(id))continue;
+  if(!leagueMatches.some(m=>String(m.id)===String(e.match_id)&&m.status==='completed'))continue;
+  const mid=String(e.match_id);tally.set(mid,(tally.get(mid)||0)+1);
+ }
+ return tally;
+}
 function achievementData(c){
  const id=String(c.id), stat=playerWinStats(c.id);
  const eventCount=kind=>extras.events.reduce((n,e)=>{
@@ -259,6 +287,10 @@ function achievementData(c){
    return n+(String(e.player_id||linked)===id?1:0);
  },0);
  const goals=eventCount('goal'),assists=eventCount('assist');
+ const streak=playerStreakData(c.id);
+ const matchGoals=playerEventCountsByMatch(id,'goal');
+ const matchAssists=playerEventCountsByMatch(id,'assist');
+ const topGoals=Math.max(0,...matchGoals.values()),topAssists=Math.max(0,...matchAssists.values());
  // Panter: kalecinin oynadığı, doğrulanmış skorlu ve 5'ten az gol yediği 5 ayrı maç gerekir.
  // Eski maçlarda skor bilinmiyorsa sayılmaz.
  const pantherMatches=leagueMatches.filter(m=>{
@@ -277,13 +309,24 @@ function achievementData(c){
   {emoji:'🎯',name:'Asist Ustası',value:assists,target:10,unit:'asist',description:'Maçlarda toplam en az 10 asist yap.'},
   {emoji:'🏆',name:'Kazanan',value:stat.wins,target:10,unit:'galibiyet',description:'Son kaydedilen maç sonuçlarına göre en az 10 galibiyet kazan.'},
   {emoji:'👑',name:'Maçın Adamı',value:mvp,target:1,unit:'ödül',description:'Tamamlanmış Maçın Adamı oylamasında en az 1 kez seçil.'},
+  {emoji:'⚽',name:'Hat-Trick',value:topGoals,target:3,unit:'gol / maç',description:'Tek bir tamamlanmış maçta en az 3 normal gol at.'},
+  {emoji:'🎯',name:'Oyun Kurucu',value:topAssists,target:3,unit:'asist / maç',description:'Tek bir tamamlanmış maçta en az 3 asist yap.'},
+  {emoji:'🔥',name:'Durdurulamaz',value:streak.best,target:5,unit:'galibiyet seri',description:'Art arda 5 galibiyet kazan. Maça katılmadığın haftalar seriyi bozmaz.'},
+  {emoji:'👑',name:'Yıldız Oyuncu',value:mvp,target:3,unit:'ödül',description:'3 ayrı maçta Maçın Adamı seçil.'},
+  {emoji:'🧱',name:'Demir Adam',value:stat.played,target:20,unit:'maç',description:'En az 20 tamamlanmış maçta oyna.'},
+  {emoji:'🚀',name:'Gol Makinesi',value:goals,target:50,unit:'gol',description:'Toplam en az 50 normal gol at.'},
+  {emoji:'💯',name:'Efsane',value:stat.played,target:100,unit:'maç',description:'Toplam 100 tamamlanmış maçta oyna.'},
   ...(c.position==='KL'?[{emoji:'🐆',name:'Panter',value:pantherMatches,target:5,unit:'maç',description:'Kaleci olarak oynadığın 5 ayrı tamamlanmış maçın her birinde 5’ten az (en fazla 4) gol ye. Skoru kayıtlı olmayan maçlar sayılmaz.'}]:[])
  ];
 }
 function detail(c){
  if(!c)return renderPlayers();
- const badges=achievementData(c);
- return `<div class="section-head"><button class="btn small ghost" data-back="1">← Oyunculara dön</button></div><div class="detail-layout"><div class="detail-sidebar">${cardHTML(c)}</div><div class="szf-achievements"><h2>${esc(formatPersonName(c.display_name))}</h2><p class="soft">${esc(posName[c.position]||c.position)} · ${rankTier(c).toLocaleUpperCase('tr')} kart</p><div class="szf-achievements-heading"><h3>🏅 Başarı Rozetleri</h3><span>${badges.filter(b=>b.value>=b.target).length} / ${badges.length} rozet</span></div><div class="szf-achievements-grid">${badges.map(b=>{const unlocked=b.value>=b.target;return `<div class="szf-achievement ${unlocked?'unlocked':'locked'}" title="${attrs(b.name+': '+b.description)}" aria-label="${attrs(b.name+': '+b.description)}" tabindex="0"><div class="szf-achievement-icon">${unlocked?b.emoji:'🔒'}</div><div class="szf-achievement-name">${esc(b.name)}</div><div class="szf-achievement-progress">${Math.min(b.value,b.target)} / ${b.target} ${esc(b.unit)}</div></div>`}).join('')}</div><p class="micro">Rozetler kaydedilmiş maç, gol, asist ve sonuçlandırılmış Maçın Adamı verilerinden otomatik hesaplanır.</p></div></div>`;
+ const badges=achievementData(c),streak=playerStreakData(c.id);
+ const last=streak.results.slice(-5);
+ const history=last.length?last.map(r=>`<span class="szf-result-pill ${r.outcome==='G'?'win':r.outcome==='M'?'loss':'draw'}" title="${attrs(matchDateText(r.date))}">${r.outcome}</span>`).join(''):'<span class="soft">Henüz sonuçlanmış maç bulunmuyor.</span>';
+ return `<div class="section-head"><button class="btn small ghost" data-back="1">← Oyunculara dön</button></div><div class="detail-layout"><div class="detail-sidebar">${cardHTML(c)}</div><div class="szf-achievements"><h2>${esc(formatPersonName(c.display_name))}</h2><p class="soft">${esc(posName[c.position]||c.position)} · ${rankTier(c).toLocaleUpperCase('tr')} kart</p>
+ <section class="szf-streaks"><h3>🔥 Galibiyet Serileri</h3><div class="szf-streak-grid"><div><small>Mevcut seri</small><strong>${streak.current} galibiyet</strong></div><div><small>En uzun seri</small><strong>${streak.best} galibiyet</strong></div></div><p class="soft">Son 5 maç (eskiden yeniye)</p><div class="szf-results">${history}</div><p class="micro">G: Galibiyet · B: Beraberlik · M: Mağlubiyet. Oynamadığın maçlar seriyi etkilemez.</p></section>
+ <div class="szf-achievements-heading"><h3>🏅 Başarı Rozetleri</h3><span>${badges.filter(b=>b.value>=b.target).length} / ${badges.length} rozet</span></div><div class="szf-achievements-grid">${badges.map(b=>{const unlocked=b.value>=b.target;return `<div class="szf-achievement ${unlocked?'unlocked':'locked'}" title="${attrs(b.name+': '+b.description)}" aria-label="${attrs(b.name+': '+b.description)}" tabindex="0"><div class="szf-achievement-icon">${unlocked?b.emoji:'🔒'}</div><div class="szf-achievement-name">${esc(b.name)}</div><div class="szf-achievement-progress">${Math.min(b.value,b.target)} / ${b.target} ${esc(b.unit)}</div></div>`}).join('')}</div><p class="micro">Rozetler maç, gol, asist, galibiyet serileri ve sonuçlandırılmış Maçın Adamı verilerinden otomatik hesaplanır.</p></div></div>`;
 }
 
 function vestStats(playerId){

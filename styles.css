@@ -501,3 +501,6 @@ button.szf-simple-person{cursor:pointer}.szf-simple-person.red{background:#43232
 .szf-team-guest-remove{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:1px solid #a86158;background:#38211f;color:#ffe5df;border-radius:8px;padding:7px 9px;font-size:12px;font-weight:700;cursor:pointer;z-index:1}
 .szf-team-guest-remove:hover{background:#64312c}
 .szf-team-guest-remove:disabled{opacity:.5;cursor:wait}
+
+/* v125 misafir geçici genel puanı */
+.szf-guest-overall-label{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;color:inherit;font-size:14px;font-weight:600;margin:4px 8px 4px 0}.szf-guest-overall{width:95px!important;max-width:95px!important;padding:9px!important;}

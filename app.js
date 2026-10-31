@@ -429,7 +429,9 @@ function renderTeams(){
  syncTeamSelection();
  const m=nextTeamMatch(),arr=teamBuilderCandidates();
  const ready=arr.length===14;
- const selection=teamMode==='manual'?`<div class="szf-team-hint">🔴 <b>${manualRed.size}/7 kırmızı</b> · Kalan oyuncular otomatik beyaz. Oyuncuya dokunarak takımını değiştir.</div><div class="szf-simple-players">${arr.map(p=>`<button type="button" class="szf-simple-person ${manualRed.has(p.id)?'red':'white'}" data-toggle-red="${attrs(p.id)}" aria-pressed="${manualRed.has(p.id)}"><span>${manualRed.has(p.id)?'🔴':'⚪'}</span><span class="szf-simple-name">${esc(formatPersonName(p.display_name))}</span><small>${esc(p.position||'—')}${p.is_guest?' · Misafir':''}</small></button>`).join('')}</div>`:`<div class="szf-simple-players">${arr.map(p=>`<div class="szf-simple-person"><span>⚽</span><span class="szf-simple-name">${esc(formatPersonName(p.display_name))}</span><small>${esc(p.position||'—')}${p.is_guest?' · Misafir':''}</small></div>`).join('')}</div>`;
+ const guestRemoveButton=p=>p.is_guest?`<button type="button" class="szf-team-guest-remove" data-team-remove-guest="${attrs(String(p.id).replace(/^guest:/,''))}" aria-label="${attrs(formatPersonName(p.display_name))} adlı misafiri bu maçtan çıkar" title="Bu maçın kadrosundan çıkar">✕ Çıkar</button>`:'';
+ const personMarkup=(p,manual)=>`<div class="szf-team-person-wrap"><${manual?'button':'div'} ${manual?'type="button"':''} class="szf-simple-person ${manual?(manualRed.has(p.id)?'red':'white'):''}" ${manual?`data-toggle-red="${attrs(p.id)}" aria-pressed="${manualRed.has(p.id)}"`:''}><span>${manual?(manualRed.has(p.id)?'🔴':'⚪'):'⚽'}</span><span class="szf-simple-name">${esc(formatPersonName(p.display_name))}</span><small>${esc(p.position||'—')}${p.is_guest?' · Misafir':''}</small></${manual?'button':'div'}>${guestRemoveButton(p)}</div>`;
+ const selection=teamMode==='manual'?`<div class="szf-team-hint">🔴 <b>${manualRed.size}/7 kırmızı</b> · Kalan oyuncular otomatik beyaz. Oyuncuya dokunarak takımını değiştir.</div><div class="szf-simple-players">${arr.map(p=>personMarkup(p,true)).join('')}</div>`:`<div class="szf-simple-players">${arr.map(p=>personMarkup(p,false)).join('')}</div>`;
  return sectionHead('7’ye 7 takım kur',m?'📅 Sıradaki maç: '+matchDateText(m.match_date):'Yaklaşan maç bulunamadı.',`<button id="buildTeams" class="btn lime" ${!ready||(teamMode==='manual'&&manualRed.size!==7)?'disabled':''}>${teamMode==='manual'?'Takımları onayla ve maça kaydet':'Takımları oluştur ve maça kaydet'} (${arr.length}/14)</button>`)
  + `<div class="mode-buttons"><button class="btn small ${teamMode==='auto'?'lime':'ghost'}" data-mode="auto">⚖ Otomatik dengeli</button><button class="btn small ${teamMode==='manual'?'lime':'ghost'}" data-mode="manual">✋ Elle dağıt</button></div>`
  + (!ready?`<p class="notice">Sıradaki maçın kadrosunda ${arr.length} kişi var. Takım kurmak için 14 katılımcı gerekli.</p>`:'')
@@ -823,6 +825,15 @@ function bindContent(){
   teamMode=requestedMode;teamData=null;render();
   // Otomatik Dengeli tek tiklamada takimi kurar; yalnizca mod secmez.
   if(requestedMode==='auto')await buildTeams();
+ }));
+ document.querySelectorAll('[data-team-remove-guest]').forEach(el=>el.addEventListener('click',async()=>{
+  const id=el.dataset.teamRemoveGuest;
+  const guest=extras.guests.find(g=>String(g.id)===String(id));
+  const match=nextTeamMatch();
+  if(!guest||!match||String(guest.match_id)!==String(match.id))return toast('Misafir bu maçta bulunamadı. Sayfayı yenile.',true);
+  if(!confirm(`${formatPersonName(guest.display_name)} (Misafir) bu maçın kadrosundan çıkarılsın mı? Önceki maçlarının istatistikleri korunur.`))return;
+  el.disabled=true;
+  await guestAction(id,'remove');
  }));
  document.querySelectorAll('[data-toggle-red]').forEach(el=>el.addEventListener('click',()=>{
  const id=el.dataset.toggleRed;

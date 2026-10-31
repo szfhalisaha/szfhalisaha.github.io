@@ -529,3 +529,13 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 
 /* v132: Jersey number appears only before the player name on player cards. */
 .szf-numbered-card .fut-name{font-size:clamp(12px,1.35vw,17px);letter-spacing:.01em;overflow-wrap:anywhere}
+
+/* v133: Büyük karşılama paneli kaldırıldı. Sadece top -> uçak animasyonu. */
+.szf-ball-plane-strip{height:104px;margin:4px 0 12px;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}
+.szf-ball-plane-svg{display:block;width:min(100%,700px);height:100%;overflow:hidden}
+.szf-v133-ball{transform:translate(45px,62px);animation:szf-v133-ball-flight 6s linear infinite;transform-origin:0 0}
+.szf-v133-plane{opacity:0;transform:translate(365px,45px) scale(.20) rotate(-12deg);animation:szf-v133-plane-flight 6s linear infinite;transform-origin:0 0;filter:drop-shadow(0 1px 5px #b9f46d60)}
+@keyframes szf-v133-ball-flight{0%,13%{opacity:1;transform:translate(45px,62px) rotate(0deg)}43%{opacity:1;transform:translate(350px,45px) rotate(420deg)}49%,100%{opacity:0;transform:translate(366px,45px) rotate(440deg)}}
+@keyframes szf-v133-plane-flight{0%,43%{opacity:0;transform:translate(350px,45px) scale(.15) rotate(-12deg)}49%{opacity:1;transform:translate(365px,45px) scale(.32) rotate(-12deg)}76%{opacity:1;transform:translate(525px,25px) scale(.48) rotate(-12deg)}89%,100%{opacity:0;transform:translate(680px,12px) scale(.54) rotate(-12deg)}}
+@media(max-width:600px){.szf-ball-plane-strip{height:75px;margin:4px 0 8px}}
+@media(prefers-reduced-motion:reduce){.szf-v133-ball,.szf-v133-plane{animation:none!important}.szf-v133-ball{opacity:1;transform:translate(320px,45px)}.szf-v133-plane{opacity:0}}

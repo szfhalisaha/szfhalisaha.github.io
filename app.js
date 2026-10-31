@@ -168,35 +168,13 @@ function renderHome(){
  const playerCount=currentCards().length;
  const future=leagueMatches.filter(m=>m.status==='open'&&new Date(m.match_date).getTime()>Date.now()).sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
  const next=future[0];
- return `<section class="home-landing"><div class="home-welcome"><div class="welcome-copy"><small>SZF AIRPORT HALI SAHA</small><h1>Sahamıza hoş geldin!</h1><p>Maçlarını takip et, oyuncu kartlarını incele ve takımını kur.</p></div>
-<div class="szf-kick-scene" role="img" aria-label="Futbolcu siyah beyaz topa vuruyor, top yeşil bir uçağa dönüşüp sağa uçuyor ve hareket tekrarlanıyor.">
-<svg class="szf-scene-svg" viewBox="0 0 630 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-<defs>
- <linearGradient id="szf-air" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#dbffbf"/><stop offset="1" stop-color="#9cf456"/></linearGradient>
-</defs>
-<path d="M8 218 H620" stroke="#a7f15b" stroke-width="2" opacity=".18"/>
-<path d="M20 228 H610" stroke="#a7f15b" stroke-width="1" opacity=".09"/>
-<g class="szf-player" fill="none" stroke="#e6ffdb" stroke-linecap="round" stroke-linejoin="round">
- <!-- Orantılı futbolcu: kısa gövde, anatomik dirsek/diz ve dengeli adım -->
- <circle cx="79" cy="63" r="15" fill="#e6ffdb" stroke="none"/>
- <path d="M80 83 L87 111 L97 145" stroke-width="11"/>
- <path d="M85 99 L115 116 L134 97" stroke-width="8"/>
- <path d="M85 99 L61 121 L48 138" stroke-width="8"/>
- <path d="M97 145 L76 181 L53 208" stroke-width="10"/>
- <path d="M53 208 L45 214" stroke-width="8"/>
- <g class="szf-kicking-leg"><path d="M97 145 L130 172 L155 204" stroke-width="10"/><path d="M155 204 L170 207" stroke-width="8"/></g>
-</g>
-<g class="szf-transit-ball">
- <circle r="21" fill="#f4fff0" stroke="#0a1c13" stroke-width="1.5"/>
- <path d="M0-12L12-4L8 10H-8L-12-4Z" fill="#0b1f15"/>
- <path d="M0-21L0-12M19-8L12-4M12 17L8 10M-12 17L-8 10M-19-8L-12-4" stroke="#0b1f15" stroke-width="3.5"/>
- </g>
-<g class="szf-transit-plane" aria-hidden="true">
- <!-- Üstten görünüş, burnu sağa bakan belirgin uçak silueti -->
- <path d="M-79 -6 L-57 -9 L-66 -36 L-50 -36 L-22 -12 L10 -11 L-8 -60 L11 -60 L39 -11 L68 -9 Q87 -7 91 0 Q87 7 68 9 L39 11 L11 60 L-8 60 L10 11 L-22 12 L-50 36 L-66 36 L-57 9 L-79 6 Z" fill="url(#szf-air)" stroke="#e4ffd6" stroke-width="2.5" stroke-linejoin="round"/>
- <path d="M-70 0 H72" stroke="#4c9244" stroke-width="2" opacity=".5"/>
- </g>
-</svg></div></div>
+ return `<section class="home-landing"><div class="szf-ball-plane-strip" role="img" aria-label="Futbol topu ilerlerken yeşil bir uçağa dönüşüyor">
+ <svg viewBox="0 0 640 100" class="szf-ball-plane-svg" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+ <defs><linearGradient id="szf-plane-v133" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e3ffd1"/><stop offset="1" stop-color="#9cf456"/></linearGradient></defs>
+ <path d="M18 78 H622" stroke="#b9f46d" stroke-width="1" opacity=".13"/>
+ <g class="szf-v133-ball"><circle r="16" fill="#f4fff0" stroke="#0a1c13" stroke-width="1.5"/><path d="M0-9L9-3L6 8H-6L-9-3Z" fill="#0b1f15"/><path d="M0-16V-9M15-6L9-3M9 13L6 8M-9 13L-6 8M-15-6L-9-3" stroke="#0b1f15" stroke-width="2.8"/></g>
+ <g class="szf-v133-plane"><path d="M-79 -6 L-57 -9 L-66 -36 L-50 -36 L-22 -12 L10 -11 L-8 -60 L11 -60 L39 -11 L68 -9 Q87 -7 91 0 Q87 7 68 9 L39 11 L11 60 L-8 60 L10 11 L-22 12 L-50 36 L-66 36 L-57 9 L-79 6 Z" fill="url(#szf-plane-v133)" stroke="#e4ffd6" stroke-width="2.5" stroke-linejoin="round"/></g>
+ </svg></div>
  ${leagueMatches.filter(m=>{const start=new Date(m.match_date).getTime(),v=mvpStates[String(m.id)];return v?.finished&&Date.now()>=start+86400000&&Date.now()<start+172800000;}).slice(0,1).map(m=>{
  const v=mvpStates[String(m.id)];const winners=(v.winners||[]);const winnerCards=winners.map(id=>{const key=String(id);const c=key.startsWith('p:')?currentCards().find(x=>String(x.id)===key.slice(2)):linkedCard(extras.guests.find(g=>String(g.id)===key.slice(2))||{});if(c)return `<div class="szf-mvp-winning-card">${cardHTML(c)}</div>`;const guest=extras.guests.find(g=>String(g.id)===key.slice(2));return `<div class="szf-mvp-guest-winner">🏆 ${esc(formatPersonName(guest?.display_name||'Misafir oyuncu'))}</div>`;}).join('');
  const tally=(v.totals||[]).map(x=>{const id=String(x.target);const name=id.startsWith('g:')?guestDisplayName(extras.guests.find(g=>String(g.id)===id.slice(2))||{display_name:'Misafir oyuncu'}):currentCards().find(c=>String(c.id)===id.replace(/^p:/,''))?.display_name||'Oyuncu';return `${esc(formatPersonName(name))}: ${Number(x.votes)} oy`;}).join(' · ');

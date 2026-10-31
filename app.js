@@ -452,11 +452,21 @@ function renderAccount(){
 }
 
 
+// Değerlendirilmemiş oyuncular önce; değerlendirilenler verilen kişisel puana göre yüksekten düşüğe.
+function orderedAssessmentPlayers(){
+ const voteById=new Map(myVotes.filter(v=>Array.isArray(v.scores)&&v.scores.length===6).map(v=>[String(v.target_id),v]));
+ return currentCards().filter(c=>String(c.id)!==String(user?.id)).sort((a,b)=>{
+  const av=voteById.get(String(a.id)),bv=voteById.get(String(b.id));
+  if(!av!==!bv)return av?1:-1;
+  if(av&&bv){const am=av.scores.reduce((s,n)=>s+Number(n),0)/6,bm=bv.scores.reduce((s,n)=>s+Number(n),0)/6;if(bm!==am)return bm-am;}
+  return String(a.display_name).localeCompare(String(b.display_name),'tr');
+ });
+}
 function renderAssessment(){
  if(!user)return sectionHead('Oyuncu Değerlendir','Puan vermek için giriş yapmalısın.');
  if(!profile?.approved)return sectionHead('Oyuncu Değerlendir','Değerlendirme için onaylı hesap gerekiyor.');
  if(!v70Ready)return sectionHead('Oyuncu Değerlendir','v70 SQL kurulumu gerekiyor.','')+'<p class="notice">Yeni puanlama sistemi henüz veritabanında hazır değil. SUPABASE_V70_RATING.sql dosyasını çalıştır.</p>';
- const everyone=currentCards().filter(c=>String(c.id)!==String(user.id)).sort((a,b)=>String(a.display_name).localeCompare(String(b.display_name),'tr'));
+ const everyone=orderedAssessmentPlayers();
  if(!everyone.length)return sectionHead('Oyuncu Değerlendir','Değerlendirilecek oyuncu bulunmuyor.');
  weeklyIndex=Math.max(0,Math.min(weeklyIndex,everyone.length-1));
  const c=everyone[weeklyIndex],f=getFeatures(c),vote=myVotes.find(v=>String(v.target_id)===String(c.id));
@@ -469,6 +479,7 @@ let assessmentSaving=false;
 async function saveAssessmentBeforeNavigation(nextIndex){
  if(assessmentSaving)return;
  const form=$('v70VoteForm');
+ const nextPlayerId=orderedAssessmentPlayers()[nextIndex]?.id;
  if(!form){weeklyIndex=nextIndex;render();return;}
  const inputs=[...form.querySelectorAll('[data-v70-score]')];
  const target=form.dataset.target;
@@ -499,7 +510,8 @@ async function saveAssessmentBeforeNavigation(nextIndex){
    throw new Error('Kayit dogrulanamadi; verdigin puanlar sunucuda gorunmuyor.');
   }
   await loadProfileAndCards();
-  weeklyIndex=nextIndex;
+  const sortedAfterSave=orderedAssessmentPlayers();
+  weeklyIndex=Math.max(0,sortedAfterSave.findIndex(p=>String(p.id)===String(nextPlayerId)));
   render();
   toast('Puanların kaydedildi ve doğrulandı.');
  }catch(error){
@@ -849,7 +861,7 @@ function bindContent(){
 }));
  document.querySelectorAll('[data-red]').forEach(el=>el.addEventListener('change',()=>{el.checked?manualRed.add(el.dataset.red):manualRed.delete(el.dataset.red);render()}));
  document.querySelector('[data-assess-prev]')?.addEventListener('click',()=>saveAssessmentBeforeNavigation(Math.max(0,weeklyIndex-1)));
- document.querySelector('[data-assess-next]')?.addEventListener('click',()=>saveAssessmentBeforeNavigation(Math.min(weeklyIndex+1,currentCards().filter(c=>String(c.id)!==String(user.id)).length-1)));
+ document.querySelector('[data-assess-next]')?.addEventListener('click',()=>saveAssessmentBeforeNavigation(Math.min(weeklyIndex+1,orderedAssessmentPlayers().length-1)));
  document.querySelectorAll('[data-assessment-select]').forEach(el=>el.addEventListener('click',()=>{weeklyIndex=Number(el.dataset.assessmentSelect);render()}));
  document.querySelectorAll('[data-assess]').forEach(el=>el.addEventListener('click',()=>submitAssessment(el.dataset.match,el.dataset.player,el.dataset.assess,Number(el.dataset.delta))));
  document.querySelectorAll('[data-bet]').forEach(el=>el.addEventListener('click',()=>submitBet(el.dataset.bet)));

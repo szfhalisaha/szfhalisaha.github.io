@@ -523,3 +523,9 @@ button.szf-result-pill{cursor:pointer;font:inherit;border:1px solid #ffffff35;tr
 button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:translateY(-2px);box-shadow:0 0 0 3px #a5f45a55;outline:none}
 .szf-home-mvp{border:1px solid #8cca67;border-radius:18px;background:#183c28;padding:20px;margin:18px 0}.szf-home-mvp h2{margin:0 0 8px}.szf-home-mvp .szf-mvp-options{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
 @media(max-width:720px){.szf-card-jersey{right:14px;top:21px;font-size:19px}}
+
+/* v131: Maçın Adamı sonuç kartı, yalnızca oylamadan sonraki 24 saat */
+.szf-mvp-result{text-align:center}.szf-mvp-winning-cards{display:flex;flex-wrap:wrap;gap:22px;justify-content:center;align-items:flex-start;margin:18px auto}.szf-mvp-winning-card{width:min(260px,80vw)}.szf-mvp-winning-card .card-face{width:100%;max-width:100%}.szf-mvp-guest-winner{padding:30px 18px;font-size:1.2rem;font-weight:800}
+
+/* v132: Jersey number appears only before the player name on player cards. */
+.szf-numbered-card .fut-name{font-size:clamp(12px,1.35vw,17px);letter-spacing:.01em;overflow-wrap:anywhere}

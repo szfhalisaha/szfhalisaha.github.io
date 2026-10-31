@@ -11,7 +11,7 @@ begin
   select * into m from public.szf_matches where id=p_match;
   if not found then return '{}'::jsonb; end if;
   started := now() >= m.match_date;
-  ended := m.status='completed' and now() >= coalesce(m.mvp_started_at,m.match_date)+interval '24 hours';
+  ended := now() >= m.match_date + interval '24 hours';
   select exists(select 1 from public.szf_participants p where p.match_id=p_match and p.player_id=uid)
      or exists(select 1 from public.szf_guest_players_v53 g where g.match_id=p_match and g.linked_user_id=uid) into eligible;
   select exists(select 1 from public.szf_mvp_votes_v53 v where v.match_id=p_match and v.voter_id=uid)
@@ -30,7 +30,7 @@ begin
     totals := '[]'::jsonb; winners := '[]'::jsonb; n:=0; best:=0;
   end if;
   return jsonb_build_object('open',started and not ended,'eligible',eligible,'voted',voted,
-    'deadline',case when m.status='completed' then coalesce(m.mvp_started_at,m.match_date)+interval '24 hours' else null end,
+    'deadline',m.match_date + interval '24 hours',
     'finished',ended,'vote_count',n,'winning_votes',best,'winners',winners,'totals',totals);
 end $$;
 
@@ -43,7 +43,7 @@ begin
  select * into m from public.szf_matches where id=p_match for share;
  if not found then raise exception 'Maç bulunamadı'; end if;
  if now()<m.match_date then raise exception 'Oylama maçın başlangıcında açılır'; end if;
- if m.status='completed' and now()>=coalesce(m.mvp_started_at,m.match_date)+interval '24 hours' then raise exception 'Oylama sona erdi'; end if;
+ if now()>=m.match_date+interval '24 hours' then raise exception 'Oylama sona erdi'; end if;
  if not (exists(select 1 from public.szf_participants where match_id=p_match and player_id=uid)
          or exists(select 1 from public.szf_guest_players_v53 where match_id=p_match and linked_user_id=uid))
  then raise exception 'Yalnızca bu maçın katılımcıları oy verebilir'; end if;

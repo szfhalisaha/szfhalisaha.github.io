@@ -504,3 +504,15 @@ button.szf-simple-person{cursor:pointer}.szf-simple-person.red{background:#43232
 
 /* v125 misafir geçici genel puanı */
 .szf-guest-overall-label{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;color:inherit;font-size:14px;font-weight:600;margin:4px 8px 4px 0}.szf-guest-overall{width:95px!important;max-width:95px!important;padding:9px!important;}
+
+/* v127: Unassigned match roster visible to all users */
+.szf-attendance-list{margin:16px 0;padding:16px;border:1px solid #35533c;border-radius:15px;background:#11281b}
+.szf-attendance-list-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.szf-attendance-list-head h4{margin:0;color:#ebffef}
+.szf-attendance-list-head span{font-size:.85rem;color:#baf579}
+.szf-attendance-players{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:9px}
+.szf-attendance-person{display:flex;gap:8px;align-items:center;min-width:0;padding:10px;background:#193625;border:1px solid #31563b;border-radius:10px}
+.szf-attendance-person strong{overflow-wrap:anywhere;font-size:.95rem}
+.szf-attendance-person small{margin-left:auto;color:#afc3b1;white-space:nowrap;font-size:.72rem}
+.szf-attendance-number{color:#baf579;font-weight:700}
+@media(max-width:520px){.szf-attendance-players{grid-template-columns:1fr}.szf-attendance-list{padding:12px}}

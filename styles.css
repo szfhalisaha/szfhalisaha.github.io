@@ -516,3 +516,10 @@ button.szf-simple-person{cursor:pointer}.szf-simple-person.red{background:#43232
 .szf-attendance-person small{margin-left:auto;color:#afc3b1;white-space:nowrap;font-size:.72rem}
 .szf-attendance-number{color:#baf579;font-weight:700}
 @media(max-width:520px){.szf-attendance-players{grid-template-columns:1fr}.szf-attendance-list{padding:12px}}
+/* v130: Separated jersey number, interactive streak and clean post-match UI */
+.szf-card-jersey{position:absolute;right:24px;top:31px;z-index:6;font-size:27px;line-height:1;font-weight:950;color:#243b2b;text-shadow:0 1px 2px #fff9;pointer-events:none}
+.szf-pitch-shirt{display:inline-grid;place-items:center;min-width:26px;min-height:25px;border-radius:7px 7px 5px 5px;background:#ffffff24;border:1px solid #ffffff45;font-weight:900}
+button.szf-result-pill{cursor:pointer;font:inherit;border:1px solid #ffffff35;transition:transform .12s ease,box-shadow .12s ease}
+button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:translateY(-2px);box-shadow:0 0 0 3px #a5f45a55;outline:none}
+.szf-home-mvp{border:1px solid #8cca67;border-radius:18px;background:#183c28;padding:20px;margin:18px 0}.szf-home-mvp h2{margin:0 0 8px}.szf-home-mvp .szf-mvp-options{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+@media(max-width:720px){.szf-card-jersey{right:14px;top:21px;font-size:19px}}

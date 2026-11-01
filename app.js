@@ -261,6 +261,7 @@ function renderRanking(){
  +(arr.length?`<div class="table-wrap"><table><thead><tr><th>#</th>${h('OYUNCU','name')}${h('MEVKİ','position')}${h('RATING','rating')}${h('HIZ','hiz')}${h('ŞUT','sut')}${h('PAS','pas')}${h('DRİ','dripling')}${h('DEF','defans')}${h('KON','dayaniklilik')}</tr></thead><tbody>${arr.map((p,i)=>`<tr><td class="rank">${i+1}</td><td class="${activeCol==='name'?'active-col':''}">${esc(formatPersonName(p.display_name))}</td><td class="${activeCol==='position'?'active-col':''}">${esc(posName[p.position]||p.position)}</td><td class="${activeCol==='rating'?'active-col accent':'accent'}">${publicRating(p)}</td>${features.map(([key])=>`<td class="${activeCol===key?'active-col':''}">${publicAbility(p,key)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'<div class="empty">Henüz onaylı oyuncu yok.</div>');
 }
 let selectedStatsTab='wins';
+let statsSortMode={goals:'total',assists:'total'};
 function renderStatistics(){
  const stats=currentCards().map(p=>({player:p,...playerWinStats(p.id)})).sort((a,b)=>(b.played?b.pct:-1)-(a.played?a.pct:-1)||b.played-a.played||String(a.player.display_name).localeCompare(String(b.player.display_name),'tr'));
  const tallyFor=kind=>{
@@ -271,16 +272,21 @@ function renderStatistics(){
   });
   return [...tally.entries()].sort((a,b)=>b[1]-a[1]);
  };
- const board=(kind,label,average=false)=>{
+ const board=(kind,label,tab)=>{
   const tally=new Map(tallyFor(kind));
-  const entries=stats.filter(x=>x.played>0||tally.has(x.player.id)).map(x=>({...x,total:tally.get(x.player.id)||0,avg:x.played?(tally.get(x.player.id)||0)/x.played:0})).sort((a,b)=>average?(b.avg-a.avg||b.total-a.total):(b.total-a.total||b.avg-a.avg));
-  return `<div class="table-wrap"><table><thead><tr><th>#</th><th>OYUNCU</th><th>MAÇ</th><th>TOPLAM ${label.toLocaleUpperCase('tr')}</th><th>MAÇ BAŞINA</th></tr></thead><tbody>${entries.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(formatPersonName(x.player.display_name))}</td><td>${x.played}</td><td>${x.total}</td><td class="accent">${x.avg.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>`).join('')}</tbody></table></div>`;
+  const sort=statsSortMode[tab]==='average'?'average':'total';
+  const entries=stats.filter(x=>x.played>0||tally.has(x.player.id)).map(x=>({...x,total:tally.get(x.player.id)||0,avg:x.played?(tally.get(x.player.id)||0)/x.played:0})).sort((a,b)=>sort==='average'?(b.avg-a.avg||b.total-a.total||a.player.display_name.localeCompare(b.player.display_name,'tr')):(b.total-a.total||b.avg-a.avg||a.player.display_name.localeCompare(b.player.display_name,'tr')));
+  const sortControl=`<div class="szf-stats-sort"><label for="szf-stats-sort-select">Sıralama ölçütü</label><select id="szf-stats-sort-select" class="text-input" data-stats-sort="${tab}"><option value="total" ${sort==='total'?'selected':''}>Toplam ${label}</option><option value="average" ${sort==='average'?'selected':''}>Maç başına ${label}</option></select></div>`;
+  const sortHeader=(value,caption)=>`<button type="button" class="szf-stats-sort-heading ${sort===value?'active':''}" data-stats-sort-head="${value}" data-stats-sort-for="${tab}" aria-label="${caption} değerine göre sırala" aria-pressed="${sort===value}">${caption}${sort===value?' ↓':''}</button>`;
+  return sortControl+`<div class="table-wrap"><table><thead><tr><th>#</th><th>OYUNCU</th><th>MAÇ</th><th>${sortHeader('total','TOPLAM '+label.toLocaleUpperCase('tr'))}</th><th>${sortHeader('average','MAÇ BAŞINA')}</th></tr></thead><tbody>${entries.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(formatPersonName(x.player.display_name))}</td><td>${x.played}</td><td class="${sort==='total'?'accent':''}">${x.total}</td><td class="${sort==='average'?'accent':''}">${x.avg.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>`).join('')}</tbody></table></div>`;
  };
- const tabs=[['wins','🏆 Galibiyet Yüzdesi'],['goals','⚽ Toplam Gol'],['goals_avg','⚽ Maç Başına Gol'],['assists','🎯 Toplam Asist'],['assists_avg','🎯 Maç Başına Asist']];
- const active=tabs.some(t=>t[0]===selectedStatsTab)?selectedStatsTab:'wins';
+ const tabs=[['wins','🏆 Galibiyet Yüzdesi'],['goals','⚽ Gol Krallığı'],['assists','🎯 Asist Krallığı']];
+ const legacyTabMap={goals_avg:'goals',assists_avg:'assists'};
+ const normalizedTab=legacyTabMap[selectedStatsTab]||selectedStatsTab;
+ const active=tabs.some(t=>t[0]===normalizedTab)?normalizedTab:'wins';
  const content=active==='wins'
  ? `<p class="soft">Yalnızca tamamlanmış ve oyuncunun takımı kaydedilmiş maçlar hesaplanır.</p><div class="table-wrap szf-win-table"><table><thead><tr><th>#</th><th>OYUNCU</th><th>MAÇ</th><th>GALİBİYET</th><th>ORAN</th></tr></thead><tbody>${stats.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(formatPersonName(x.player.display_name))}</td><td>${x.played}</td><td>${x.wins}</td><td class="accent">${x.played?x.pct.toLocaleString('tr-TR',{maximumFractionDigits:1})+'%':'—'}</td></tr>`).join('')}</tbody></table></div>`
- :board(active.startsWith('goals')?'goal':'assist',active.startsWith('goals')?'gol':'asist',active.endsWith('_avg'));
+ :`${active==='goals'?'<p class="soft">Gol sıralamasında toplam gol ve maç başına gol birlikte gösterilir.</p>':'<p class="soft">Asist sıralamasında toplam asist ve maç başına asist birlikte gösterilir.</p>'}${board(active==='goals'?'goal':'assist',active==='goals'?'gol':'asist',active)}`;
  return sectionHead('İstatistikler','Tüm zamanların oyuncu performansları')
  + `<section class="szf-stats-single"><div class="szf-stats-tabs" role="tablist" aria-label="İstatistik türü">${tabs.map(([key,label])=>`<button type="button" role="tab" aria-selected="${active===key}" class="szf-stats-tab ${active===key?'active':''}" data-stats-tab="${key}">${label}</button>`).join('')}</div><div class="szf-stats-body" role="tabpanel">${content}</div></section>`;
 }
@@ -916,6 +922,8 @@ function bindContent(){
  }
 
  document.querySelectorAll('[data-stats-tab]').forEach(btn=>btn.addEventListener('click',()=>{selectedStatsTab=btn.dataset.statsTab;render()}));
+ document.querySelector('[data-stats-sort]')?.addEventListener('change',el=>{statsSortMode[el.target.dataset.statsSort]=el.target.value;render()});
+ document.querySelectorAll('[data-stats-sort-head]').forEach(btn=>btn.addEventListener('click',()=>{statsSortMode[btn.dataset.statsSortFor]=btn.dataset.statsSortHead;render()}));
  refreshHomeCountdown();
  document.querySelectorAll('[data-home-nav]').forEach(el=>el.addEventListener('click',()=>{view=el.dataset.homeNav;selectedPlayer=null;render();window.scrollTo({top:0,behavior:'smooth'});}));
  document.querySelectorAll('[data-player]').forEach(el=>el.addEventListener('click',()=>{selectedPlayer=el.dataset.player;render();document.querySelector('#content').scrollIntoView({behavior:'smooth',block:'start'});}));

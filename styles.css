@@ -542,3 +542,8 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 
 /* v134: misafir istatistikleri eşleştirme */
 .szf-guest-stat-name{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.szf-guest-stat-name .btn{padding:5px 11px;font-size:12px}.szf-guest-stat{gap:12px}
+
+/* v135: geçmiş maçlarda saha dizilişi yerine paylaşım görseli */
+.szf-history-share-card{padding-bottom:10px}
+.szf-inline-share-preview{margin-top:10px;border:1px solid #426246;border-radius:16px;padding:10px;background:rgba(5,20,12,.38)}
+.szf-inline-share-image{display:block;width:100%;max-width:560px;margin:0 auto;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.28)}

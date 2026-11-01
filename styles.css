@@ -539,3 +539,6 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 @keyframes szf-v133-plane-flight{0%,43%{opacity:0;transform:translate(350px,45px) scale(.15) rotate(-12deg)}49%{opacity:1;transform:translate(365px,45px) scale(.32) rotate(-12deg)}76%{opacity:1;transform:translate(525px,25px) scale(.48) rotate(-12deg)}89%,100%{opacity:0;transform:translate(680px,12px) scale(.54) rotate(-12deg)}}
 @media(max-width:600px){.szf-ball-plane-strip{height:75px;margin:4px 0 8px}}
 @media(prefers-reduced-motion:reduce){.szf-v133-ball,.szf-v133-plane{animation:none!important}.szf-v133-ball{opacity:1;transform:translate(320px,45px)}.szf-v133-plane{opacity:0}}
+
+/* v134: misafir istatistikleri eşleştirme */
+.szf-guest-stat-name{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.szf-guest-stat-name .btn{padding:5px 11px;font-size:12px}.szf-guest-stat{gap:12px}

@@ -162,7 +162,7 @@ function recurringGuestStats(){
 function guestStatsPanel(){
  if(!adminInfo)return '';
  const a=recurringGuestStats();
- return `<details class="szf-guest-history"><summary>👤 Misafir İstatistikleri (${a.length})</summary><p class="soft">Aynı tam adla gelen eşleştirilmemiş misafirlerin geçmiş maçları birlikte gösterilir. Farklı kişilerin aynı adı kullanmamasına dikkat edin.</p>${a.length?a.map(g=>`<div class="szf-guest-stat"><strong>${esc(g.name)} (Misafir)</strong><span>${g.matches.size} maç · ${g.goals} gol · ${g.assists} asist · ${g.wins} G / ${g.draws} B / ${g.losses} M</span></div>`).join(''):'<p class="soft">Henüz misafir kaydı yok.</p>'}</details>`;
+ return `<details class="szf-guest-history"><summary>👤 Misafir İstatistikleri (${a.length})</summary><p class="soft">Aynı tam adla gelen eşleştirilmemiş misafirlerin geçmiş maçları birlikte gösterilir. Farklı kişilerin aynı adı kullanmamasına dikkat edin.</p>${a.length?a.map(g=>`<div class="szf-guest-stat"><div class="szf-guest-stat-name"><strong>${esc(g.name)} (Misafir)</strong><button type="button" class="btn small lime" data-link-guest-group="${attrs(g.rows.map(x=>x.id).join(','))}">Eşleştir</button></div><span>${g.matches.size} maç · ${g.goals} gol · ${g.assists} asist · ${g.wins} G / ${g.draws} B / ${g.losses} M</span></div>`).join(''):'<p class="soft">Henüz misafir kaydı yok.</p>'}</details>`;
 }
 function renderHome(){
  const playerCount=currentCards().length;
@@ -865,6 +865,26 @@ function bindContent(){
  document.querySelectorAll('[data-open-guest-form]').forEach(el=>el.addEventListener('click',()=>{if(!adminInfo)return toast('Anonim oyuncu eklemek için yönetici yetkisi gerekiyor. Yönetici hesabının Supabase yetkisini kontrol et.',true);const id=el.dataset.openGuestForm;const panel=$('roster-'+id);if(panel){panel.classList.remove('hidden');panel.scrollIntoView({behavior:'smooth',block:'nearest'});$('guest-name-'+id)?.focus();}}));
  document.querySelectorAll('[data-guest-add]').forEach(el=>el.addEventListener('click',()=>addGuest(el.dataset.guestAdd)));
  $('adminLinkNow')?.addEventListener('click',async()=>{const guest=$('adminGuestLink')?.value,player=$('adminUserLink')?.value;if(!guest||!player)return toast('Anonim ve kayıtlı oyuncuyu seç.',true);const gn=extras.guests.find(g=>g.id===guest)?.display_name||'Anonim oyuncu';const pn=currentCards().find(c=>c.id===player)?.display_name||'Kayıtlı oyuncu';if(!confirm(`${gn} kaydını ${pn} hesabıyla eşleştir?`))return;await guestAction(guest,'link',player);});
+ document.querySelectorAll('[data-link-guest-group]').forEach(el=>el.addEventListener('click',async()=>{
+  if(!adminInfo)return toast('Bu işlem yalnızca yöneticilere açıktır.',true);
+  const ids=el.dataset.linkGuestGroup.split(',').filter(Boolean);
+  const group=extras.guests.filter(g=>ids.includes(String(g.id))&&!linkedPlayerId(g));
+  if(!group.length)return toast('Eşleştirilecek misafir bulunamadı.',true);
+  const cards=currentCards();
+  const name=prompt(`${formatPersonName(group[0].display_name)} misafirini kayıtlı oyuncuyla eşleştir. Oyuncunun tam adını yaz:\n${cards.map(c=>formatPersonName(c.display_name)).join('\n')}`);
+  if(!name)return;
+  const matches=cards.filter(c=>formatPersonName(c.display_name).toLocaleLowerCase('tr')===formatPersonName(name).toLocaleLowerCase('tr'));
+  if(matches.length!==1)return toast('Kayıtlı oyuncunun tam adını eksiksiz yaz.',true);
+  if(!confirm(`${group.length} misafir kaydı → ${formatPersonName(matches[0].display_name)} hesabına bağlansın mı?`))return;
+  el.disabled=true;
+  let done=0;
+  for(const guest of group){
+   const {error}=await db.rpc('szf_link_guest_v53',{p_guest:guest.id,p_player:matches[0].id});
+   if(error){await loadLeagueData();render();return toast(`${done} kayıt eşleştirildi, kalanlarda hata: ${formatError(error)}`,true)}
+   done++;
+  }
+  await loadLeagueData();render();toast(`${done} misafir kaydı eşleştirildi.`);
+ }));
  document.querySelectorAll('[data-open-guest-link]').forEach(el=>el.addEventListener('click',async()=>{if(!adminInfo)return;const guest=extras.guests.find(g=>String(g.id)===String(el.dataset.openGuestLink));if(!guest)return;const cards=currentCards();const name=prompt(`${guest.display_name} (Misafir) hesabını eşleştir. Kayıtlı oyuncu adını yaz:\n${cards.map(c=>formatPersonName(c.display_name)).join('\n')}`);if(!name)return;const match=cards.filter(c=>formatPersonName(c.display_name).toLocaleLowerCase('tr')===formatPersonName(name).toLocaleLowerCase('tr'));if(match.length!==1)return toast('Tek bir kayıtlı oyuncunun tam adını yaz.',true);if(!confirm(`${guest.display_name} → ${match[0].display_name} eşleştirilsin mi?`))return;await guestAction(guest.id,'link',match[0].id);}));
  document.querySelectorAll('[data-history-team]').forEach(el=>el.addEventListener('change',async()=>{if(!adminInfo)return;const match=el.dataset.historyMatch,id=el.dataset.historyTeam;const fn=el.dataset.historyGuest==='1'?'szf_history_guest_team_v97':'szf_history_player_team_v97';const args=el.dataset.historyGuest==='1'?{p_guest:id,p_team:el.value||null}:{p_match:match,p_player:id,p_team:el.value||null};const {error}=await db.rpc(fn,args);if(error)return toast('Geçmiş takım kaydı için v97 SQL kurulumunu kontrol et: '+formatError(error),true);openMatchRosters.add(match);await loadLeagueData();render();toast('Takım kaydedildi.');}));
  document.querySelectorAll('[data-link-guest]').forEach(el=>el.addEventListener('change',()=>{if(el.value&&confirm('Bu misafir kaydını seçilen kullanıcıyla eşleştir?'))guestAction(el.dataset.linkGuest,'link',el.value)}));

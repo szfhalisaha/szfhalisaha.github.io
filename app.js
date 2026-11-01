@@ -1084,6 +1084,57 @@ function balancedRoleTeams(picked,manualIds=null){
  solve(slots);
  return best;
 }
+// v139: Mevki kontenjanları karşılanamasa da 14 kişiyi dengeli dağıt.
+// Kalecileri ayır, defansı forvete yerleştirmemeye öncelik ver.
+function flexibleBalancedTeams(players){
+ if(players.length!==14)return null;
+ const slots=['KL','DEF','DEF','DEF','ORT','ORT','FOR'];
+ const primary=p=>String(p.position||'ORT').toUpperCase();
+ const secondary=p=>String(p.secondary_position||'').toUpperCase();
+ const rating=p=>Number(p.overall_rating)||70;
+ const roleCost=(p,role)=>{
+  const a=primary(p),b=secondary(p);
+  if(a===role)return 0;
+  if(b===role)return 2;
+  if(role==='KL')return 1500;
+  if(a==='KL')return 1500;
+  if((a==='DEF'&&role==='FOR')||(a==='FOR'&&role==='DEF'))return 350;
+  if(a==='ORT'&&(role==='DEF'||role==='FOR'))return 16;
+  if((a==='DEF'||a==='FOR')&&role==='ORT')return 25;
+  return 100;
+ };
+ // Tek takımda her oyuncu yalnızca bir mevkiye atanır (bitmask DP).
+ function assign(team){
+  let dp=new Map([[0,{cost:0,arr:[]}] ]);
+  for(const slot of slots){
+   const next=new Map();
+   for(const [mask,entry] of dp)for(let i=0;i<7;i++){
+    if(mask&(1<<i))continue;
+    const key=mask|(1<<i),cost=entry.cost+roleCost(team[i],slot);
+    if(!next.has(key)||next.get(key).cost>cost)next.set(key,{cost,arr:[...entry.arr,{...team[i],assigned_role:slot}]});
+   }
+   dp=next;
+  }
+  return dp.get(127);
+ }
+ // Seçili 14 kişiden 7'li kombinasyonları değerlendir.
+ // İlk oyuncuyu kırmızıda tutarak simetrik tekrarları önle.
+ let best=null,bestScore=Infinity;
+ const choose=(selected,start)=>{
+  if(selected.length===7){
+   const chosen=new Set(selected),red=selected.map(i=>players[i]),white=players.filter((_,i)=>!chosen.has(i));
+   const r=assign(red),w=assign(white);
+   const diff=Math.abs(red.reduce((n,p)=>n+rating(p),0)-white.reduce((n,p)=>n+rating(p),0));
+   // Mevki uyumu temel öncelik, puan dengesi ikincil öncelik.
+   const score=r.cost+w.cost+diff*0.7;
+   if(score<bestScore){bestScore=score;best=[r.arr,w.arr];}
+   return;
+  }
+  for(let i=start;i<=14-(7-selected.length);i++)choose([...selected,i],i+1);
+ };
+ choose([0],1);
+ return best;
+}
 async function saveTeamsToNextMatch({automatic=false}={}){
  if(!adminInfo||!db)return toast('Takımları yalnızca yönetici kaydedebilir.',true);
  const m=nextTeamMatch();
@@ -1138,8 +1189,8 @@ async function buildTeams(){
   teams=[picked.filter(p=>manualIds.has(p.id)),picked.filter(p=>!manualIds.has(p.id))];
  }else{
   // Mevki kontenjanları yalnızca Otomatik Dengeli modunda geçerli.
-  teams=balancedRoleTeams(picked);
-  if(!teams)return toast('Mevkilere uygun iki takım kurulamıyor. 2 kaleci, 6 defans, 4 orta saha ve 2 forvet gereklidir. İkinci mevkiler de sayılır.',true);
+  teams=balancedRoleTeams(picked) || flexibleBalancedTeams(picked);
+  if(!teams)return toast('14 oyuncu ile takım oluşturulamadı. Kadroyu yenileyip tekrar dene.',true);
  }
  teamData=teams;
  render();

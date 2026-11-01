@@ -811,9 +811,7 @@ async function addRosterPlayer(match,player){
  try{
   const chosenMatch=leagueMatches.find(m=>String(m.id)===String(match));
   if(!chosenMatch||chosenMatch.status==='completed'||new Date(chosenMatch.match_date).getTime()<=Date.now())throw new Error('Tamamlanan maça oyuncu eklenemez.');
-  let result=await db.rpc('szf_add_match_player_v137',{p_match:match,p_player:player});
-  // Yeni SQL henüz kurulmadıysa önceki sürümün ekleme fonksiyonunu da dene.
-  if(result.error&&String(result.error.code)==='42883')result=await db.rpc('szf_add_match_player_v23',{p_match:match,p_player:player});
+  const result=await db.rpc('szf_add_match_player_v138',{p_match:match,p_player:player});
   if(result.error)throw result.error;
   await loadLeagueData();
   const recorded=weeklyPlayers.some(p=>String(p.match_id)===String(match)&&String(p.player_id)===String(player));

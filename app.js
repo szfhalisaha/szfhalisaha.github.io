@@ -429,11 +429,11 @@ function renderTeams(){
  const guestRemoveButton=p=>p.is_guest?`<button type="button" class="szf-team-guest-remove" data-team-remove-guest="${attrs(String(p.id).replace(/^guest:/,''))}" aria-label="${attrs(formatPersonName(p.display_name))} adlı misafiri bu maçtan çıkar" title="Bu maçın kadrosundan çıkar">✕ Çıkar</button>`:'';
  const personMarkup=(p,manual)=>`<div class="szf-team-person-wrap"><${manual?'button':'div'} ${manual?'type="button"':''} class="szf-simple-person ${manual?(manualRed.has(p.id)?'red':'white'):''}" ${manual?`data-toggle-red="${attrs(p.id)}" aria-pressed="${manualRed.has(p.id)}"`:''}><span>${manual?(manualRed.has(p.id)?'🔴':'⚪'):'⚽'}</span><span class="szf-simple-name">${esc(formatPersonName(p.display_name))}</span><small>${esc(p.position||'—')}${p.is_guest?' · Misafir · '+Number(p.overall_rating)+' GEN':''}</small></${manual?'button':'div'}>${guestRemoveButton(p)}</div>`;
  const selection=teamMode==='manual'?`<div class="szf-team-hint">🔴 <b>${manualRed.size}/7 kırmızı</b> · Kalan oyuncular otomatik beyaz. Oyuncuya dokunarak takımını değiştir.</div><div class="szf-simple-players">${arr.map(p=>personMarkup(p,true)).join('')}</div>`:`<div class="szf-simple-players">${arr.map(p=>personMarkup(p,false)).join('')}</div>`;
- return sectionHead('7’ye 7 takım kur',m?'📅 Sıradaki maç: '+matchDateText(m.match_date):'Yaklaşan maç bulunamadı.',`<button id="buildTeams" class="btn lime" ${!ready||(teamMode==='manual'&&manualRed.size!==7)?'disabled':''}>${teamMode==='manual'?'Takımları onayla ve maça kaydet':'Takımları oluştur ve maça kaydet'} (${arr.length}/14)</button>`)
+ return sectionHead('7’ye 7 takım kur',m?'📅 Sıradaki maç: '+matchDateText(m.match_date):'Yaklaşan maç bulunamadı.',`<button id="buildTeams" class="btn lime" ${!ready||(teamMode==='manual'&&manualRed.size!==7)?'disabled':''}>${teamMode==='manual'?'Takımları onayla ve maça kaydet':(teamData?'🔄 Yeniden Oluştur':'⚖ Takımları Oluştur')} (${arr.length}/14)</button>`)
  + `<div class="mode-buttons"><button class="btn small ${teamMode==='auto'?'lime':'ghost'}" data-mode="auto">⚖ Otomatik dengeli</button><button class="btn small ${teamMode==='manual'?'lime':'ghost'}" data-mode="manual">✋ Elle dağıt</button></div>`
  + (!ready?`<p class="notice">Sıradaki maçın kadrosunda ${arr.length} kişi var. Takım kurmak için 14 katılımcı gerekli.</p>`:'')
  + selection
- + (teamData&&adminInfo?`<button class="btn lime" id="saveTeamsToMatch">💾 Bu kadroları sıradaki maça kaydet</button>`:teamData?`<p class="soft">Maça kaydetme işlemini yönetici yapabilir.</p>`:'')
+ + (teamData&&adminInfo?`<button class="btn lime" id="saveTeamsToMatch">✅ Beğendim, kadroyu maça kaydet</button>`:teamData?`<p class="soft">Maça kaydetme işlemini yönetici yapabilir.</p>`:'')
  + (teamData?vestSuggestion(teamData):'')
  + (teamData?`<div class="team-cols">${teamData.map((t,i)=>`<div class="team-result"><h3>${i===0?'🔴 Kırmızı takım':'⚪ Beyaz takım'}</h3><p>Toplam rating: ${t.reduce((n,x)=>n+x.overall_rating,0)} · Ortalama: ${(t.reduce((n,x)=>n+x.overall_rating,0)/7).toFixed(1)}</p><ol>${t.map(p=>`<li><b>${esc(p.assigned_role||p.position)}</b> · ${esc(formatPersonName(p.display_name))} <span>${p.overall_rating}</span></li>`).join('')}</ol></div>`).join('')}</div>`:'');
 }
@@ -1062,7 +1062,7 @@ function balancedRoleTeams(picked,manualIds=null){
   if(++nodes>160000)return;
   if(!remaining.length){
    const difference=Math.abs(sum[0]-sum[1]);
-   if(difference<bestDiff){bestDiff=difference;best=t.map(side=>side.map(p=>({...p})))}
+   if(difference<bestDiff || (difference===bestDiff && Math.random()<0.35)){bestDiff=difference;best=t.map(side=>side.map(p=>({...p})))}
    return;
   }
   let slotIndex=-1,choices=null;
@@ -1074,11 +1074,12 @@ function balancedRoleTeams(picked,manualIds=null){
   }
   const slot=remaining[slotIndex],rest=remaining.filter((_,i)=>i!==slotIndex);
   const ordered=[...choices].sort((a,b)=>Math.abs(sum[slot.team]+Number(a.overall_rating||60)-sum[1-slot.team])-Math.abs(sum[slot.team]+Number(b.overall_rating||60)-sum[1-slot.team]));
+  if(ordered.length>1 && Math.random()<0.5)ordered.reverse();
   for(const p of ordered){
    used.add(p.id);const entry={...p,assigned_role:slot.role};t[slot.team].push(entry);sum[slot.team]+=Number(p.overall_rating||60);
    solve(rest);
    sum[slot.team]-=Number(p.overall_rating||60);t[slot.team].pop();used.delete(p.id);
-   if(bestDiff===0||nodes>160000)return;
+   if(nodes>160000)return;
   }
  }
  solve(slots);
@@ -1126,7 +1127,7 @@ function flexibleBalancedTeams(players){
    const r=assign(red),w=assign(white);
    const diff=Math.abs(red.reduce((n,p)=>n+rating(p),0)-white.reduce((n,p)=>n+rating(p),0));
    // Mevki uyumu temel öncelik, puan dengesi ikincil öncelik.
-   const score=r.cost+w.cost+diff*0.7;
+   const score=r.cost+w.cost+diff*0.7+Math.random()*9;
    if(score<bestScore){bestScore=score;best=[r.arr,w.arr];}
    return;
   }
@@ -1192,13 +1193,17 @@ async function buildTeams(){
   teams=balancedRoleTeams(picked) || flexibleBalancedTeams(picked);
   if(!teams)return toast('14 oyuncu ile takım oluşturulamadı. Kadroyu yenileyip tekrar dene.',true);
  }
+ // Aynı dağılım denk gelirse birkaç kez alternatif üret.
+ const prevKey=teamData?.[0]?.map(p=>String(p.id)).sort().join('|');
+ if(teamMode==='auto'&&prevKey){
+  for(let attempt=0;attempt<12&&teams[0].map(p=>String(p.id)).sort().join('|')===prevKey;attempt++){
+   const alternative=balancedRoleTeams([...picked].sort(()=>Math.random()-.5)) || flexibleBalancedTeams([...picked].sort(()=>Math.random()-.5));
+   if(alternative)teams=alternative;
+  }
+ }
  teamData=teams;
  render();
- if(adminInfo&&db){
-  await saveTeamsToNextMatch({automatic:true});
- }else{
-  toast('Takımlar hazır, ancak maça kaydedilemedi: yönetici hesabıyla giriş yapılmalı.',true);
- }
+ toast('Takımlar önizlendi. Beğenmezsen Yeniden Oluştur; beğenirsen Maça Kaydet.');
 }
 function openAuth(register=false){if(user)return toast('Zaten giriş yaptın.');if(!configured)return toast('Önce config.js dosyasına Supabase publishable anahtarını girmelisin.',true);signup=register;$('authDialog').showModal();drawAuth()}
 function drawAuth(){ $('authTitle').textContent=signup?'Yeni oyuncu kaydı':'Oyuncu girişi';$('authDesc').textContent=signup?'Gerçek e-posta adresinle kayıt ol.':'E-posta adresin ve şifrenle giriş yap.';$('signupConfirm').classList.toggle('hidden',!signup);$('confirmPassword').required=signup;$('authSubmit').textContent=signup?'Hesap oluştur':'Giriş yap';$('switchAuth').textContent=signup?'Zaten hesabın var mı? Giriş yap':'Hesabın yok mu? Kayıt ol';$('password').autocomplete=signup?'new-password':'current-password';$('forgotPassword').classList.toggle('hidden',signup);$('authError').classList.add('hidden')}

@@ -7,6 +7,7 @@ let openMatchRosters=new Set(), manualRed=new Set(), leagueMatches=[], leagueWal
 let extras={guests:[],waitlist:[],events:[],mvp:[]}, extraReady=true;
 let mvpStates={}, mvpEnabled=false;
 let guestOverallRatings={}; // Geçici, sadece takım dengesi için; FC değerlendirmesi değildir.
+let teamRatingOverrides={}; // Yönetici tarafından, yalnızca takım dengesi için girilen geçici puanlar.
 let playerSort='rating_desc', rankingSort='rating_desc', rosterPickerMatch=null, rosterSearch='';
 let assessmentFlash=null;
 let v70Ready=false;
@@ -416,7 +417,7 @@ function syncTeamSelection(){
  const arr=teamBuilderCandidates(),key=String(nextTeamMatch()?.id||'');
  if(window._teamMatchKey!==key){
   window._teamMatchKey=key;
-  manualRed.clear();teamData=null;
+  manualRed.clear();teamData=null;teamRatingOverrides={};
  }
  teamSelections=new Set(arr.map(p=>p.id));
  for(const id of [...manualRed])if(!teamSelections.has(id))manualRed.delete(id);
@@ -426,11 +427,11 @@ function renderTeams(){
  syncTeamSelection();
  const m=nextTeamMatch(),arr=teamBuilderCandidates();
  const ready=arr.length===14;
- const guestRemoveButton=p=>p.is_guest?`<button type="button" class="szf-team-guest-remove" data-team-remove-guest="${attrs(String(p.id).replace(/^guest:/,''))}" aria-label="${attrs(formatPersonName(p.display_name))} adlı misafiri bu maçtan çıkar" title="Bu maçın kadrosundan çıkar">✕ Çıkar</button>`:'';
- const personMarkup=(p,manual)=>`<div class="szf-team-person-wrap"><${manual?'button':'div'} ${manual?'type="button"':''} class="szf-simple-person ${manual?(manualRed.has(p.id)?'red':'white'):''}" ${manual?`data-toggle-red="${attrs(p.id)}" aria-pressed="${manualRed.has(p.id)}"`:''}><span>${manual?(manualRed.has(p.id)?'🔴':'⚪'):'⚽'}</span><span class="szf-simple-name">${esc(formatPersonName(p.display_name))}</span><small>${esc(p.position||'—')}${p.is_guest?' · Misafir · '+Number(p.overall_rating)+' GEN':''}</small></${manual?'button':'div'}>${guestRemoveButton(p)}</div>`;
+ const guestRemoveButton=p=>adminInfo?`<button type="button" class="szf-team-guest-remove" ${String(p.id).startsWith('guest:')?`data-team-remove-guest="${attrs(String(p.id).slice(6))}"`:`data-team-remove-player="${attrs(p.id)}"`} aria-label="${attrs(formatPersonName(p.display_name))} oyuncusunu maçtan çıkar" title="Bu maçın kadrosundan çıkar">✕ Çıkar</button>`:'';
+ const personMarkup=(p,manual)=>`<div class="szf-team-person-wrap"><${manual?'button':'div'} ${manual?'type="button"':''} class="szf-simple-person ${manual?(manualRed.has(p.id)?'red':'white'):''}" ${manual?`data-toggle-red="${attrs(p.id)}" aria-pressed="${manualRed.has(p.id)}"`:''}><span>${manual?(manualRed.has(p.id)?'🔴':'⚪'):'⚽'}</span><span class="szf-simple-name">${esc(formatPersonName(p.display_name))}</span><small>${esc(p.position||'—')}${p.is_guest?' · Misafir · '+Number(p.overall_rating)+' GEN':''}</small></${manual?'button':'div'}>${adminInfo&&!p.is_guest&&Number(p.v70_count||0)<10?`<label class="szf-team-rating-label">Denge puanı <input type="number" class="szf-team-rating-input" data-team-rating="${attrs(p.id)}" min="1" max="99" step="1" value="${attrs(teamRatingOverrides[String(p.id)]??'')}" placeholder="${Number(p.overall_rating)||70}" title="Sadece takım dengesi için geçici puan"></label>`:''}${guestRemoveButton(p)}</div>`;
  const selection=teamMode==='manual'?`<div class="szf-team-hint">🔴 <b>${manualRed.size}/7 kırmızı</b> · Kalan oyuncular otomatik beyaz. Oyuncuya dokunarak takımını değiştir.</div><div class="szf-simple-players">${arr.map(p=>personMarkup(p,true)).join('')}</div>`:`<div class="szf-simple-players">${arr.map(p=>personMarkup(p,false)).join('')}</div>`;
- return sectionHead('7’ye 7 takım kur',m?'📅 Sıradaki maç: '+matchDateText(m.match_date):'Yaklaşan maç bulunamadı.',`<button id="buildTeams" class="btn lime" ${!ready||(teamMode==='manual'&&manualRed.size!==7)?'disabled':''}>${teamMode==='manual'?'Takımları onayla ve maça kaydet':(teamData?'🔄 Yeniden Oluştur':'⚖ Takımları Oluştur')} (${arr.length}/14)</button>`)
- + `<div class="mode-buttons"><button class="btn small ${teamMode==='auto'?'lime':'ghost'}" data-mode="auto">⚖ Otomatik dengeli</button><button class="btn small ${teamMode==='manual'?'lime':'ghost'}" data-mode="manual">✋ Elle dağıt</button></div>`
+ return sectionHead('7’ye 7 takım kur',m?'📅 Sıradaki maç: '+matchDateText(m.match_date):'Yaklaşan maç bulunamadı.',`<div class="szf-team-header-actions"><button id="buildTeams" class="btn lime" ${!ready||(teamMode==='manual'&&manualRed.size!==7)?'disabled':''}>${teamMode==='manual'?'Takımları onayla ve maça kaydet':(teamData?'🔄 Yeniden Oluştur':'⚖ Takımları Oluştur')} (${arr.length}/14)</button><button type="button" id="resetTeamPreview" class="btn ghost">↺ Sıfırla</button></div>`)
+ + `${adminInfo&&m?`<div class="szf-team-admin-tools"><button type="button" class="btn small lime" data-team-add-player="${attrs(m.id)}">＋ Oyuncu Ekle</button><span class="soft">Oyuncu değiştiğinde takım önizlemesi sıfırlanır.</span></div>`:''}<div class="mode-buttons"><button class="btn small ${teamMode==='auto'?'lime':'ghost'}" data-mode="auto">⚖ Otomatik dengeli</button><button class="btn small ${teamMode==='manual'?'lime':'ghost'}" data-mode="manual">✋ Elle dağıt</button></div>`
  + (!ready?`<p class="notice">Sıradaki maçın kadrosunda ${arr.length} kişi var. Takım kurmak için 14 katılımcı gerekli.</p>`:'')
  + selection
  + (teamData&&adminInfo?`<button class="btn lime" id="saveTeamsToMatch">✅ Beğendim, kadroyu maça kaydet</button>`:teamData?`<p class="soft">Maça kaydetme işlemini yönetici yapabilir.</p>`:'')
@@ -940,6 +941,17 @@ function bindContent(){
 
  $('v70Target')?.addEventListener('change',e=>saveAssessmentBeforeNavigation(Number(e.target.value)));
  
+ document.getElementById('resetTeamPreview')?.addEventListener('click',()=>{
+  teamData=null;manualRed.clear();teamMode='auto';render();toast('Takım dağılımı sıfırlandı. Katılımcılar korundu.');
+ });
+ document.querySelectorAll('[data-team-rating]').forEach(el=>el.addEventListener('change',()=>{
+  if(!adminInfo)return;
+  const raw=el.value.trim(),n=Number(raw);
+  if(raw!==''&&(!Number.isInteger(n)||n<1||n>99)){toast('Denge puanı 1–99 arasında olmalı.',true);el.value=teamRatingOverrides[String(el.dataset.teamRating)]??'';return;}
+  if(raw==='')delete teamRatingOverrides[String(el.dataset.teamRating)];
+  else teamRatingOverrides[String(el.dataset.teamRating)]=n;
+  teamData=null;render();toast('Geçici denge puanı güncellendi. Takımları yeniden oluştur.');
+ }));
  document.querySelectorAll('[data-team]').forEach(el=>el.addEventListener('change',()=>{teamData=null;el.checked?teamSelections.add(el.dataset.team):teamSelections.delete(el.dataset.team);render()}));
  document.querySelectorAll('[data-mode]').forEach(el=>el.addEventListener('click',async()=>{
   const requestedMode=el.dataset.mode;
@@ -947,7 +959,22 @@ function bindContent(){
   // Otomatik Dengeli tek tiklamada takimi kurar; yalnizca mod secmez.
   if(requestedMode==='auto')await buildTeams();
  }));
+ document.querySelector('[data-team-add-player]')?.addEventListener('click',e=>{
+  if(!adminInfo)return;
+  rosterPickerMatch=e.currentTarget.dataset.teamAddPlayer;rosterSearch='';teamData=null;
+  render();$('rosterPickerDialog')?.showModal();
+ });
+ document.querySelectorAll('[data-team-remove-player]').forEach(el=>el.addEventListener('click',async()=>{
+  if(!adminInfo)return;
+  const m=nextTeamMatch(),id=el.dataset.teamRemovePlayer;
+  if(!m||!id)return;
+  const person=teamBuilderCandidates().find(p=>String(p.id)===String(id));
+  if(!confirm(`${formatPersonName(person?.display_name||'Oyuncu')} bu maçın kadrosundan çıkarılsın mı?`))return;
+  el.disabled=true;teamData=null;
+  await removeRosterPlayer(m.id,id);
+ }));
  document.querySelectorAll('[data-team-remove-guest]').forEach(el=>el.addEventListener('click',async()=>{
+  if(!adminInfo)return;
   const id=el.dataset.teamRemoveGuest;
   const guest=extras.guests.find(g=>String(g.id)===String(id));
   const match=nextTeamMatch();
@@ -1177,7 +1204,7 @@ async function saveTeamsToNextMatch({automatic=false}={}){
  }catch(err){await loadLeagueData();render();toast('Bazı takım kayıtları kaydedilemedi: '+formatError(err),true);}
 }
 async function buildTeams(){
- const picked=teamBuilderCandidates().filter(p=>teamSelections.has(p.id));
+ const picked=teamBuilderCandidates().filter(p=>teamSelections.has(p.id)).map(p=>teamRatingOverrides[String(p.id)]!=null?{...p,overall_rating:teamRatingOverrides[String(p.id)]}:p);
  if(picked.length!==14)return toast('Otomatik takım kurmak için gelecek maçta 14 katılımcı gerekli. Şu an '+picked.length+'/14 oyuncu var.',true);
  let manualIds=null;
  if(teamMode==='manual'){

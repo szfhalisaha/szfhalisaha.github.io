@@ -547,3 +547,11 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-history-share-card{padding-bottom:10px}
 .szf-inline-share-preview{margin-top:10px;border:1px solid #426246;border-radius:16px;padding:10px;background:rgba(5,20,12,.38)}
 .szf-inline-share-image{display:block;width:100%;max-width:560px;margin:0 auto;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.28)}
+
+.szf-team-admin-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 16px}.szf-team-person-wrap{min-width:0}.szf-simple-name{overflow-wrap:anywhere;min-width:0}
+
+/* v142 */
+.szf-team-header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.szf-team-rating-label{display:flex;align-items:center;gap:6px;font-size:11px;color:#d8e9d8;min-width:0}
+.szf-team-rating-input{width:57px;max-width:100%;border:1px solid #6e9d75;background:#102a1b;color:#fff;border-radius:7px;padding:5px;font-size:12px}
+.szf-team-person-wrap{min-width:0;flex-wrap:wrap}

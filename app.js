@@ -974,11 +974,25 @@ function renderLeague(){
 }
 
 function render(){
+ // A data refresh must not destroy an active score entry field mid-keystroke.
+ const oldFocus=view==='assessment'?document.activeElement:null;
+ const scoreFocus=oldFocus?.matches?.('[data-v70-score]')?{
+   key:oldFocus.dataset.v70Score,
+   target:oldFocus.closest('[data-target]')?.dataset.target,
+   start:oldFocus.selectionStart,
+   end:oldFocus.selectionEnd
+ }:null;
+ if(scoreFocus){
+   const draft=assessmentDrafts.get(String(scoreFocus.target))||{};
+   draft[scoreFocus.key]=oldFocus.value;
+   assessmentDrafts.set(String(scoreFocus.target),draft);
+ }
  displayMode();
  const headings={home:'ANA SAYFA',players:'OYUNCULAR',ranking:'SIRALAMA',statistics:'İSTATİSTİKLER',teams:'TAKIM KUR',matches:'MAÇLAR',assessment:'OYUNCU DEĞERLENDİR',league:'BAHİS LİGİ',account:'HESABIM'};
  $('crumbPage').textContent=selectedPlayer?'OYUNCU DETAY':headings[view];
  document.querySelectorAll('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));
  $('content').innerHTML=selectedPlayer?detail(currentCards().find(c=>c.id===selectedPlayer)):view==='home'?renderHome():view==='players'?renderPlayers():view==='ranking'?renderRanking():view==='statistics'?renderStatistics():view==='teams'?renderMatches():view==='matches'?renderMatches():view==='assessment'?renderAssessment():view==='league'?renderLeague():renderAccount();
+ if(scoreFocus&&view==='assessment'){const field=[...document.querySelectorAll('[data-v70-score]')].find(x=>x.dataset.v70Score===scoreFocus.key&&x.closest('[data-target]')?.dataset.target===scoreFocus.target);if(field){field.focus({preventScroll:true});try{field.setSelectionRange(scoreFocus.start,scoreFocus.end)}catch(_){}}}
  if(view==='matches')for(const id of openMatchRosters){$('roster-'+id)?.classList.remove('hidden');$('roster-'+id)?.closest('.szf-history-compact')?.classList.add('szf-history-open');}
  bindContent();
  fillInlineSharePreviews();
@@ -1033,19 +1047,16 @@ function bindContent(){
    const btn=$('v70SubmitBtn');
    if(btn){const changed=!saved||saved.length!==6||scores.some((v,i)=>v!==saved[i]);btn.disabled=!complete||!changed;btn.setAttribute('aria-disabled',String(btn.disabled));}
   };
-  // Klavyeden yazilan rakami formdan bagimsiz isle. Ilk oy/24 saat serbest duzenleme.
+  // Native keyboard entry: do not preventDefault, replace the focused node,
+  // or rewrite input.value while a user is typing.
   ratingForm.querySelectorAll('[data-v70-score]').forEach(field=>{
    const keep=()=>{
-    const clean=field.value.replace(/[^0-9]/g,'').slice(0,2);
-    if(field.value!==clean)field.value=clean;
     const key=String(ratingForm.dataset.target);
     const draft=assessmentDrafts.get(key)||{};
     draft[field.dataset.v70Score]=field.value;
     assessmentDrafts.set(key,draft);
     updateAverage();
    };
-   // Do not cancel the browser's native text insertion. Some browsers
-   // dispatch beforeinput but do not support the manual replacement correctly.
    field.addEventListener('input',keep);
    field.addEventListener('change',keep);
   });

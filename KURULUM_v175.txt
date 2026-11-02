@@ -1,0 +1,1 @@
+v175: Puan kutusunda yerel metin girisi korunur; render sirasinda taslak ve imlec kaybolmaz. Yeni SQL gerekmez. Tek ZIP Cloudflare Pages icindir.

@@ -1,0 +1,1 @@
+v172: Elle 1-99 puan girişi (metin kutusu, sayısal klavye), 24 saat serbest düzeltme kuralı korunur. SQL gerekmez. Cloudflare Pages'e tek ZIP yükleyin. Canlı test yapılmadı.

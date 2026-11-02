@@ -585,3 +585,6 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 /* v171: Direct keyboard entry; no dropdown, no slider. */
 .szf-score-entry::-webkit-inner-spin-button,.szf-score-entry::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .szf-score-entry{-moz-appearance:textfield!important;appearance:textfield!important}
+
+/* v172: first evaluation is a plain editable text field, never a spinner. */
+.v70-rating-field input.szf-score-entry{user-select:text!important;-webkit-user-select:text!important;-webkit-text-fill-color:inherit;opacity:1;pointer-events:auto!important}

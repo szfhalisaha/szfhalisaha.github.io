@@ -481,6 +481,8 @@ function orderedAssessmentPlayers(){
   return String(a.display_name||'').localeCompare(String(b.display_name||''),'tr');
  });
 }
+// Puan taslagi, ekran beklenmedik sekilde yeniden cizilse bile kaybolmaz.
+const assessmentDrafts=new Map();
 function renderAssessment(){
  if(!user)return sectionHead('Oyuncu Değerlendir','Puan vermek için giriş yapmalısın.');
  if(!profile?.approved)return sectionHead('Oyuncu Değerlendir','Değerlendirme için onaylı hesap gerekiyor.');
@@ -496,7 +498,7 @@ function renderAssessment(){
  const fields=f.map(([key,short,label],i)=>{
   const old=Number(vote?.scores?.[i]||0);
   if(permission.mode==='match')return `<div class="v153-field"><div class="v153-field-head"><strong>${esc(label)}</strong><span class="v153-values">${old} → <b data-v153-result="${key}">${old}</b></span></div><div class="v153-options" role="group" aria-label="${esc(label)} puan değişimi">${[-3,0,3].map(d=>`<label class="v153-choice"><input type="radio" name="v153-${key}" data-v70-delta="${key}" value="${d}" ${d===0?'checked':''}><span>${d>0?'+3':d===0?'0':'−3'}</span></label>`).join('')}</div></div>`;
-  return `<label class="v70-rating-field"><span>${esc(label)}</span><input type="number" inputmode="numeric" min="1" max="99" step="1" autocomplete="off" class="text-input szf-score-entry" data-v70-score="${key}" required placeholder="Puan yaz (1–99)" ${permission.mode==='locked'?'disabled':''} value="${vote?.scores?.[i]??''}"></label>`;
+  return `<label class="v70-rating-field"><span>${esc(label)}</span><input type="text" inputmode="numeric" pattern="[1-9][0-9]?" maxlength="2" autocomplete="off" autocorrect="off" spellcheck="false" class="text-input szf-score-entry" data-v70-score="${key}" required placeholder="Puan yaz (1–99)" ${permission.mode==='locked'?'disabled':''} value="${attrs(assessmentDrafts.get(String(c.id))?.[key]??vote?.scores?.[i]??'')}"></label>`;
  }).join('');
  const picker=`<select id="v70Target" class="text-input">${everyone.map((c,i)=>`<option value="${i}" ${i===weeklyIndex?'selected':''}>${esc(formatPersonName(c.display_name))}</option>`).join('')}</select>`;
  const explain=permission.mode==='first'?'İlk değerlendirme: maç şartı ve süre sınırı yok. Altı özelliğe 1–99 arasında puan ver. İlk 24 saat serbestçe düzeltebilirsin.':permission.mode==='free'?'İlk değerlendirmenden sonraki 24 saat içindesin: altı puanı 1–99 arasında serbestçe düzeltebilirsin.':permission.mode==='match'?`Ortak maç sonrası güncelleme: ${esc(matchDateText(permission.match.match_date))}. Her özellik için −3 / 0 / +3 seç. Oyunu aynı maç içinde değiştirmen artışı biriktirmez.`:'Önceki verdiğin puanlar aşağıda görüntülenir ancak şu anda değiştirilemez. Yeni değişiklik için ortak maç sonrası değerlendirme penceresi açılmalıdır.';
@@ -553,6 +555,7 @@ async function saveAssessmentBeforeNavigation(nextIndex){
   if(!Array.isArray(persisted)||persisted.length!==6||!scores.every((n,i)=>Number(persisted[i])===n)){
    throw new Error('Kayit dogrulanamadi; verdigin puanlar sunucuda gorunmuyor.');
   }
+  assessmentDrafts.delete(String(target));
   await loadProfileAndCards();
   const sortedAfterSave=orderedAssessmentPlayers();
   weeklyIndex=Math.max(0,sortedAfterSave.findIndex(p=>String(p.id)===String(nextPlayerId)));
@@ -585,7 +588,7 @@ async function submitV70Vote(e){
  const btn=form.querySelector('[type=submit]');if(btn)btn.disabled=true;
  const {error}=await db.rpc('szf_submit_rating_v148',{p_target:target,p_scores:scores,p_match:permission.mode==='match'?permission.match.id:null});
  if(error){if(btn)btn.disabled=false;return toast('Puan kaydedilemedi: '+formatError(error),true);}
- await loadProfileAndCards();render();toast('Değerlendirme kaydedildi.');
+ assessmentDrafts.delete(String(target));await loadProfileAndCards();render();toast('Değerlendirme kaydedildi.');
 }
 
 function matchTitleInfo(raw){
@@ -1030,6 +1033,32 @@ function bindContent(){
    const btn=$('v70SubmitBtn');
    if(btn){const changed=!saved||saved.length!==6||scores.some((v,i)=>v!==saved[i]);btn.disabled=!complete||!changed;btn.setAttribute('aria-disabled',String(btn.disabled));}
   };
+  // Klavyeden yazilan rakami formdan bagimsiz isle. Ilk oy/24 saat serbest duzenleme.
+  ratingForm.querySelectorAll('[data-v70-score]').forEach(field=>{
+   const keep=()=>{
+    const clean=field.value.replace(/[^0-9]/g,'').slice(0,2);
+    if(field.value!==clean)field.value=clean;
+    const key=String(ratingForm.dataset.target);
+    const draft=assessmentDrafts.get(key)||{};
+    draft[field.dataset.v70Score]=field.value;
+    assessmentDrafts.set(key,draft);
+    updateAverage();
+   };
+   field.addEventListener('beforeinput',e=>{
+    if(e.isComposing||!e.cancelable||e.inputType!=='insertText'||!e.data)return;
+    if(!/^[0-9]+$/.test(e.data))return;
+    // Browser/overlay kaynakli kaybolan tus girdisini DOM'dan bagimsiz uygula.
+    e.preventDefault();
+    const start=field.selectionStart??field.value.length;
+    const end=field.selectionEnd??start;
+    const next=(field.value.slice(0,start)+e.data+field.value.slice(end)).slice(0,2);
+    field.value=next;
+    field.setSelectionRange(Math.min(start+e.data.length,next.length),Math.min(start+e.data.length,next.length));
+    keep();
+   });
+   field.addEventListener('input',keep);
+   field.addEventListener('change',keep);
+  });
   ratingForm.addEventListener('input',updateAverage);ratingForm.addEventListener('change',updateAverage);updateAverage();
  }
 

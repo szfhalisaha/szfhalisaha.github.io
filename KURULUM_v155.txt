@@ -1,0 +1,9 @@
+SZF v155 - 1 ve 99 uc oy filtreleme
+
+1. Once Supabase SQL Editor icinde SZF_v155_Uc_Oy_Filtreleme.sql dosyasini calistirin.
+2. Sonra ZIP icindeki site dosyalarini mevcut barindirmaya yukleyin.
+3. Sayfayi yenileyin. 1/99 oylar kullanicinin kendi ekraninda aynen kalir.
+4. Genel kart ortalamalari yalnizca 2-98 oylarindan hesaplanir. 10 kisi esigi degismez.
+5. Bir ozelligin tum oylari sadece 1/99 ise, gecerli oy gelene dek o ozellik icin 70 kullanilir.
+
+Not: Bu paket Supabase veritabanina otomatik baglanip SQL calistirmaz; SQL adimi zorunludur.

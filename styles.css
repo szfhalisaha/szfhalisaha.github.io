@@ -577,3 +577,7 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-current-bet,.szf-bet-history{border:1px solid rgba(167,243,92,.45);border-radius:12px;background:rgba(80,150,70,.10);padding:12px 14px;margin:10px 0;color:#e9fbe2}
 .szf-current-bet p{margin:6px 0;font-weight:600}.szf-current-bet small,.szf-bet-history small{display:block;color:#c9ddcb;margin-top:4px}
 .szf-bet-history{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+
+/* v170: first rating fields must remain focusable and keyboard editable */
+.v70-rating-field .szf-score-entry{appearance:none;-webkit-appearance:none;pointer-events:auto!important;user-select:text!important;-webkit-user-select:text!important;touch-action:manipulation;caret-color:#b9f46d;cursor:text;position:relative;z-index:2}
+.v70-rating-field .szf-score-entry:focus{outline:2px solid #b9f46d;outline-offset:1px;border-color:#b9f46d;background:#163221}

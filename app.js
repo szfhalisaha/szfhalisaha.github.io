@@ -582,7 +582,7 @@ async function submitV70Vote(e){
  }
  const btn=form.querySelector('[type=submit]');if(btn)btn.disabled=true;
  const {error}=await db.rpc('szf_submit_rating_v148',{p_target:target,p_scores:scores,p_match:permission.mode==='match'?permission.match.id:null});
- if(error){if(btn)btn.disabled=false;return toast('Puan kaydedilemedi: '+formatError(error),true);}
+ if(error){if(btn)btn.disabled=false;return toast('Puan kaydedilemedi: '+formatError(error)+' (Gerekirse v165 SQL düzeltmesini uygula.)',true);}
  await loadProfileAndCards();render();toast('Değerlendirme kaydedildi.');
 }
 
@@ -1401,7 +1401,7 @@ async function loadProfileAndCards(){if(!db||!user)return;const [p,c,v,all]=awai
  db.from('player_cards').select('*').order('overall_rating',{ascending:false}),
  db.from('szf_ratings_v70').select('target_id,scores,first_submitted_at').eq('voter_id',user.id),
  db.from('profiles').select('id,display_name,position,approved,jersey_number,avatar_path')
-]);if(p.error)toast('Profil alınamadı: '+formatError(p.error),true);if(c.error)toast('Oyuncular alınamadı: '+formatError(c.error),true);ownVotesReadError=v.error?formatError(v.error):null;if(v.error)toast('Oylar alınamadı: '+formatError(v.error),true);profile=p.data?{...p.data,display_name:formatPersonName(p.data.display_name)}:null;cards=(c.data||[]).map(c=>({...c,display_name:formatPersonName(c.display_name), overall_rating:Number(c.overall_rating)||60}));myVotes=v.data||[];publicProfiles=(all.data||[]).map(p=>({...p,display_name:formatPersonName(p.display_name)}));
+]);if(p.error)toast('Profil alınamadı: '+formatError(p.error),true);if(c.error)toast('Oyuncular alınamadı: '+formatError(c.error),true);ownVotesReadError=v.error?formatError(v.error):null;if(v.error)toast('Oylar alınamadı: '+formatError(v.error)+' — v165 SQL düzeltmesini çalıştır.',true);profile=p.data?{...p.data,display_name:formatPersonName(p.data.display_name)}:null;cards=(c.data||[]).map(c=>({...c,display_name:formatPersonName(c.display_name), overall_rating:Number(c.overall_rating)||60}));myVotes=v.data||[];publicProfiles=(all.data||[]).map(p=>({...p,display_name:formatPersonName(p.display_name)}));
  // A new player may have no old vote-derived player_cards row yet.
  // Show a genuine baseline card from the saved profile, without altering previous scores.
  const existing=new Set(cards.map(x=>x.id));

@@ -558,3 +558,11 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 
 /* v144 statistics sorting */
 .szf-stats-sort{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0 16px}.szf-stats-sort label{font-weight:700;color:#b8d7b7}.szf-stats-sort select{width:min(280px,100%);max-width:100%}.szf-stats-sort-heading{border:0;background:transparent;color:inherit;font:inherit;font-weight:inherit;letter-spacing:inherit;cursor:pointer;text-align:left;padding:7px 0}.szf-stats-sort-heading:hover,.szf-stats-sort-heading.active{color:#d5ffa0;text-decoration:underline;text-underline-offset:4px}.szf-stats-sort-heading:focus-visible{outline:2px solid #c5f78f;outline-offset:3px;border-radius:3px}
+
+/* v149: Admin roster controls */
+.szf-attendance-person .szf-attendance-remove{border:1px solid #e98181;color:#ffd2d2;background:#6b2525;border-radius:7px;padding:5px 8px;font-size:.72rem;font-weight:750;cursor:pointer;flex-shrink:0}
+.szf-attendance-person .szf-attendance-remove:hover{background:#8a3434}
+.szf-attendance-person .szf-attendance-remove:disabled{opacity:.5;cursor:wait}
+.szf-attendance-person:has(.szf-attendance-remove){flex-wrap:wrap}
+.szf-attendance-person:has(.szf-attendance-remove) small{margin-left:auto}
+.szf-pitch-actions{display:flex;justify-content:flex-end;margin-top:12px}

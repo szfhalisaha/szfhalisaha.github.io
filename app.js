@@ -1044,18 +1044,8 @@ function bindContent(){
     assessmentDrafts.set(key,draft);
     updateAverage();
    };
-   field.addEventListener('beforeinput',e=>{
-    if(e.isComposing||!e.cancelable||e.inputType!=='insertText'||!e.data)return;
-    if(!/^[0-9]+$/.test(e.data))return;
-    // Browser/overlay kaynakli kaybolan tus girdisini DOM'dan bagimsiz uygula.
-    e.preventDefault();
-    const start=field.selectionStart??field.value.length;
-    const end=field.selectionEnd??start;
-    const next=(field.value.slice(0,start)+e.data+field.value.slice(end)).slice(0,2);
-    field.value=next;
-    field.setSelectionRange(Math.min(start+e.data.length,next.length),Math.min(start+e.data.length,next.length));
-    keep();
-   });
+   // Do not cancel the browser's native text insertion. Some browsers
+   // dispatch beforeinput but do not support the manual replacement correctly.
    field.addEventListener('input',keep);
    field.addEventListener('change',keep);
   });

@@ -1,0 +1,5 @@
+1. Supabase SQL Editor: SZF_v161_Bahis_Duzeltme.sql dosyasini calistir. Basarili olunca devam et.
+2. Sitede eski dosyalari v161 ile degistir.
+3. Tarayicida sert yenile (Ctrl+Shift+R); gerekirse site verilerindeki eski servis isci onbelleklerini temizle.
+4. Bahis yap; kendi secimin ve kredi tutarin kaydedildikten sonra Bahis Ligi ekraninda ve Bahislerim bolumunde gorunur.
+Not: Bu paket SQL dosyasini kendisi Supabase uzerinde calistiramaz.

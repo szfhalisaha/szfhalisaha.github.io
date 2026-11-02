@@ -1,0 +1,5 @@
+SZF v160 - Maç başlayana kadar bahis güncelleme.
+1) Supabase SQL Editor içerisinde SZF_v160_Bahis_Degistirme.sql dosyasını çalıştırın.
+2) ZIP içindeki site dosyalarını yayınlayın.
+Bahis tutarı ve sonuç tercihi değişebilir; eski bahis kredisi hesaba katılır. Maç başlayınca SQL tarafında da kilitlenir.
+Önceki v159 takım isimleri ve v158 maç kredisi özellikleri korunur.

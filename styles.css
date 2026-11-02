@@ -572,3 +572,8 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 
 /* v156: Mac kadrosu takim rating ortalamasi */
 .szf-pitch-side > b{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.szf-team-mean{color:#c3ff79;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* v161: signed-in user bet receipt */
+.szf-current-bet,.szf-bet-history{border:1px solid rgba(167,243,92,.45);border-radius:12px;background:rgba(80,150,70,.10);padding:12px 14px;margin:10px 0;color:#e9fbe2}
+.szf-current-bet p{margin:6px 0;font-weight:600}.szf-current-bet small,.szf-bet-history small{display:block;color:#c9ddcb;margin-top:4px}
+.szf-bet-history{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}

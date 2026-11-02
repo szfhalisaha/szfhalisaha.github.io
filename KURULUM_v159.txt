@@ -1,0 +1,3 @@
+SZF v159: KIRMIZI / BEYAZ takım başlıkları, yelek giyen takım KIRMIZI açıklaması, genel puan ortalaması ve v158 maç-bazlı kredi sistemi korunur.
+Supabase için v158 SQL kurulu ise yeniden çalıştırmaya gerek yoktur. Kurulu değilse ZIP içindeki SZF_v158_Mac_Bazli_Kredi.sql dosyasını çalıştırın.
+Önbellek sürümü 159 yapıldı.

@@ -581,3 +581,7 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 /* v170: first rating fields must remain focusable and keyboard editable */
 .v70-rating-field .szf-score-entry{appearance:none;-webkit-appearance:none;pointer-events:auto!important;user-select:text!important;-webkit-user-select:text!important;touch-action:manipulation;caret-color:#b9f46d;cursor:text;position:relative;z-index:2}
 .v70-rating-field .szf-score-entry:focus{outline:2px solid #b9f46d;outline-offset:1px;border-color:#b9f46d;background:#163221}
+
+/* v171: Direct keyboard entry; no dropdown, no slider. */
+.szf-score-entry::-webkit-inner-spin-button,.szf-score-entry::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.szf-score-entry{-moz-appearance:textfield!important;appearance:textfield!important}

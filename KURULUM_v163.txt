@@ -1,0 +1,1 @@
+Once SZF_v162_Eksik_Bahis_Tablolari_Duzeltme.sql (calistirdiysan tekrar gerekmez), sonra SZF_v163_Bahis_Uyumluluk.sql. Sonra ZIP icerigini deploy et. Tarayicida Ctrl+Shift+R.

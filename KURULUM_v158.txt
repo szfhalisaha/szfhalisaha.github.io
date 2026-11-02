@@ -1,0 +1,1 @@
+SZF v158: Ilk olarak Supabase SQL Editor uzerinde SZF_v158_Mac_Bazli_Kredi.sql dosyasini calistirin. Ardindan ZIP dosyasinin site dosyalarini yayinlayin. Kredi tamamlanan macin status completed olmasiyla otomatik bir kere dagitilir. Eski maclara kredi dagitilmaz.

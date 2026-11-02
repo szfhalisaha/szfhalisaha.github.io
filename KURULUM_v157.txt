@@ -1,0 +1,7 @@
+SZF Airport Hali Saha v157 - Kirmizi / Beyaz Takim Adlari
+
+- Saha dizilisindeki Yelekli ve Yeleksiz basliklari Kirmizi ve Beyaz oldu.
+- Saha dizilisi aciklamasi: Yelek giyen: KIRMIZI.
+- Kadro listesi ve misafir takim etiketleri de Kirmizi/Beyaz oldu.
+- Veritabani takim kodlari red/white aynen korundu.
+- SQL gerekmez. v156 uzerindeki degisiklikler korunur.

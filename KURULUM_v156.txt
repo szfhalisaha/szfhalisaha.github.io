@@ -1,0 +1,1 @@
+SZF Airport Hali Saha v156: Maclar ekranindaki Yelekli / Yeleksiz saha dizilisi basliklarina takim genel puan ortalamasi eklendi. 10 oyu tamamlanmamis kayitli oyuncu icin takim dengeleme puani 70; misafir icin mevcut denge puani kullanilir. v155 1/99 hesaplama mantigi korunur. Bu guncelleme icin yeni SQL gerekmez. ZIP icerigini mevcut siteye yayinlayin.

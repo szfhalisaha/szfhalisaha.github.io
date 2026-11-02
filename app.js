@@ -628,6 +628,24 @@ function pitchFormation(entries){
  if(entries.length===7)solve(0,new Set(),[],0);
  return best||entries.map((p,i)=>({...p,assigned_role:slots[i]||p.position}));
 }
+// Takim ortalamasi: gorunur kart ratingi, henuz 10 oy almayanlarda 70.
+function szfTeamPlayerRating(card){
+ const count=Number(card?.v70_count??card?.voter_count??0);
+ const val=Number(card?.overall_rating);
+ return count>=10 && Number.isFinite(val) && val>=1 && val<=99 ? val : 70;
+}
+function szfMatchTeamRating(people,guests,color){
+ const vals=[];
+ people.filter(x=>x.team_color===color).forEach(x=>{
+  const card=currentCards().find(c=>String(c.id)===String(x.player_id));
+  vals.push(szfTeamPlayerRating(card));
+ });
+ guests.filter(x=>x.team_color===color).forEach(x=>{
+  const card=linkedCard(x);
+  vals.push(card?szfTeamPlayerRating(card):Number(guestOverallRatings[guestKey(x.display_name)]||70));
+ });
+ return vals.length?`${(vals.reduce((a,b)=>a+b,0)/vals.length).toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1})} GEN`:'—';
+}
 function scoreEntryAllowed(id){const m=leagueMatches.find(x=>String(x.id)===String(id));return !!m&&Date.now()>=new Date(m.match_date).getTime()+3600000;}
 function matchBlock(m){
  const people=weeklyPlayers.filter(x=>x.match_id===m.id);
@@ -656,7 +674,7 @@ function matchBlock(m){
   const players=formed.filter(x=>types.includes(x.assigned_role));
   return `<div class="szf-formation-line szf-formation-line-${idx}">${players.map(x=>`<div class="szf-pitch-player"><span class="szf-pitch-shirt">${esc(x.assigned_role)}</span><strong>${esc(formatPersonName(x.name))}</strong></div>`).join('')}</div>`;
  }).join('');
- return `<div class="szf-pitch-side"><b>${color==='red'?'🎽 Yelekli':'👕 Yeleksiz'} · 1-3-2-1</b><div class="szf-pitch szf-formation">${rosterEntries.length===7?rows:'<small>Takım henüz oluşturulmadı</small>'}</div></div>`;
+ return `<div class="szf-pitch-side"><b>${color==='red'?'🎽 Yelekli':'👕 Yeleksiz'} · 1-3-2-1 <span class="szf-team-mean">Ort. ${szfMatchTeamRating(people,guests,color)}</span></b><div class="szf-pitch szf-formation">${rosterEntries.length===7?rows:'<small>Takım henüz oluşturulmadı</small>'}</div></div>`;
 };
  const events=extras.events.filter(x=>x.match_id===m.id);const goals=events.filter(x=>x.kind==='goal');const assists=events.filter(x=>x.kind==='assist');const ownGoals=events.filter(x=>x.kind==='own_goal');
  const playerName=(id,guest)=>guest?(guests.find(x=>String(x.id)===String(id))?.linked_user_id?currentCards().find(c=>String(c.id)===String(guests.find(x=>String(x.id)===String(id)).linked_user_id))?.display_name:guests.find(x=>String(x.id)===String(id))?.display_name)||'Misafir':currentCards().find(x=>x.id===id)?.display_name||'Oyuncu';

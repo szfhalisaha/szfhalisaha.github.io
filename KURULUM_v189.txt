@@ -1,0 +1,1 @@
+SZF v189 — Maçın Adamı: eşleştirilmiş misafir için oy ekranı ve sunucu durumunu yenileme. SQL gerekmez; mevcut szf_mvp_state_v130 ve szf_mvp_cast_v130 fonksiyonları kullanılır.

@@ -305,7 +305,7 @@ function szfNewspaperData(match){
  }
  // H2H ve takım arkadaşlığı: aynı maçta bulunan kayıtlı/eşleşmiş oyuncuların
  // yalnızca daha önce tamamlanmış karşılaşmalarını say; hayalî seri üretme.
- const prior=leagueMatches.filter(m=>m.status==='completed'&&validScore(m)&&new Date(m.match_date)<new Date(match.match_date));
+ const prior=leagueMatches.filter(m=>m.status==='completed'&&validScore(m)&&new Date(m.match_date)<new Date(match.match_date)).sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
  const currentIds=[...playersInMatch.keys()].filter(id=>getName(id));
  const histories=prior.map(m=>{
   const sides=new Map();

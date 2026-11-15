@@ -1011,7 +1011,7 @@ function buildInlineSharePreviewMarkup(id){
  const winner=red>white?'KIRMIZI KAZANDI':white>red?'BEYAZ KAZANDI':'BERABERE';
  const team=(color,label)=>{
   const names=roster(color);
-  return '<section class="szf-v190-team szf-v190-'+color+'"><div class="szf-v190-team-title"><strong>'+label+'</strong><span>'+names.length+'/7</span></div><ol>'+names.map(n=>'<li>'+(n.number?'<span class="szf-v193-shirt-number">'+esc(n.number)+'</span>':'')+'<span>'+esc(n.name)+'</span></li>').join('')+'</ol><h4>⚽ GOLLER</h4>'+goalMarkup(color)+'</section>';
+  return '<section class="szf-v190-team szf-v190-'+color+'"><div class="szf-v190-team-title"><strong>'+label+'</strong><span>'+names.length+'/7</span></div><ol>'+names.map(n=>'<li>'+'<span class="szf-v193-shirt-number">'+(n.number?esc(n.number):'&nbsp;')+'</span>'+'<span>'+esc(n.name)+'</span></li>').join('')+'</ol><h4>⚽ GOLLER</h4>'+goalMarkup(color)+'</section>';
  };
  return '<div class="szf-v190-poster" role="img" aria-label="SZF maç sonucu, Kırmızı '+red+', Beyaz '+white+'"><div class="szf-v190-top"><div class="szf-v190-brand">✈ SZF AIRPORT <span>HALI SAHA</span></div><div class="szf-v190-overline">MAÇ SONU</div><div class="szf-v190-title">'+esc((m.title||'Haftalık Maç').split('[Saha:')[0].trim())+'</div><div class="szf-v190-date">'+esc(matchDateText(m.match_date))+'</div></div><div class="szf-v190-score"><span>KIRMIZI</span><strong>'+red+'<i>–</i>'+white+'</strong><span>BEYAZ</span></div><div class="szf-v190-winner">'+winner+'</div><div class="szf-v190-teams">'+team('red','KIRMIZI')+team('white','BEYAZ')+'</div><div class="szf-v190-footer">SZF AIRPORT HALI SAHA · BİRLİKTE DAHA GÜÇLÜ</div></div>';
 }

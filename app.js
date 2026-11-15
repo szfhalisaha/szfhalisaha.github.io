@@ -959,7 +959,8 @@ function inlineSharePreviewSignature(m){
  const events=extras.events.filter(e=>String(e.match_id)===String(m.id));
  const guests=extras.guests.filter(g=>String(g.match_id)===String(m.id));
  const people=weeklyPlayers.filter(p=>String(p.match_id)===String(m.id));
- return [m.id,m.title,m.match_date,m.red_score,m.white_score,m.result,events.map(e=>[e.id,e.kind,e.player_id,e.guest_id,e.goal_event_id].join(':')).join(','),guests.map(g=>[g.id,g.team_color,g.linked_player_id].join(':')).join(','),people.map(p=>[p.player_id,p.team_color].join(':')).join(',')].join('|');
+ const mv=mvpStates[String(m.id)]||{};
+ return [m.id,m.title,m.match_date,m.red_score,m.white_score,m.result,events.map(e=>[e.id,e.kind,e.player_id,e.guest_id,e.goal_event_id].join(':')).join(','),guests.map(g=>[g.id,g.team_color,g.linked_player_id].join(':')).join(','),people.map(p=>[p.player_id,p.team_color].join(':')).join(','),mv.finished,mv.vote_count,(mv.winners||[]).join(',')].join('|');
 }
 function buildInlineSharePreviewMarkup(id){
  const m=leagueMatches.find(x=>String(x.id)===String(id));
@@ -1007,13 +1008,24 @@ function buildInlineSharePreviewMarkup(id){
   const entries=[...grouped].sort((a,b)=>b[1].count-a[1].count||a[0].localeCompare(b[0],'tr'));
   return entries.length?entries.map(([name,info])=>'<div class="szf-v190-goal"><div><strong>'+esc(name)+'</strong><b>×'+info.count+'</b></div>'+(info.assists.length?'<small>Asist: '+esc(info.assists.join(', '))+'</small>':'')+'</div>').join(''):'<p class="szf-v190-empty">Henüz gol kaydı yok</p>';
  };
+ const mv=mvpStates[String(m.id)]||{};
+ const mvpNames=mv.finished===true&&Number(mv.vote_count||0)>0?(mv.winners||[]).map(key=>{
+  const k=String(key);
+  if(k.startsWith('g:')){
+   const guest=guests.find(g=>String(g.id)===k.slice(2));
+   return guest?guestName(guest):'';
+  }
+  if(k.startsWith('p:'))return nameOf(k.slice(2));
+  return '';
+ }).filter(Boolean):[];
+ const mvpMarkup=mvpNames.length?'<section class="szf-v195-mvp"><div class="szf-v195-mvp-title">🏆 MAÇIN ADAMI</div><div class="szf-v195-mvp-names">'+mvpNames.map(n=>'<strong>'+esc(n)+'</strong>').join('<span class="szf-v195-mvp-separator">·</span>')+'</div>'+(mvpNames.length>1?'<small>Oylama berabere sonuçlandı</small>':'')+'</section>':'';
  const red=Number(m.red_score),white=Number(m.white_score);
  const winner=red>white?'KIRMIZI KAZANDI':white>red?'BEYAZ KAZANDI':'BERABERE';
  const team=(color,label)=>{
   const names=roster(color);
   return '<section class="szf-v190-team szf-v190-'+color+'"><div class="szf-v190-team-title"><strong>'+label+'</strong><span>'+names.length+'/7</span></div><ol>'+names.map(n=>'<li>'+'<span class="szf-v193-shirt-number">'+(n.number?esc(n.number):'&nbsp;')+'</span>'+'<span>'+esc(n.name)+'</span></li>').join('')+'</ol><h4>⚽ GOLLER</h4>'+goalMarkup(color)+'</section>';
  };
- return '<div class="szf-v190-poster" role="img" aria-label="SZF maç sonucu, Kırmızı '+red+', Beyaz '+white+'"><div class="szf-v190-top"><div class="szf-v190-brand">✈ SZF AIRPORT <span>HALI SAHA</span></div><div class="szf-v190-overline">MAÇ SONU</div><div class="szf-v190-title">'+esc((m.title||'Haftalık Maç').split('[Saha:')[0].trim())+'</div><div class="szf-v190-date">'+esc(matchDateText(m.match_date))+'</div></div><div class="szf-v190-score"><span>KIRMIZI</span><strong>'+red+'<i>–</i>'+white+'</strong><span>BEYAZ</span></div><div class="szf-v190-winner">'+winner+'</div><div class="szf-v190-teams">'+team('red','KIRMIZI')+team('white','BEYAZ')+'</div><div class="szf-v190-footer">SZF AIRPORT HALI SAHA · BİRLİKTE DAHA GÜÇLÜ</div></div>';
+ return '<div class="szf-v190-poster" role="img" aria-label="SZF maç sonucu, Kırmızı '+red+', Beyaz '+white+'"><div class="szf-v190-top"><div class="szf-v190-brand">✈ SZF AIRPORT <span>HALI SAHA</span></div><div class="szf-v190-overline">MAÇ SONU</div><div class="szf-v190-title">'+esc((m.title||'Haftalık Maç').split('[Saha:')[0].trim())+'</div><div class="szf-v190-date">'+esc(matchDateText(m.match_date))+'</div></div><div class="szf-v190-score"><span>KIRMIZI</span><strong>'+red+'<i>–</i>'+white+'</strong><span>BEYAZ</span></div><div class="szf-v190-winner">'+winner+'</div><div class="szf-v190-teams">'+team('red','KIRMIZI')+team('white','BEYAZ')+'</div>'+mvpMarkup+'<div class="szf-v190-footer">SZF AIRPORT HALI SAHA · BİRLİKTE DAHA GÜÇLÜ</div></div>';
 }
 function fillInlineSharePreviews(){
  document.querySelectorAll('[data-inline-share-preview]').forEach(node=>{

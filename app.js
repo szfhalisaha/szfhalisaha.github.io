@@ -532,7 +532,7 @@ function renderAssessment(){
  const summaryWarning=!v70Ready?'<p class="notice">Puan özeti alınamadı. Bu durum ilk değerlendirme yapmana engel değildir.</p>':'';
  const fields=f.map(([key,short,label],i)=>{
   const old=Number((permission.mode==='match'?baseline:vote?.scores)?.[i]||0);
-  if(permission.mode==='match')return `<div class="v153-field"><div class="v153-field-head"><strong>${esc(label)}</strong><span class="v153-values">${old} → <b data-v153-result="${key}">${Math.max(1,Math.min(99,old+Number(savedDeltas?.[i]??0)))}</b></span></div><div class="v153-options" role="group" aria-label="${esc(label)} puan değişimi">${[-3,0,3].map(d=>`<label class="v184-choice"><input type="radio" name="szf-delta-${key}" value="${d}" data-v184-delta="${key}" ${d===Number(savedDeltas?.[i]??0)?'checked':''}><span>${d>0?'+3':d===0?'0':'−3'}</span></label>`).join('')}</div></div>`;
+  if(permission.mode==='match')return `<div class="v153-field"><div class="v153-field-head"><strong>${esc(label)}</strong><span class="v153-values">${old} → <b data-v153-result="${key}">${Math.max(1,Math.min(99,old+Number(savedDeltas?.[i]??0)))}</b></span></div><div class="v153-options" role="group" aria-label="${esc(label)} puan değişimi">${[-3,0,3].map(d=>{const draft=szfDeltaDrafts185.get(String(permission.match.id)+':'+String(c.id));const chosen=Number(draft?.[key]??savedDeltas?.[i]??0)===d;return `<button type="button" class="v185-choice ${chosen?'selected':''}" data-v185-key="${key}" data-v185-value="${d}" aria-pressed="${chosen}">${d>0?'+3':d===0?'0':'−3'}</button>`}).join('')}</div></div>`;
   return `<label class="v70-rating-field"><span>${esc(label)}</span><input type="text" inputmode="numeric" pattern="[1-9][0-9]?" maxlength="2" autocomplete="off" autocorrect="off" spellcheck="false" class="text-input szf-score-entry" data-v70-score="${key}" required placeholder="Puan yaz (1–99)" ${permission.mode==='locked'?'disabled':''} value="${attrs(assessmentDrafts.get(String(c.id))?.[key]??vote?.scores?.[i]??'')}"></label>`;
  }).join('');
  const picker=`${focus.match?`<p class="soft">⚽ Önce birlikte oynadığın maçın kadrosu: ${esc(matchDateText(focus.match.match_date))}. Diğer oyuncular listenin sonunda.</p>`:''}<select id="v70Target" class="text-input">${everyone.map((c,i)=>`<option value="${i}" ${i===weeklyIndex?'selected':''}>${focus.ids.has(String(c.id))?'⚽ ':''}${esc(formatPersonName(c.display_name))}${focus.ids.has(String(c.id))?' · Son maç':''}</option>`).join('')}</select>`;
@@ -540,6 +540,33 @@ function renderAssessment(){
  return sectionHead('Oyuncu Değerlendir','İlk puanlama serbest; sonraki değişiklikler yalnızca ortak maçtan sonra −3 / 0 / +3.',picker)
  +`<div class="assessment-layout"><div class="assessment-preview"><p class="soft">${Number(c.v70_count||0)}/10 değerlendirme tamamlandı</p>${assessmentCardHTML(c)}</div><div class="assessment-panel"><h3>${esc(formatPersonName(c.display_name))}</h3><p class="soft">${explain}</p>${summaryWarning}${votesReadWarning}${permission.mode==='locked'&&vote?'<p class="notice">Şu anda bu oyuncunun puanlarını değiştiremezsin.</p>':''}<form id="v70VoteForm" data-target="${attrs(c.id)}" data-mode="${permission.mode}" data-match="${attrs(permission.match?.id||'')}"><div class="v70-rating-fields">${fields}</div><div id="szf-live-rating" class="szf-live-rating" aria-live="polite">${permission.mode==='match'?`<strong id="v181-old-average">${baseline?.length===6?Math.round(baseline.reduce((sum,n)=>sum+Number(n),0)/6):'—'}</strong> <span class="v153-arrow">→</span> <strong id="v153-new-average">${baseline?.length===6?Math.round(baseline.map((v,i)=>Math.max(1,Math.min(99,Number(v)+Number(savedDeltas?.[i]||0)))).reduce((sum,n)=>sum+n,0)/6):'—'}</strong><p class="v153-help">Bu değişiklik yalnızca senin verdiğin oyu etkiler; kartın genel rating'i tüm oyların ortalamasıdır.</p>`:`Verdiğin genel rating: <strong>${baseline?.length===6?Math.round(baseline.reduce((sum,n)=>sum+Number(n),0)/6):'—'}</strong>`}</div><button class="btn lime" type="submit" id="v70SubmitBtn" ${permission.mode==='locked'||ownVotesReadError?'disabled':''}>${permission.mode==='match'?'Oyumu Güncelle (−3 / 0 / +3)':vote?'Puanlarımı düzelt':'Değerlendirmeyi kaydet'}</button></form><div class="mode-buttons"><button type="button" class="btn ghost" data-assess-prev ${weeklyIndex===0?'disabled aria-disabled="true" title="İlk oyuncudasın"':''}>← Önceki</button><button type="button" class="btn lime" data-assess-next ${weeklyIndex===everyone.length-1?'disabled aria-disabled="true" title="Son oyuncudasın"':''}>Sonraki →</button></div></div></div>`;
 }
+// v185: selections stay in memory until explicitly saved.
+const szfDeltaDrafts185=new Map();
+function szfDeltaKey185(form){return String(form.dataset.match)+':'+String(form.dataset.target);}
+function szfSelected185(form,key){
+ const draft=szfDeltaDrafts185.get(szfDeltaKey185(form));
+ if(draft && Object.prototype.hasOwnProperty.call(draft,key)) return Number(draft[key]);
+ const chosen=form.querySelector(`[data-v185-key="${key}"].selected`);
+ return chosen?Number(chosen.dataset.v185Value):0;
+}
+function onDelta185(ev){
+ const btn=ev.target.closest?.('[data-v185-key]');
+ if(!btn)return;
+ const form=btn.closest('#v70VoteForm');
+ if(!form||form.dataset.mode!=='match')return;
+ ev.preventDefault();ev.stopPropagation();
+ const key=btn.dataset.v185Key, value=Number(btn.dataset.v185Value);
+ const draftKey=szfDeltaKey185(form),draft=szfDeltaDrafts185.get(draftKey)||{};
+ draft[key]=value;szfDeltaDrafts185.set(draftKey,draft);
+ form.querySelectorAll('[data-v185-key]').forEach(b=>{
+  if(b.dataset.v185Key!==key)return;
+  const chosen=Number(b.dataset.v185Value)===value;
+  b.classList.toggle('selected',chosen);
+  b.setAttribute('aria-pressed',String(chosen));
+ });
+ updateMatchDeltaUI(form);
+}
+document.addEventListener('click',onDelta185,true);
 function updateMatchDeltaUI(form){
  if(!form||form.dataset.mode!=='match')return;
  const target=String(form.dataset.target);
@@ -550,8 +577,7 @@ function updateMatchDeltaUI(form){
  const player=currentCards().find(c=>String(c.id)===target);
  const list=player?getFeatures(player):features;
  const selected=list.map(([key],i)=>{
-  const choice=form.querySelector(`input[data-v184-delta="${key}"]:checked`);
-  const delta=Number(choice?.value??0);
+  const delta=szfSelected185(form,key);
   const next=Math.max(1,Math.min(99,Number(base[i])+delta));
   const node=form.querySelector(`[data-v153-result="${key}"]`);
   if(node)node.textContent=String(next);
@@ -640,7 +666,7 @@ async function submitV70Vote(e){
  if(permission.mode==='match'){
   if(String(permission.match?.id)!==String(form.dataset.match))return toast('Maç penceresi değişti; sayfayı yenile.',true);
   const card=currentCards().find(c=>String(c.id)===String(target));
-  const delta=(card?getFeatures(card):features).map(([key])=>Number(form.querySelector(`input[data-v184-delta="${key}"]:checked`)?.value));
+  const delta=(card?getFeatures(card):features).map(([key])=>szfSelected185(form,key));
   if(delta.length!==6||delta.some(x=>![-3,0,3].includes(x)))return toast('Geçersiz puan değişikliği.',true);
   scores=delta;
  }else{
@@ -659,6 +685,7 @@ async function submitV70Vote(e){
   const check=myMatchRatingChanges.find(x=>String(x.target_id)===String(target)&&String(x.match_id)===String(permission.match.id));
   if(!check||!Array.isArray(check.deltas)||!scores.every((n,i)=>Number(check.deltas[i])===n))return toast('Kaydedilen +3/−3 seçimi doğrulanamadı. Yenile ve tekrar kontrol et.',true);
  }
+ if(permission.mode==='match')szfDeltaDrafts185.delete(String(permission.match.id)+':'+String(target));
  weeklyIndex=Math.max(0,orderedAssessmentPlayers().findIndex(c=>String(c.id)===String(target)));
  render();toast('Değerlendirme kaydedildi ve kontrol edildi.');
 }

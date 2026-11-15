@@ -1,0 +1,1 @@
+SZF v185: +3/-3 secimi dogrudan butonlarla, 78 +3 = 81; ayni oyuncunun eski oyu guncellenir. SQL: onceki v181 fonksiyonlari yeterli. GitHub Pages icin tum dosyalari yukleyin.

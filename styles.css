@@ -682,3 +682,44 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-v200-mvp-prize{display:flex;flex-wrap:wrap;align-items:center;gap:6px 9px;padding:12px 14px;margin:12px 0 16px;border-radius:12px;border:1px solid rgba(190,239,111,.36);background:linear-gradient(110deg,rgba(183,237,98,.14),rgba(183,237,98,.035));color:#efffe1;line-height:1.55}
 .szf-v200-mvp-prize>span{font-size:11px;font-weight:900;letter-spacing:.09em;color:#ceff90}
 .szf-v200-mvp-prize b{font-weight:900;color:#ceff90}
+
+/* v201 SZF SPOR — traditional paper design */
+.szf-news-home{margin:18px 0 22px;border:1px solid #b3ab99;background:#f0eadd;color:#1a1915;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px #0002}
+.szf-news-home-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 14px;background:#191a18;color:#f5f0e4;font-size:12px;letter-spacing:.06em}
+.szf-news-home-heading span{font-size:10px;color:#e8dac2;font-weight:800}
+.szf-news-home-body{padding:16px 20px 19px}
+.szf-news-home-mast{text-align:center;font:900 clamp(30px,7vw,48px)/1 Georgia,serif;letter-spacing:-.05em;border-bottom:3px double #262626}
+.szf-news-home-mast b{color:#ab2727}
+.szf-news-home-kicker{color:#a32323;font-size:11px;font-weight:900;letter-spacing:.08em;margin:12px 0 4px}
+.szf-news-home h2{font:900 clamp(20px,4vw,29px)/1.12 Georgia,serif;color:#171717;margin:5px 0 10px}
+.szf-news-home p{color:#393a32;font-size:14px;margin:0 0 14px}
+.szf-news-history-link{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:13px;margin:12px 0;border-radius:12px;border:1px solid #b4a27c;background:#ebe4d3;color:#171716}
+.szf-news-history-link strong{font-weight:900;font-family:Georgia,serif}
+.szf-news-overlay{padding:12px}
+.szf-news-dialog{background:#151914;color:#eee;max-height:95vh;overflow:hidden;display:flex;flex-direction:column;width:min(740px,98vw);border-radius:14px;border:1px solid #516245;box-shadow:0 12px 45px #0008}
+.szf-news-toolbar,.szf-news-actions{padding:11px 15px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:#161c17}
+.szf-news-actions{justify-content:center}
+.szf-news-scroll{overflow:auto;padding:14px;background:#272e26}
+.szf-news-capture{width:100%;max-width:690px;margin:auto}
+.szf-news-paper{box-sizing:border-box;background:#f2ecdf;color:#1d1c18;padding:clamp(16px,4vw,29px);border:1px solid #c7bfae;box-shadow:0 5px 20px #0002;font-family:Georgia,'Times New Roman',serif}
+.szf-news-topline{display:flex;justify-content:space-between;gap:12px;font-family:Arial,sans-serif;font-weight:800;font-size:10px;letter-spacing:.04em;border-top:2px solid #262626;border-bottom:1px solid #262626;padding:6px 0}
+.szf-news-masthead{text-align:center;font:900 clamp(47px,11vw,90px)/1 Georgia,serif;letter-spacing:-.06em;color:#141414;padding:10px 0 0}
+.szf-news-masthead span{color:#ad2222}
+.szf-news-slogan{font:800 10px Arial,sans-serif;text-align:center;letter-spacing:.11em;border-bottom:4px double #181818;padding:0 0 11px}
+.szf-news-strip{background:#a62323;color:white;text-align:center;font:900 11px Arial,sans-serif;letter-spacing:.13em;padding:9px;margin:12px 0}
+.szf-news-paper h1{font:900 clamp(26px,6vw,47px)/1.03 Georgia,serif;text-align:center;margin:10px 0;color:#171717}
+.szf-news-deck{font-size:clamp(14px,2.8vw,18px);line-height:1.4;text-align:center;color:#37352e;margin:8px 0 16px}
+.szf-news-score{display:flex;align-items:center;justify-content:center;gap:clamp(10px,4vw,35px);border-top:3px solid #1d1c19;border-bottom:3px solid #1d1c19;padding:10px 0}
+.szf-news-score span{font:900 clamp(11px,2.6vw,16px) Arial,sans-serif;letter-spacing:.06em}
+.szf-news-score strong{font:900 clamp(32px,9vw,64px)/1 Georgia,serif;white-space:nowrap}
+.szf-news-score i{font-style:normal;color:#a32323}
+.szf-news-caption{text-align:center;color:#555043;font-size:12px;font-style:italic;padding:8px 0 12px}
+.szf-news-columns{display:grid;grid-template-columns:1fr 1fr;gap:18px;border-top:2px solid #222;padding-top:16px}
+.szf-news-columns section+section{border-left:1px solid #b5ac9b;padding-left:18px}
+.szf-news-kicker{font:900 11px Arial,sans-serif;letter-spacing:.05em;color:#9d2222;margin-bottom:5px}
+.szf-news-columns h2{font:bold clamp(16px,3.5vw,23px)/1.12 Georgia,serif;margin:4px 0 8px;color:#1a1a18}
+.szf-news-columns p{font-size:14px;line-height:1.5;margin:0;color:#33312b;overflow-wrap:anywhere}
+.szf-news-bottom{display:flex;gap:10px;align-items:center;border-top:2px solid #242424;margin-top:17px;padding:10px 0;font:12px Arial,sans-serif}
+.szf-news-bottom strong{white-space:nowrap;background:#a72323;color:white;padding:5px}
+.szf-news-paper footer{border-top:3px double #222;padding-top:8px;text-align:center;font:700 9px Arial,sans-serif;color:#595344;letter-spacing:.03em}
+@media(max-width:480px){.szf-news-columns{grid-template-columns:1fr;gap:14px}.szf-news-columns section+section{border-left:0;border-top:1px solid #b5ac9b;padding:14px 0 0}.szf-news-scroll{padding:8px}.szf-news-topline{font-size:8px}}

@@ -774,20 +774,38 @@ function pitchFormation(entries){
   if(primary==='DEF'&&role==='ORT'||primary==='FOR'&&role==='ORT'||primary==='ORT'&&(role==='DEF'||role==='FOR'))return 20;
   return 400;
  };
- // 7 kisilik en dusuk toplam mevki maliyeti, esitlikte ilk oyuncu sirasini koru.
- let best=null,bestCost=Infinity;
- const solve=(idx,used,team,cost)=>{
-  if(cost>=bestCost)return;
-  if(idx===slots.length){best=[...team];bestCost=cost;return;}
-  for(let i=0;i<entries.length;i++){
-   if(used.has(i))continue;
-   used.add(i);team.push({...entries[i],assigned_role:slots[idx]});
-   solve(idx+1,used,team,cost+roleCost(entries[i],slots[idx]));
-   team.pop();used.delete(i);
+ if(entries.length!==7)return entries.map((p,i)=>({...p,assigned_role:slots[i]||p.position}));
+ // v196: 7! kombinasyon yerine en fazla 128 maske x 7 aday;
+ // eşit puanda eskisi gibi kadrodaki ilk oyuncu tercih edilir.
+ const memo=new Map();
+ const bestCost=mask=>{
+  if(mask===127)return 0;
+  if(memo.has(mask))return memo.get(mask);
+  const slot=slots[mask.toString(2).replace(/0/g,'').length];
+  let best=Infinity;
+  for(let i=0;i<7;i++){
+   if(mask&(1<<i))continue;
+   const cost=roleCost(entries[i],slot)+bestCost(mask|(1<<i));
+   if(cost<best)best=cost;
   }
+  memo.set(mask,best);
+  return best;
  };
- if(entries.length===7)solve(0,new Set(),[],0);
- return best||entries.map((p,i)=>({...p,assigned_role:slots[i]||p.position}));
+ const result=[];
+ let mask=0;
+ for(let slotIndex=0;slotIndex<7;slotIndex++){
+  const target=bestCost(mask);
+  for(let i=0;i<7;i++){
+   if(mask&(1<<i))continue;
+   const next=mask|(1<<i);
+   if(roleCost(entries[i],slots[slotIndex])+bestCost(next)===target){
+    result.push({...entries[i],assigned_role:slots[slotIndex]});
+    mask=next;
+    break;
+   }
+  }
+ }
+ return result.length===7?result:entries.map((p,i)=>({...p,assigned_role:slots[i]||p.position}));
 }
 // Takim ortalamasi: gorunur kart ratingi, henuz 10 oy almayanlarda 70.
 function szfTeamPlayerRating(card){

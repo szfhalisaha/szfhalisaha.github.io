@@ -1,0 +1,5 @@
+SZF v181 – Değerlendirme arayüz düzeltmesi
+1. Site ZIP dosyalarını GitHub Pages köküne yükleyin.
+2. +3 / -3 sunucu fonksiyonu için v180 SQL gerekli; zaten çalıştırdıysanız YENİDEN çalıştırmayın.
+3. Eski maç puanları değiştirilmez.
+4. Uygulama testleri canlı Supabase bağlantısıyla doğrulanmalıdır.

@@ -588,3 +588,11 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 
 /* v172: first evaluation is a plain editable text field, never a spinner. */
 .v70-rating-field input.szf-score-entry{user-select:text!important;-webkit-user-select:text!important;-webkit-text-fill-color:inherit;opacity:1;pointer-events:auto!important}
+
+/* v181: direct accessible assessment controls, no hidden radio overlays */
+.v153-options{display:flex;gap:8px}
+.v181-delta-btn{flex:1;min-width:0;min-height:44px;touch-action:manipulation;cursor:pointer;border:1px solid #486250;border-radius:9px;background:#20332a;color:#e9f5ed;font-weight:800;font-size:14px}
+.v181-delta-btn.selected,.v181-delta-btn[aria-pressed="true"]{border-color:#bcfb75;background:#315126;color:#c3ff80;box-shadow:0 0 0 1px #bcfb75}
+.v181-delta-btn:focus-visible{outline:2px solid white;outline-offset:2px}
+#szf-live-rating #v181-old-average,#szf-live-rating #v153-new-average{font-size:24px;color:#bafa72;font-variant-numeric:tabular-nums}
+#szf-live-rating .v153-help{font-size:12px;font-weight:400;line-height:1.5;color:#c8dbc9}

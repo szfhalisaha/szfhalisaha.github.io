@@ -467,20 +467,50 @@ function renderAccount(){
 }
 
 
-// v154: Açık ortak maç güncellemeleri önce; sonra ilk kez değerlendirilecekler;
-// en sonda diğer kayıtlı oylar. Her sınıfta ad sırası sabit tutulur.
+// v180: Once son (tercihen halen acik) macin GERCEK katilimcilari.
+// Mac disindaki ilk-oy adaylari silinmez; listenin altina alinir.
+function assessmentFocusMatch(){
+ const now=Date.now();
+ const attended=leagueMatches.filter(m=>{
+  const t=new Date(m.match_date).getTime();
+  if(!Number.isFinite(t)||t>now)return false;
+  return weeklyPlayers.some(p=>String(p.match_id)===String(m.id)&&String(p.player_id)===String(user?.id))
+   || extras.guests.some(g=>String(g.match_id)===String(m.id)&&String(g.linked_user_id)===String(user?.id));
+ }).sort((a,b)=>new Date(b.match_date)-new Date(a.match_date));
+ return attended.find(m=>now>=new Date(m.match_date).getTime()+3600000&&now<new Date(m.match_date).getTime()+90000000)
+    || attended[0] || null;
+}
+function assessmentFocusRoster(){
+ const m=assessmentFocusMatch();
+ if(!m)return {match:null,ids:new Set()};
+ const ids=new Set([
+  ...weeklyPlayers.filter(p=>String(p.match_id)===String(m.id)).map(p=>String(p.player_id)),
+  ...extras.guests.filter(g=>String(g.match_id)===String(m.id)&&g.linked_user_id).map(g=>String(g.linked_user_id))
+ ]);
+ ids.delete(String(user?.id));
+ return {match:m,ids};
+}
 function orderedAssessmentPlayers(){
- const voteById=new Map(myVotes.filter(v=>Array.isArray(v.scores)&&v.scores.length===6).map(v=>[String(v.target_id),v]));
- const rank=(c)=>{
-  const vote=voteById.get(String(c.id));
-  if(!vote)return 1;
-  return assessmentPermission(c.id).mode==='match'?0:2;
+ const roster=assessmentFocusRoster();
+ const voted=new Set(myVotes.filter(v=>Array.isArray(v.scores)&&v.scores.length===6).map(v=>String(v.target_id)));
+ const rank=c=>{
+  const id=String(c.id),inMatch=roster.ids.has(id);
+  if(inMatch){
+   const permission=assessmentPermission(id);
+   return permission.mode==='match'?0:permission.mode==='first'?1:permission.mode==='free'?2:3;
+  }
+  return voted.has(id)?5:4;
  };
  return currentCards().filter(c=>String(c.id)!==String(user?.id)).sort((a,b)=>{
-  const ar=rank(a),br=rank(b);
-  if(ar!==br)return ar-br;
-  return String(a.display_name||'').localeCompare(String(b.display_name||''),'tr');
+  const r=rank(a)-rank(b);
+  return r||String(a.display_name||'').localeCompare(String(b.display_name||''),'tr');
  });
+}
+function focusAssessmentFirst(){
+ const list=orderedAssessmentPlayers();
+ const roster=assessmentFocusRoster();
+ const first=list.findIndex(c=>roster.ids.has(String(c.id)));
+ weeklyIndex=first>=0?first:Math.max(0,list.findIndex(p=>!myVotes.some(v=>String(v.target_id)===String(p.id))));
 }
 // Puan taslagi, ekran beklenmedik sekilde yeniden cizilse bile kaybolmaz.
 const assessmentDrafts=new Map();
@@ -490,6 +520,7 @@ function renderAssessment(){
  // Puan ozeti sorgusu basarisiz olsa bile ilk oy formunu engelleme.
 
  const everyone=orderedAssessmentPlayers();
+ const focus=assessmentFocusRoster();
  if(!everyone.length)return sectionHead('Oyuncu Değerlendir','Değerlendirilecek oyuncu bulunmuyor.');
  weeklyIndex=Math.max(0,Math.min(weeklyIndex,everyone.length-1));
  const c=everyone[weeklyIndex],f=getFeatures(c),vote=myVotes.find(v=>String(v.target_id)===String(c.id));
@@ -501,13 +532,39 @@ function renderAssessment(){
  const summaryWarning=!v70Ready?'<p class="notice">Puan özeti alınamadı. Bu durum ilk değerlendirme yapmana engel değildir.</p>':'';
  const fields=f.map(([key,short,label],i)=>{
   const old=Number((permission.mode==='match'?baseline:vote?.scores)?.[i]||0);
-  if(permission.mode==='match')return `<div class="v153-field"><div class="v153-field-head"><strong>${esc(label)}</strong><span class="v153-values">${old} → <b data-v153-result="${key}">${Math.max(1,Math.min(99,old+Number(savedDeltas?.[i]??0)))}</b></span></div><div class="v153-options" role="group" aria-label="${esc(label)} puan değişimi">${[-3,0,3].map(d=>`<label class="v153-choice"><input type="radio" name="v153-${key}" data-v70-delta="${key}" value="${d}" ${d===Number(savedDeltas?.[i]??0)?'checked':''}><span>${d>0?'+3':d===0?'0':'−3'}</span></label>`).join('')}</div></div>`;
+  if(permission.mode==='match')return `<div class="v153-field"><div class="v153-field-head"><strong>${esc(label)}</strong><span class="v153-values">${old} → <b data-v153-result="${key}">${Math.max(1,Math.min(99,old+Number(savedDeltas?.[i]??0)))}</b></span></div><div class="v153-options" role="group" aria-label="${esc(label)} puan değişimi">${[-3,0,3].map(d=>`<button type="button" class="v181-delta-btn ${d===Number(savedDeltas?.[i]??0)?'selected':''}" data-v181-delta="${key}" data-value="${d}" aria-pressed="${d===Number(savedDeltas?.[i]??0)}">${d>0?'+3':d===0?'0':'−3'}</button>`).join('')}</div></div>`;
   return `<label class="v70-rating-field"><span>${esc(label)}</span><input type="text" inputmode="numeric" pattern="[1-9][0-9]?" maxlength="2" autocomplete="off" autocorrect="off" spellcheck="false" class="text-input szf-score-entry" data-v70-score="${key}" required placeholder="Puan yaz (1–99)" ${permission.mode==='locked'?'disabled':''} value="${attrs(assessmentDrafts.get(String(c.id))?.[key]??vote?.scores?.[i]??'')}"></label>`;
  }).join('');
- const picker=`<select id="v70Target" class="text-input">${everyone.map((c,i)=>`<option value="${i}" ${i===weeklyIndex?'selected':''}>${esc(formatPersonName(c.display_name))}</option>`).join('')}</select>`;
- const explain=permission.mode==='first'?'İlk değerlendirme: maç şartı ve süre sınırı yok. Altı özelliğe 1–99 arasında puan ver. İlk 24 saat serbestçe düzeltebilirsin.':permission.mode==='free'?'İlk değerlendirmenden sonraki 24 saat içindesin: altı puanı 1–99 arasında serbestçe düzeltebilirsin.':permission.mode==='match'?`Ortak maç sonrası güncelleme: ${esc(matchDateText(permission.match.match_date))}. Her özellik için −3 / 0 / +3 seç. Oyunu aynı maç içinde değiştirmen artışı biriktirmez.`:'Önceki verdiğin puanlar aşağıda görüntülenir ancak şu anda değiştirilemez. Yeni değişiklik için ortak maç sonrası değerlendirme penceresi açılmalıdır.';
+ const picker=`${focus.match?`<p class="soft">⚽ Önce birlikte oynadığın maçın kadrosu: ${esc(matchDateText(focus.match.match_date))}. Diğer oyuncular listenin sonunda.</p>`:''}<select id="v70Target" class="text-input">${everyone.map((c,i)=>`<option value="${i}" ${i===weeklyIndex?'selected':''}>${focus.ids.has(String(c.id))?'⚽ ':''}${esc(formatPersonName(c.display_name))}${focus.ids.has(String(c.id))?' · Son maç':''}</option>`).join('')}</select>`;
+ const explain=permission.mode==='first'?'İlk değerlendirme: maç şartı ve süre sınırı yok. Altı özelliğe 1–99 arasında puan ver. İlk 24 saat serbestçe düzeltebilirsin.':permission.mode==='free'?'İlk oyunun üzerinden henüz 24 saat geçmedi: +3/−3 yerine 1–99 puanlarını serbestçe düzeltebilirsin. Bu süre dolduktan sonra ortak maç güncellemesi açılır.':permission.mode==='match'?`Ortak maç sonrası güncelleme: ${esc(matchDateText(permission.match.match_date))}. Her özellik için −3 / 0 / +3 seç. Oyunu aynı maç içinde değiştirmen artışı biriktirmez.`:'Önceki verdiğin puanlar aşağıda görüntülenir ancak şu anda değiştirilemez. Yeni değişiklik için ortak maç sonrası değerlendirme penceresi açılmalıdır.';
  return sectionHead('Oyuncu Değerlendir','İlk puanlama serbest; sonraki değişiklikler yalnızca ortak maçtan sonra −3 / 0 / +3.',picker)
- +`<div class="assessment-layout"><div class="assessment-preview"><p class="soft">${Number(c.v70_count||0)}/10 değerlendirme tamamlandı</p>${assessmentCardHTML(c)}</div><div class="assessment-panel"><h3>${esc(formatPersonName(c.display_name))}</h3><p class="soft">${explain}</p>${summaryWarning}${votesReadWarning}${permission.mode==='locked'&&vote?'<p class="notice">Şu anda bu oyuncunun puanlarını değiştiremezsin.</p>':''}<form id="v70VoteForm" data-target="${attrs(c.id)}" data-mode="${permission.mode}" data-match="${attrs(permission.match?.id||'')}"><div class="v70-rating-fields">${fields}</div><div id="szf-live-rating" class="szf-live-rating" aria-live="polite">${permission.mode==='match'?'Maç öncesi verdiğin genel rating':'Verdiğin genel rating'}: <strong>${baseline?.length===6?Math.round(baseline.reduce((sum,n)=>sum+Number(n),0)/6):'—'}</strong>${permission.mode==='match'?` <span class="v153-arrow">→</span> <strong id="v153-new-average">${Math.round((savedDeltas?baseline.map((v,i)=>Math.max(1,Math.min(99,Number(v)+Number(savedDeltas[i])))):vote.scores).reduce((sum,n)=>sum+Number(n),0)/6)}</strong><p class="v153-help">Bu değişiklikler yalnızca senin oyuna uygulanır. Oyuncunun gerçek kart rating'i herkesin oylarının ortalamasıdır; doğrudan 3 puan artmaz.</p>`:''}</div><button class="btn lime" type="submit" id="v70SubmitBtn" ${permission.mode==='locked'||ownVotesReadError||permission.mode==='match'&&!savedDeltas?'disabled':''}>${permission.mode==='match'?'Oyumu Güncelle (−3 / 0 / +3)':vote?'Puanlarımı düzelt':'Değerlendirmeyi kaydet'}</button></form><div class="mode-buttons"><button type="button" class="btn ghost" data-assess-prev ${weeklyIndex===0?'disabled aria-disabled="true" title="İlk oyuncudasın"':''}>← Önceki</button><button type="button" class="btn lime" data-assess-next ${weeklyIndex===everyone.length-1?'disabled aria-disabled="true" title="Son oyuncudasın"':''}>Sonraki →</button></div></div></div>`;
+ +`<div class="assessment-layout"><div class="assessment-preview"><p class="soft">${Number(c.v70_count||0)}/10 değerlendirme tamamlandı</p>${assessmentCardHTML(c)}</div><div class="assessment-panel"><h3>${esc(formatPersonName(c.display_name))}</h3><p class="soft">${explain}</p>${summaryWarning}${votesReadWarning}${permission.mode==='locked'&&vote?'<p class="notice">Şu anda bu oyuncunun puanlarını değiştiremezsin.</p>':''}<form id="v70VoteForm" data-target="${attrs(c.id)}" data-mode="${permission.mode}" data-match="${attrs(permission.match?.id||'')}"><div class="v70-rating-fields">${fields}</div><div id="szf-live-rating" class="szf-live-rating" aria-live="polite">${permission.mode==='match'?`<strong id="v181-old-average">${baseline?.length===6?Math.round(baseline.reduce((sum,n)=>sum+Number(n),0)/6):'—'}</strong> <span class="v153-arrow">→</span> <strong id="v153-new-average">${baseline?.length===6?Math.round(baseline.map((v,i)=>Math.max(1,Math.min(99,Number(v)+Number(savedDeltas?.[i]||0)))).reduce((sum,n)=>sum+n,0)/6):'—'}</strong><p class="v153-help">Bu değişiklik yalnızca senin verdiğin oyu etkiler; kartın genel rating'i tüm oyların ortalamasıdır.</p>`:`Verdiğin genel rating: <strong>${baseline?.length===6?Math.round(baseline.reduce((sum,n)=>sum+Number(n),0)/6):'—'}</strong>`}</div><button class="btn lime" type="submit" id="v70SubmitBtn" ${permission.mode==='locked'||ownVotesReadError||permission.mode==='match'&&!savedDeltas?'disabled':''}>${permission.mode==='match'?'Oyumu Güncelle (−3 / 0 / +3)':vote?'Puanlarımı düzelt':'Değerlendirmeyi kaydet'}</button></form><div class="mode-buttons"><button type="button" class="btn ghost" data-assess-prev ${weeklyIndex===0?'disabled aria-disabled="true" title="İlk oyuncudasın"':''}>← Önceki</button><button type="button" class="btn lime" data-assess-next ${weeklyIndex===everyone.length-1?'disabled aria-disabled="true" title="Son oyuncudasın"':''}>Sonraki →</button></div></div></div>`;
+}
+function updateMatchDeltaUI(form){
+ if(!form||form.dataset.mode!=='match')return;
+ const target=String(form.dataset.target);
+ const vote=myVotes.find(v=>String(v.target_id)===target);
+ const saved=myMatchRatingChanges.find(x=>String(x.target_id)===target&&String(x.match_id)===String(form.dataset.match));
+ const base=saved?.base_scores?.length===6?saved.base_scores:vote?.scores;
+ if(!Array.isArray(base)||base.length!==6)return;
+ const player=currentCards().find(c=>String(c.id)===target);
+ const list=player?getFeatures(player):features;
+ const selected=list.map(([key],i)=>{
+  const choice=form.querySelector(`.v181-delta-btn.selected[data-v181-delta="${key}"]`);
+  const delta=Number(choice?.dataset.value??0);
+  const next=Math.max(1,Math.min(99,Number(base[i])+delta));
+  const node=form.querySelector(`[data-v153-result="${key}"]`);
+  if(node)node.textContent=String(next);
+  return {delta,next};
+ });
+ const out=form.querySelector('#v153-new-average');
+ if(out)out.textContent=String(Math.round(selected.reduce((n,v)=>n+v.next,0)/6));
+ const btn=form.querySelector('#v70SubmitBtn');
+ if(btn){
+  const changed=selected.some(v=>v.delta!==0);
+  const unchanged=!!saved&&selected.every((v,i)=>v.delta===Number(saved.deltas?.[i]??0));
+  btn.disabled=!!ownVotesReadError||(!saved&&!changed)||unchanged;
+ }
 }
 function assessmentPermission(target){
  const vote=myVotes.find(v=>String(v.target_id)===String(target));
@@ -582,7 +639,8 @@ async function submitV70Vote(e){
  let scores;
  if(permission.mode==='match'){
   if(String(permission.match?.id)!==String(form.dataset.match))return toast('Maç penceresi değişti; sayfayı yenile.',true);
-  const delta=[...form.querySelectorAll('[data-v70-delta]:checked')].map(x=>Number(x.value));
+  const card=currentCards().find(c=>String(c.id)===String(target));
+  const delta=(card?getFeatures(card):features).map(([key])=>Number(form.querySelector(`.v181-delta-btn.selected[data-v181-delta="${key}"]`)?.dataset.value));
   if(delta.length!==6||delta.some(x=>![-3,0,3].includes(x)))return toast('Geçersiz puan değişikliği.',true);
   scores=delta;
  }else{
@@ -592,7 +650,17 @@ async function submitV70Vote(e){
  const btn=form.querySelector('[type=submit]');if(btn)btn.disabled=true;
  const {error}=await db.rpc('szf_submit_rating_v148',{p_target:target,p_scores:scores,p_match:permission.mode==='match'?permission.match.id:null});
  if(error){if(btn)btn.disabled=false;return toast('Puan kaydedilemedi (v177 SQL kurulumunu kontrol et): '+formatError(error),true);}
- assessmentDrafts.delete(String(target));await loadProfileAndCards();render();toast('Değerlendirme kaydedildi.');
+ assessmentDrafts.delete(String(target));
+ await loadProfileAndCards();
+ if(permission.mode==='match') {
+  const saved=await db.rpc('szf_my_match_rating_changes_v177');
+  if(saved.error)return toast('Puan kaydedildi ancak değişiklik geçmişi okunamadı: '+formatError(saved.error),true);
+  myMatchRatingChanges=saved.data||[];
+  const check=myMatchRatingChanges.find(x=>String(x.target_id)===String(target)&&String(x.match_id)===String(permission.match.id));
+  if(!check||!Array.isArray(check.deltas)||!scores.every((n,i)=>Number(check.deltas[i])===n))return toast('Kaydedilen +3/−3 seçimi doğrulanamadı. Yenile ve tekrar kontrol et.',true);
+ }
+ weeklyIndex=Math.max(0,orderedAssessmentPlayers().findIndex(c=>String(c.id)===String(target)));
+ render();toast('Değerlendirme kaydedildi ve kontrol edildi.');
 }
 
 function matchTitleInfo(raw){
@@ -1050,7 +1118,7 @@ function bindContent(){
   const saved=Array.isArray(existing?.scores)?existing.scores.map(Number):null;
   const mode=ratingForm.dataset.mode;
   const updateAverage=()=>{
-   if(mode==='match'){const deltas=[...ratingForm.querySelectorAll('[data-v70-delta]')].map(x=>Number(x.value));const btn=$('v70SubmitBtn');if(btn)btn.disabled=false;const out=$('szf-live-rating')?.querySelector('strong');if(out)out.textContent=deltas.map(n=>n>0?'+'+n:String(n)).join(' / ');return;}
+   if(mode==='match'){updateMatchDeltaUI(ratingForm);return;}
    if(mode==='locked'){const out=$('szf-live-rating')?.querySelector('strong');if(out)out.textContent=saved?.length===6?String(Math.round(saved.reduce((a,n)=>a+n,0)/6)):'—';return;}
    const inputs=[...ratingForm.querySelectorAll('[data-v70-score]')];
    const complete=inputs.length===6&&inputs.every(el=>el.value.trim()!==''&&Number.isInteger(Number(el.value))&&Number(el.value)>=1&&Number(el.value)<=99);
@@ -1185,27 +1253,17 @@ function bindContent(){
  document.querySelectorAll('[data-red]').forEach(el=>el.addEventListener('change',()=>{el.checked?manualRed.add(el.dataset.red):manualRed.delete(el.dataset.red);render()}));
  document.querySelector('[data-assess-prev]')?.addEventListener('click',()=>saveAssessmentBeforeNavigation(Math.max(0,weeklyIndex-1)));
  document.querySelector('[data-assess-next]')?.addEventListener('click',()=>saveAssessmentBeforeNavigation(Math.min(weeklyIndex+1,orderedAssessmentPlayers().length-1)));
- document.querySelectorAll('.v153-choice input').forEach(input=>input.addEventListener('change',()=>{
-  const form=$('v70VoteForm');if(!form||form.dataset.mode!=='match')return;
-  const vote=myVotes.find(v=>String(v.target_id)===String(form.dataset.target));
-  const saved=myMatchRatingChanges.find(x=>String(x.target_id)===String(form.dataset.target)&&String(x.match_id)===String(form.dataset.match));
-  const base=saved?.base_scores?.length===6?saved.base_scores:vote?.scores;
-  if(!Array.isArray(base)||base.length!==6)return;
-  const player=currentCards().find(c=>String(c.id)===String(form.dataset.target));
-  const featuresList=player?getFeatures(player):features;
-  let changed=false;let total=0;
-  featuresList.forEach(([key],i)=>{
-    const delta=Number(form.querySelector(`input[data-v70-delta="${key}"]:checked`)?.value||0);
-    const next=Math.max(1,Math.min(99,Number(base[i])+delta));
-    const field=form.querySelector(`[data-v153-result="${key}"]`);
-    if(field)field.textContent=String(next);
-    total+=next;if(delta!==0)changed=true;
+ document.querySelectorAll('.v181-delta-btn').forEach(button=>button.addEventListener('click',()=>{
+  const form=button.closest('#v70VoteForm');
+  if(!form||form.dataset.mode!=='match')return;
+  const key=button.dataset.v181Delta;
+  form.querySelectorAll('.v181-delta-btn').forEach(peer=>{
+    if(peer.dataset.v181Delta!==key)return;
+    const active=peer===button;
+    peer.classList.toggle('selected',active);
+    peer.setAttribute('aria-pressed',String(active));
   });
-  const out=$('v153-new-average');if(out)out.textContent=String(Math.round(total/6));
-  const btn=$('v70SubmitBtn');if(btn){
-    const selected=featuresList.map(([key])=>Number(form.querySelector(`input[data-v70-delta="${key}"]:checked`)?.value||0));
-    btn.disabled=!changed && !saved || !!saved && selected.every((n,i)=>n===Number(saved.deltas[i]));
-  }
+  updateMatchDeltaUI(form);
  }));
  document.querySelectorAll('[data-assessment-select]').forEach(el=>el.addEventListener('click',()=>{weeklyIndex=Number(el.dataset.assessmentSelect);render()}));
  document.querySelectorAll('[data-assess]').forEach(el=>el.addEventListener('click',()=>submitAssessment(el.dataset.match,el.dataset.player,el.dataset.assess,Number(el.dataset.delta))));
@@ -1808,7 +1866,7 @@ async function initialize(){
 
  // Render public shell before any external authentication/network requests.
  try{render()}catch(e){console.error('Initial render failed',e)}
- $('nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(!b)return;view=b.dataset.view==='teams'?'matches':b.dataset.view;if(view==='assessment'){const list=orderedAssessmentPlayers();const first=list.findIndex(p=>!myVotes.some(v=>String(v.target_id)===String(p.id)));if(first>=0)weeklyIndex=first;}selectedMatchTab='upcoming';selectedPlayer=null;render()});
+ $('nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(!b)return;view=b.dataset.view==='teams'?'matches':b.dataset.view;if(view==='assessment'){focusAssessmentFirst();}selectedMatchTab='upcoming';selectedPlayer=null;render()});
  $('refreshBtn').addEventListener('click',refresh);
   $('topProfileBtn').addEventListener('click',()=>{if(!user)return;view='account';selectedPlayer=null;render();window.scrollTo({top:0,behavior:'smooth'})});
  $('topAuthBtn').addEventListener('click',()=>user?signOut():openAuth());

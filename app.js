@@ -621,9 +621,18 @@ function renderHome(){
  <h2 class="home-shortcuts-title">Hızlı erişim</h2><div class="home-shortcuts"><button data-home-nav="players">◈ <strong>Oyuncu Kartları</strong><span>Tüm oyuncuları gör</span></button><button data-home-nav="matches">⚽ <strong>Maçlar</strong><span>Katıl veya oyuncu ekle</span></button><button data-home-nav="ranking">▥ <strong>Sıralama</strong><span>Oyuncu puanlarını incele</span></button></div>
  <div class="home-summary" aria-label="Genel sayılar"><div><small>OYUNCU KARTLARI</small><strong>${playerCount}</strong><span>Kayıtlı oyuncu</span></div><div><small>MAÇLAR</small><strong>${leagueMatches.length}</strong><span>Toplam maç</span></div></div></section>`;
 }
+/* v215: reversible premium player-card trial, stored only in this browser. */
+let szfPremiumCards=true;
+try{szfPremiumCards=localStorage.getItem('szf-card-v2')!=='off'}catch(_){}
+function szfSetPremiumCards(enabled){
+ szfPremiumCards=!!enabled;
+ try{localStorage.setItem('szf-card-v2',enabled?'on':'off')}catch(_){}
+ document.body.classList.toggle('szf-card-v2',szfPremiumCards);
+ render();
+}
 function renderPlayers(){
  const arr=sortPlayerCards(currentCards().filter(c=>c.display_name.toLocaleLowerCase('tr').includes(search.toLocaleLowerCase('tr')) || (posName[c.position]||'').toLocaleLowerCase('tr').includes(search.toLocaleLowerCase('tr'))));
- return sectionHead('Oyuncu kartları','EA FC tarzı kartlar · Bronz / Gümüş / Altın / ICON',`<div class="control-row"><input id="playerSearch" placeholder="Oyuncu ara..." value="${attrs(search)}" autocomplete="off"/>${sortMenu("player",playerSort)}</div>`)
+ return sectionHead('Oyuncu kartları','EA FC tarzı kartlar · Bronz / Gümüş / Altın / ICON',`<div class="control-row"><input id="playerSearch" placeholder="Oyuncu ara..." value="${attrs(search)}" autocomplete="off"/>${sortMenu("player",playerSort)}<button type="button" class="btn small ghost szf-card-design-switch" data-card-design-toggle aria-pressed="${szfPremiumCards}">${szfPremiumCards?'↶ Eski tasarıma dön':'✦ Premium tasarımı dene'}</button></div>`)
  + (!configured?`<p class="soft">Bunlar sadece tasarımı göstermek için hazırlanmış <b>örnek kartlardır</b>. Supabase bağlanınca gerçek oyuncular listelenir.</p>`:'')
  + (configured&&!user?`<div class="empty"><b>Oyuncu kartlarını görmek için giriş yap.</b><br>E-posta adresin ve şifrenle giriş yap.<p><button class="btn lime" data-login="1">Giriş yap / Kayıt ol</button></p></div>`:
  arr.length?`<div class="players-grid">${arr.map(c=>`<div class="player-tile">${cardHTML(c,true)}<div class="tile-under"><strong>${esc(formatPersonName(c.display_name))}</strong><button data-player="${attrs(c.id)}">Kartı aç →</button></div></div>`).join('')}</div>`:
@@ -1591,6 +1600,7 @@ function renderLeague(){
 }
 
 function render(){
+ document.body.classList.toggle('szf-card-v2',szfPremiumCards);
  // A data refresh must not destroy an active score entry field mid-keystroke.
  const oldFocus=view==='assessment'?document.activeElement:null;
  const scoreFocus=oldFocus?.matches?.('[data-v70-score]')?{
@@ -1615,6 +1625,7 @@ function render(){
  fillInlineSharePreviews();
 }
 function bindContent(){
+ document.querySelector('[data-card-design-toggle]')?.addEventListener('click',()=>szfSetPremiumCards(!szfPremiumCards));
  document.getElementById('szf-delete-account')?.addEventListener('click',async()=>{
   if(!adminInfo||view!=='account')return toast('Bu işlem yalnızca Hesabım bölümündeki yöneticilere açıktır.',true);
   const id=document.getElementById('szf-delete-account-id')?.value;

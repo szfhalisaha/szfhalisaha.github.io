@@ -424,46 +424,100 @@ function szfNewspaperData(match){
  const sampleNames=[...redPlayers,...whitePlayers].map(p=>p.name);
  const pickedName=sampleNames.length?sampleNames[hash%sampleNames.length]:winners[0];
  const caps=name=>String(name||'').toLocaleUpperCase('tr-TR');
+ // v213: Skor ve gol adedi aşağıdaki tabloda zaten var. Üst haberde sayı tekrarlamak yerine
+ // kısa, oyuncu odaklı, mizahi spor yazarlığı kullan.
+ const editorial=(options)=>options[(hash>>>5)%options.length];
  let headline=chosen.headline,summary=chosen.summary;
- if(chosen.type==='savunma'&&defensiveHero){
+ if(chosen.type==='golcu'&&topScorers.length){
+  const name=topScorers[0][0];
+  headline=editorial([caps(name)+' RAKİBİN EZBERİNİ BOZDU!','SAVUNMANIN BAŞ AĞRISI: '+caps(name),'BU HAFTA '+caps(name)+' İÇİN AYRI ÖNLEM GEREKİYORDU!']);
+  summary=editorial([
+   name+' gol yollarını iyi biliyor; karşı savunmanın gelecek hafta toplantı gündemi belli.',
+   'Rakip savunmanın başını ağrıtan isim '+name+'. Bir dahaki maçta özel markaj konuşulursa şaşırmayın.',
+   name+' bugün sahada iz bıraktı. Rakipler önümüzdeki karşılaşma için yeni plan arayabilir.'
+  ]);
+ }else if(chosen.type==='savunma'&&defensiveHero){
   const name=defensiveHero.name;
-  headline=defensiveHero.position==='KL'
-   ?caps(name)+' DUVARI: RAKİP '+Math.min(red,white)+' GOLDE KALDI!'
-   :caps(name)+' VE ARKADAŞLARI SAVUNMADA NÖBETTE!';
-  summary=defensiveHero.position==='KL'
-   ?name+' kalede, '+winningTeam+' savunması sahadaydı. '+red+'-'+white+' biten maçta rakip '+Math.min(red,white)+' gol bulabildi.'
-   :name+' ve '+winningTeam+' takım arkadaşları rakibe '+Math.min(red,white)+' gol izni verdi. Skor '+red+'-'+white+'.';
- }else if(chosen.type==='hucum'&&attackingHero){
-  headline=caps(attackingHero[0])+' VİTES YÜKSELTTİ, '+winningTeam+' GOLLE COŞTU!';
-  summary=attackingHero[0]+' '+attackingHero[1]+' gol kaydetti. '+winningTeam+' takımının '+Math.max(red,white)+' gollü hücum gösterisi '+red+'-'+white+' sonuçlandı.';
- }else if(chosen.type==='kaybeden'&&losingHero){
-  headline=caps(losingHero[0])+' ATTI ATTI, GALİBİYET GELMEDİ!';
-  summary=losingHero[0]+' '+losingHero[1]+' gol buldu ama takımı '+red+'-'+white+' kaybetti. Soyunma odasında skora bakıp iç çekme serbest.';
+  headline=editorial([caps(name)+' VE ARKADAŞLARI KALEYİ KOLAY AÇTIRMADI!','SAVUNMADA NÖBETÇİ: '+caps(name),'ARKA TARAFTA '+caps(name)+' FAKTÖRÜ!']);
+  summary=editorial([
+   name+' ve savunma arkadaşları rakibin işini zorlaştırdı. Hücumcuların kapıyı çalmadan girmesi mümkün olmadı.',
+   'Savunmada '+name+' öne çıktı; rakip atakların işi bu hafta kolay değildi.',
+   name+' için sessiz sedasız görev gecesi. Savunma başarılı olunca manşeti hep golcüler mi alacak?'
+  ]);
+ }else if(chosen.type==='hucum'){
+  const name=attackingHero?.[0]||winName;
+  headline=editorial([caps(name)+' ÖNDE, RAKİP SAVUNMA DÜŞÜNCEDE!','HÜCUM HATTININ İŞTAHI AÇILDI: '+caps(name),'GOL YOLLARINDA '+caps(name)+' ETKİSİ']);
+  summary=editorial([
+   name+' ve takım arkadaşları hücumda tempoyu artırdı. Rakibin savunma planları bir sonraki maç için yeniden masaya yatırılabilir.',
+   'Hücumun bu kadar işlediği gecede '+name+' da gündemde. Karşı takımın savunma toplantısı uzayabilir.'
+  ]);
+ }else if(chosen.type==='kaybeden'){
+  const name=losingHero?.[0]||loseName;
+  headline=caps(name)+' UĞRAŞTI, TAKIM YİNE DE KAYBETTİ!';
+  summary=editorial([
+   name+' tarafında hücum çabası vardı ama tabelanın son sözü başka oldu. Teselli konuşması isteyenler sıraya girebilir.',
+   'Hücumda '+name+' dikkat çekti, savunma ise aynı mutlulukta değil. Bir sonraki maç için toplantı şart gibi.'
+  ]);
+ }else if(chosen.type==='gol-yagmuru'){
+  headline=caps(pickedName)+' BU GOL YAĞMURUNDAN KAÇAMADI!';
+  summary=editorial([
+   'Kale ağları dinlenmeye fırsat bulamadı. '+pickedName+' da sahadaydı; savunmaların hafta içi düşünmesi gereken çok şey var.',
+   'Bu kadar hareketli gecede '+pickedName+' da işin içindeydi. Gol yağmuru için şemsiye henüz icat edilmedi.'
+  ]);
+ }else if(chosen.type==='kisir'){
+  headline=caps(pickedName)+' DA SAHADAYDI, GOLLER İZİNDEYDİ!';
+  summary=editorial([
+   'Fileler fazla yorulmadı. '+pickedName+' ve arkadaşları için hücum planı gelecek haftanın ev ödevi olabilir.',
+   'Skor tabelası sakin, saha sohbeti hareketli. '+pickedName+' için gol orucunu bozacak yeni fırsatlar sırada.'
+  ]);
+ }else if(chosen.type==='fark'){
+  headline=caps(winName)+' VE ARKADAŞLARI FRENİ UNUTTU!';
+  summary=editorial([
+   winName+' kazanan taraftaydı. Karşı takımın dönüş yolunda taktik tahtasını yeniden açması şaşırtıcı olmaz.',
+   'Fark açılınca rövanşın konusu da belli oldu. '+winName+' ve ekip arkadaşları bir sonraki maçı şimdiden bekliyor.'
+  ]);
+ }else if(chosen.type==='beraberlik'){
+  const a=redPlayers[0]?.name||winners[0],b=whitePlayers[0]?.name||winners[0];
+  headline=caps(a)+' İLE '+caps(b)+' YENİŞEMEDİ!';
+  summary=editorial([
+   'İki taraf da son sözü söyleyemedi. '+a+' ile '+b+' arasındaki saha hesabı gelecek maça kaldı.',
+   'Kazanan çıkmadı; '+a+' ve '+b+' için rövanş sohbeti şimdiden başladı.'
+  ]);
  }else if(chosen.type==='mizahi-kulis'&&losingPlayers.length){
-  headline=caps(loseName)+' VE EKİBİNDE TAKTİK ANLAŞMAZLIK MI VAR?';
-  summary=loseName+' ve takım arkadaşları '+red+'-'+white+' kaybetti. Bu sadece skorun ardından yazılmış mizahi bir gazete sorusu; gerçek anlaşmazlık iddiası değil.';
- }else if(['gol-yagmuru','kisir','fark','beraberlik','hucum','kaybeden','mac'].includes(chosen.type)){
-  if(chosen.type==='gol-yagmuru'){
-   headline=caps(pickedName)+' BU GOL YAĞMURUNDA ISLANDI!';
-   summary=pickedName+' da sahadaydı; toplam '+total+' gol atıldı. Maç '+red+'-'+white+' tamamlandı, savunmaların işi zordu.';
-  }else if(chosen.type==='kisir'){
-   headline=caps(pickedName)+' DA SAHADAYDI, GOLLER İZİNDEYDİ!';
-   summary=pickedName+' ve arkadaşlarının maçında toplam '+total+' gol çıktı. '+red+'-'+white+' biten karşılaşmada hücumculara haftalık hatırlatma gerekebilir.';
-  }else if(chosen.type==='fark'){
-   headline=caps(winName)+' VE ARKADAŞLARI FARKI AÇTI!';
-   summary=winName+' '+winningTeam+' takımındaydı. Maç '+red+'-'+white+' tamamlandı, '+difference+' gol fark oluştu.';
-  }else if(chosen.type==='beraberlik'){
-   const a=redPlayers[0]?.name||winners[0],b=whitePlayers[0]?.name||winners[0];
-   headline=caps(a)+' İLE '+caps(b)+' YENİŞEMEDİ!';
-   summary=a+' ve '+b+' karşı takımlardaydı. '+red+'-'+white+' biten maçta taraflar galibiyeti paylaşamadı.';
-  }else{
-   headline=caps(pickedName)+' SAHNEDE, '+red+'-'+white+' TABELADA!';
-   summary=pickedName+' bu maçın kadrosundaydı. '+chosen.summary;
+  headline=caps(loseName)+' VE EKİBİNDE TAKTİK KRİZ Mİ VAR?';
+  summary='Yenilginin ardından '+loseName+' ve arkadaşları için taktik soruları havada uçuşuyor. Elbette bu yalnızca gazetenin mizahi yakıştırması.';
+ }else if(chosen.type==='asist'){
+  // Gerçekten en az iki kez birlikte gol üreten ikililer için haber zaten doğrulanmış.
+  const pair=pairs[0]?.[0]?.split('|')||[];
+  if(pair.length===2){
+   headline=editorial(['BU İKİLİ GÖZÜ KAPALI ANLAŞIYOR: '+caps(pair[0])+' & '+caps(pair[1]),caps(pair[0])+' ADRESİ BİLİYOR, '+caps(pair[1])+' NOKTALIYOR!']);
+   summary=pair[0]+' ile '+pair[1]+' arasındaki uyum rakip savunmanın yeni meselesi. Bir dahaki sefere pas kanalı kapatılabilecek mi?';
   }
+ }else if(chosen.type==='galibiyet-serisi'&&winStreak){
+  const name=getName(winStreak.id);
+  headline=caps(name)+' KAZANMAYI ALIŞKANLIK YAPTI!';
+  summary='Galibiyet serisini sürdüren '+name+' için en zor soru artık şu: Bu seriyi kim bitirecek?';
+ }else if(chosen.type==='maglubiyet-serisi'&&lossStreak){
+  const name=getName(lossStreak.id);
+  headline=caps(name)+' İÇİN ÇIKIŞ KAPISI ARANIYOR!';
+  summary='Üst üste gelen yenilgilerin ardından '+name+' için kayıp galibiyet ilanı mı verilecek? Spor servisinin merakı büyük.';
+ }else if(chosen.type==='mac'){
+  headline=caps(pickedName)+' BU HAFTANIN SAHA GÜNDEMİNDE!';
+  summary='Saha kapandı ama '+pickedName+' ve arkadaşlarının muhabbeti daha bitmemiş olabilir. Rövanşa kadar tartışacak konu bol.';
+ }else if(chosen.type==='rekabet'&&dominant){
+  const leader=getName(dominant.leader),lagger=getName(dominant.lagger);
+  summary=leader+' bu eşleşmede üstünlüğünü sürdürüyor. '+lagger+' için rövanş, sıradan bir maç olmaktan çıktı.';
+ }else if(chosen.type==='arkadaslik'&&duo){
+  const a=getName(duo.a),b=getName(duo.b);
+  summary=a+' ile '+b+' aynı takıma gelince işler yolunda gidiyor. Rakipler eşleşme listesine yeniden bakabilir.';
+ }else if(chosen.type==='mvp'){
+  summary=winners.join(' ile ')+' oylamada zirveyi paylaştı. Tek ödüle iki aday çıkınca gazete de manşeti bölüştü.';
  }
- // Oyuncu adı içermeyen manşet kalmasın; MVP ve golcü gibi özel isimli başlıklar korunur.
+ // Bir maçta skor ve gol sayısı zaten görünüyor: haberin altına bir kez daha aynı rakamları yazma.
+ // Diğer haber türleri için de skoru yineleyen kalıpları temizle.
+ summary=String(summary).replace(new RegExp('\\b'+red+'\\s*[-–]\\s*'+white+'\\b','g'),'maç').replace(/\s+/g,' ').trim();
  const mentioned=sampleNames.concat(winners).some(n=>n&&headline.toLocaleLowerCase('tr-TR').includes(n.toLocaleLowerCase('tr-TR')));
- if(!mentioned){headline=caps(pickedName)+': '+headline;summary=pickedName+' da maçın kadrosundaydı. '+summary;}
+ if(!mentioned)headline=caps(pickedName)+': '+headline;
  return {match,winners,headline,summary,topScorers,red,white,winningTeam,votes:Number(mv.vote_count||0)};
 }
 function szfNewspaperMarkup(id){

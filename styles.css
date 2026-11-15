@@ -723,3 +723,31 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-news-bottom strong{white-space:nowrap;background:#a72323;color:white;padding:5px}
 .szf-news-paper footer{border-top:3px double #222;padding-top:8px;text-align:center;font:700 9px Arial,sans-serif;color:#595344;letter-spacing:.03em}
 @media(max-width:480px){.szf-news-columns{grid-template-columns:1fr;gap:14px}.szf-news-columns section+section{border-left:0;border-top:1px solid #b5ac9b;padding:14px 0 0}.szf-news-scroll{padding:8px}.szf-news-topline{font-size:8px}}
+
+
+/* v213 - iPhone/mobile viewport containment. Keep horizontal scrolling
+   inside tabular widgets and the navigation, never on the whole page. */
+@media (max-width:720px){
+  html,body{width:100%;max-width:100%;overflow-x:clip}
+  .shell{display:block;width:100%;max-width:100%;min-width:0}
+  .sidebar{box-sizing:border-box;width:100%;max-width:100%;min-width:0;overflow:hidden;display:flex;flex-wrap:nowrap;gap:8px;padding:9px 10px}
+  .sidebar .brand{flex:0 0 auto;min-width:0}
+  .navigation{display:flex;flex:1 1 auto;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:3px}
+  .navigation::-webkit-scrollbar{display:none}
+  .navigation .nav-link{flex:0 0 38px;min-width:38px;min-height:42px;padding:8px;justify-content:center}
+  .main{box-sizing:border-box;width:100%;min-width:0;max-width:100%;padding:0 12px 25px;margin:0}
+  #content,#content > *, .main > *{min-width:0;max-width:100%}
+  .topbar{height:auto;min-height:65px;display:flex;flex-wrap:wrap;gap:8px;padding:10px 0;align-items:center}
+  .crumb{flex:1 1 100%;min-width:0}
+  .top-right{flex:1 1 100%;min-width:0;max-width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:6px}
+  .top-right .top-profile{max-width:min(155px,100%)}
+  .top-right .top-credit{max-width:100%;white-space:normal}
+  .hero,.home-welcome,.szf-home-mvp,.match-panel,.assessment-panel{max-width:100%;min-width:0}
+  .home-welcome{flex-wrap:wrap}
+  .table-wrap,.szf-win-table{max-width:100%;overflow-x:auto}
+}
+@media (max-width:420px){
+  .sidebar{padding:8px}
+  .navigation .nav-link{flex-basis:36px;min-width:36px;padding:7px}
+  .top-right .btn.small{padding:8px 10px}
+}

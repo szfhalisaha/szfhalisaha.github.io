@@ -1,0 +1,3 @@
+SZF v183 — Gol ve asistler tek listede.
+Asistler ayrı sütunu kaldırıldı; asist oyuncuları golcünün yanında parantezde kalır. Kendi kalesine goller ayrıca korunur.
+Site dosyalarını GitHub Pages deposunun köküne yükleyin. Bu sürüm için SQL gerekmez.

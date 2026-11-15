@@ -751,3 +751,65 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
   .navigation .nav-link{flex-basis:36px;min-width:36px;padding:7px}
   .top-right .btn.small{padding:8px 10px}
 }
+
+/* v215 — reversible premium trial. Leave .fut-photo and img untouched:
+   all existing profile photo crop/scale/positions are preserved. */
+.szf-card-v2 .fut-card{
+ --szf-metal:#f7d77b;--szf-glow:#edc66b;
+ background:
+  radial-gradient(ellipse at 75% 8%,rgba(255,255,255,.45),transparent 46%),
+  linear-gradient(127deg,#fff4ba 0%,#eac96d 24%,#c99635 53%,#f3d982 80%,#d6a44b 100%);
+ border:2px solid #fce5a2;
+ box-shadow:0 11px 27px #0009,0 0 0 1px #5c3f1190,inset 0 0 0 3px #fff5,inset 0 18px 28px #fff4,inset 0 -20px 32px #8d5b1438;
+ transition:transform .18s ease,box-shadow .18s ease;
+}
+.szf-card-v2 .fut-card.tier-bronze{
+ --szf-metal:#f7cdb1;--szf-glow:#bf7954;
+ background:radial-gradient(ellipse at 80% 7%,#fff6,transparent 45%),linear-gradient(135deg,#ffdfc6,#c48b6b 48%,#a96142 65%,#eeb593);
+ border-color:#ffd5b5;
+}
+.szf-card-v2 .fut-card.tier-silver{
+ --szf-metal:#f2f7ff;--szf-glow:#aab7c5;
+ background:radial-gradient(ellipse at 80% 5%,#fff9,transparent 43%),linear-gradient(138deg,#fff,#c1ccd7 38%,#8d9cae 64%,#e6edf5);
+ border-color:#e9f5ff;
+}
+.szf-card-v2 .fut-card.tier-icon{
+ --szf-metal:#fff1b9;--szf-glow:#e5c96d;
+ background:radial-gradient(ellipse at 80% 10%,#ffffffbb,transparent 40%),linear-gradient(142deg,#fffefa,#e7dfc7 40%,#fff9e7 68%,#dac28b);
+ border-color:#efcd69;
+}
+.szf-card-v2 .fut-card:hover{
+ transform:translateY(-5px);
+ box-shadow:0 18px 36px #000a,0 0 0 1px var(--szf-glow),0 0 18px #f8e1a14d,inset 0 0 0 3px #fff7;
+}
+.szf-card-v2 .fut-head{color:#17201b;text-shadow:0 1px 0 #fff8,0 2px 5px #fff8}
+.szf-card-v2 .fut-overall{font-weight:1000;letter-spacing:-.075em}
+.szf-card-v2 .fut-pos{letter-spacing:.04em}
+.szf-card-v2 .fut-name{
+ color:#fff9e8;
+ background:linear-gradient(90deg,#091b15 0%,#173629 48%,#091b15 100%);
+ border:1px solid #f4d584a8;
+ border-radius:7px;
+ box-shadow:0 2px 8px #0006,inset 0 1px 0 #ffffff22;
+ text-shadow:0 1px 2px #0009;
+ letter-spacing:.015em;
+ padding:6px 4px 4px;
+}
+.szf-card-v2 .fut-stats{
+ border-top:1px solid #7b582d88;
+ background:linear-gradient(180deg,#fff4d31c,transparent);
+ border-radius:0 0 9px 9px;
+}
+.szf-card-v2 .fut-attr{border-right:1px solid #4c381c36}
+.szf-card-v2 .fut-attr:last-child{border-right:0}
+.szf-card-v2 .fut-attr span{color:#42351e;font-weight:950}
+.szf-card-v2 .fut-attr b{color:#141d17;font-weight:1000;text-shadow:0 1px 0 #fff9}
+.szf-card-v2 .tile-under strong{color:#dbe8d7}
+.szf-card-design-switch{white-space:nowrap;border-color:#b9f46d!important;color:#dbffb8!important;font-weight:800!important}
+.szf-card-design-switch:hover{background:#1a4029!important}
+@media(max-width:720px){
+ .szf-card-v2 .fut-name{padding:4px 2px 2px;border-radius:5px;letter-spacing:0}
+ .szf-card-v2 .fut-attr span{font-size:8px}
+ .szf-card-v2 .fut-attr b{font-size:13px}
+ .szf-card-design-switch{font-size:11px}
+}

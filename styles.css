@@ -645,3 +645,13 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-v190-empty{font-size:12px;color:#9bb4a3}
 .szf-v190-footer{margin-top:17px;text-align:center;font-size:10px;font-weight:850;letter-spacing:.08em;color:#bad49e}
 @media(max-width:480px){.szf-v190-poster{padding:16px 9px 13px;border-radius:13px}.szf-v190-teams{gap:6px}.szf-v190-team{padding:0 6px 9px}.szf-v190-team-title{margin:0 -6px 8px;padding:10px 6px}.szf-v190-team ol{min-height:165px}.szf-v190-score>span{min-height:64px}}
+
+/* v191: match goal management, side by side without changing edit actions */
+.szf-v191-goal-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start;margin:12px 0 22px}
+.szf-v191-goal-columns>section{min-width:0;overflow:hidden;background:#102b20;border:1px solid #355744;border-radius:13px;padding:11px}
+.szf-v191-goal-columns h5{margin:0 0 10px;padding:9px 8px;border-radius:8px;font-size:13px;font-weight:900}
+.szf-v191-goal-red h5{background:#692635;color:#fff}
+.szf-v191-goal-white h5{background:#dce8df;color:#14291a}
+.szf-v191-event-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 2px;border-bottom:1px solid #ffffff20;font-size:12px;line-height:1.4}
+.szf-v191-event-row span{min-width:0;overflow-wrap:anywhere}.szf-v191-event-row small{color:#a6bea9;font-size:11px}.szf-v191-event-row button{flex-shrink:0}
+@media(max-width:480px){.szf-v191-goal-columns{gap:6px}.szf-v191-goal-columns>section{padding:6px}.szf-v191-event-row{gap:3px;flex-wrap:wrap}.szf-v191-goal-columns h5{font-size:11px;padding:7px 4px}}

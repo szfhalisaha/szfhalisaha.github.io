@@ -239,12 +239,43 @@ function szfNewspaperData(match){
  const topScorers=[...scorers].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'tr'));
  const red=Number(match.red_score),white=Number(match.white_score);
  const winningTeam=red>white?'KIRMIZI':white>red?'BEYAZ':'BERABERLİK';
- const headline=winners.length>1?'ZİRVEYE ORTAK OLDULAR!':[
-  winners[0].toLocaleUpperCase('tr-TR')+' MANŞETLERİ KAPATTI!',
-  'SAHADA SON SÖZ '+winners[0].toLocaleUpperCase('tr-TR')+'’UN!',
-  winners[0].toLocaleUpperCase('tr-TR')+' GÜNDEMİ BELİRLEDİ!'
- ][Math.abs([...String(match.id)].reduce((a,c)=>a+c.charCodeAt(0),0))%3];
- const summary=winners.length>1?'Maçın Adamı oylamasında eşitlik çıktı. Spor servisinde tek manşet yetmedi.':winners[0]+' Maçın Adamı seçildi. Rakiplerin yeni taktik arayışına girip girmeyeceği merak konusu.';
+ // v205: ana manşet, sadece MVP'ye değil gerçek skora ve gol kayıtlarına dayanır.
+ // Maç başına toplam golün geçmişteki tipik değerine göre gol yağmuru / kısır maç ayrımı.
+ const totals=leagueMatches.filter(x=>x.red_score!=null&&x.white_score!=null&&x.status==='completed').map(x=>Number(x.red_score)+Number(x.white_score)).filter(x=>Number.isFinite(x)&&x>=0).sort((a,b)=>a-b);
+ const typical=totals.length>=3?totals[Math.floor(totals.length/2)]:8;
+ const total=red+white,difference=Math.abs(red-white);
+ const high=total>=Math.max(11,typical+3),low=total<=Math.min(5,typical-3);
+ const hatTrick=topScorers.find(([,n])=>n>=3),star=topScorers[0];
+ const pick=(options)=>options[Math.abs([...String(match.id)].reduce((n,c)=>n+c.charCodeAt(0),0))%options.length];
+ let headline,summary;
+ if(high){
+  headline=pick(['GOL YAĞMURU! KALELER MESAİYE KALDI','FİLELERİN İZİN GÜNÜ YOK!','SAVUNMALAR TATİLDE, GOLLER MESAİDE!','GOL SAĞANAĞI: SKOR TABELASI YETİŞEMEDİ']);
+  summary='Toplam '+total+' gol atıldı. Bu maçta fileler dinlenemedi; '+red+'-'+white+' biten karşılaşma gol rekoru tartışmalarını yeniden açtı.';
+ }else if(low){
+  headline=pick(['KISIR GECE: GOLLER İZNE ÇIKTI','KALECİLER RAHAT, FORVETLER DÜŞÜNCELİ','GOL KITLIĞI: TABELA SAKİN KALDI','TOP DOLAŞTI, GOL UĞRAMADI']);
+  summary=total===0?'Karşılaşma golsüz bitti. Skor tabelası bütün gece dinlendi.':'Sahada toplam '+total+' gol görüldü. '+red+'-'+white+' biten maçta hücum hattının gelecek hafta daha kalabalık çalışması bekleniyor.';
+ }else if(difference>=5){
+  headline=pick(['FARK AÇILDI, HESAP MAKİNELERİ ÇIKTI!','TEK TARAFLI TRAFİK: SAVUNMA ALARM VERDİ','SKOR TABELASINDA AĞIR MESAİ']);
+  summary=winningTeam+' takımı '+red+'-'+white+' kazandı. '+difference+' gollük farkın ardından rövanş beklentisi yükseldi.';
+ }else if(red===white){
+  headline=pick(['PUANLAR PAYLAŞILDI, TARTIŞMA BİTMEDİ!','SAHADA DENGE, SOYUNMA ODASINDA İDDİA','KAZANAN YOK, KONUŞACAK ÇOK ŞEY VAR']);
+  summary='Maç '+red+'-'+white+' sona erdi. İki taraf da galibiyete uzanamadı; dostluk kazandı demek için henüz erken.';
+ }else if(hatTrick){
+  headline=pick(['HAT-TRICK ALARMI: '+hatTrick[0].toLocaleUpperCase('tr-TR')+' DURDURULAMADI!','ÜÇÜ BULDU, GÜNDEMİ ALDI: '+hatTrick[0].toLocaleUpperCase('tr-TR')]);
+  summary=hatTrick[0]+' '+hatTrick[1]+' golle maçın gol dosyasına damga vurdu. Son skor '+red+'-'+white+'.';
+ }else if(difference===1){
+  headline=pick(['SON DÜDÜĞE KADAR NEFESLER TUTULDU','BİR GOL, BİN TARTIŞMA!','KIL PAYI GALİBİYET: NABIZLAR YÜKSELDİ']);
+  summary=winningTeam+' takımı '+red+'-'+white+' kazandı. Tek gollük fark, rövanş sohbetini şimdiden başlattı.';
+ }else if(star&&star[1]>=2){
+  headline=pick(['GOL DOSYASININ BAŞROLÜ: '+star[0].toLocaleUpperCase('tr-TR'),'FİLELERE İMZAYI '+star[0].toLocaleUpperCase('tr-TR')+' ATTI!']);
+  summary=star[0]+' '+star[1]+' golle öne çıktı. '+winningTeam+' takımının '+red+'-'+white+' biten maçında golcüler konuştu.';
+ }else if(winners.length>1){
+  headline=pick(['MANŞETİ PAYLAŞAMADILAR!','MVP KÜRSÜSÜNDE ORTAKLIK VAR']);
+  summary='Maçın Adamı oylamasında eşitlik çıktı. '+red+'-'+white+' biten maçta ödül tek kişiye sığmadı.';
+ }else{
+  headline=pick(['SAHADA MÜCADELE, MANŞETTE REKABET!','HAFTALIK MAÇTA HESAPLAR YENİDEN YAPILIYOR','SKOR KONUŞTU, RÖVANŞ MASADA','MAÇ BİTTİ, MUHABBET BİTMEDİ']);
+  summary=winningTeam+' takımının '+red+'-'+white+' tamamlanan maçında mücadele öne çıktı. MVP ödülü '+winners[0]+'un oldu.';
+ }
  return {match,winners,headline,summary,topScorers,red,white,winningTeam,votes:Number(mv.vote_count||0)};
 }
 function szfNewspaperMarkup(id){

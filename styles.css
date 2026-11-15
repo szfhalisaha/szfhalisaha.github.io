@@ -655,3 +655,10 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-v191-event-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 2px;border-bottom:1px solid #ffffff20;font-size:12px;line-height:1.4}
 .szf-v191-event-row span{min-width:0;overflow-wrap:anywhere}.szf-v191-event-row small{color:#a6bea9;font-size:11px}.szf-v191-event-row button{flex-shrink:0}
 @media(max-width:480px){.szf-v191-goal-columns{gap:6px}.szf-v191-goal-columns>section{padding:6px}.szf-v191-event-row{gap:3px;flex-wrap:wrap}.szf-v191-goal-columns h5{font-size:11px;padding:7px 4px}}
+
+/* v192: Sonucu Paylaş — afiş artık tam genişlikte, okunaklı ve doğrudan HTML */
+.szf-share-v192 .szf-share-dialog{width:min(920px,100%);max-height:94vh;padding:18px;background:#0b2118}
+.szf-share-v192 .szf-share-poster-wrap{max-height:calc(94vh - 155px);overflow:auto;display:flex;justify-content:center;padding:8px;border-radius:12px;background:#071811}
+.szf-share-v192 .szf-share-poster-capture{width:min(680px,100%);flex-shrink:0}
+.szf-share-v192 .szf-v190-poster{margin:0}
+@media(max-width:600px){.szf-share-v192{padding:7px}.szf-share-v192 .szf-share-dialog{padding:9px;max-height:98vh}.szf-share-v192 .szf-share-poster-wrap{max-height:calc(98vh - 135px);padding:0}.szf-share-v192 .szf-share-poster-capture{width:100%}}

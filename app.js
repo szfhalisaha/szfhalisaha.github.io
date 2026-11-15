@@ -239,43 +239,112 @@ function szfNewspaperData(match){
  const topScorers=[...scorers].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'tr'));
  const red=Number(match.red_score),white=Number(match.white_score);
  const winningTeam=red>white?'KIRMIZI':white>red?'BEYAZ':'BERABERLİK';
- // v205: ana manşet, sadece MVP'ye değil gerçek skora ve gol kayıtlarına dayanır.
- // Maç başına toplam golün geçmişteki tipik değerine göre gol yağmuru / kısır maç ayrımı.
- const totals=leagueMatches.filter(x=>x.red_score!=null&&x.white_score!=null&&x.status==='completed').map(x=>Number(x.red_score)+Number(x.white_score)).filter(x=>Number.isFinite(x)&&x>=0).sort((a,b)=>a-b);
+ // v206: maç istatistiklerinden farklı, doğrulanabilir gazete hikâyeleri üret.
+ const validScore=x=>x?.red_score!=null&&x?.white_score!=null&&Number.isFinite(Number(x.red_score))&&Number.isFinite(Number(x.white_score));
+ const totals=leagueMatches.filter(x=>x.status==='completed'&&validScore(x)).map(x=>Number(x.red_score)+Number(x.white_score)).sort((a,b)=>a-b);
  const typical=totals.length>=3?totals[Math.floor(totals.length/2)]:8;
  const total=red+white,difference=Math.abs(red-white);
- const high=total>=Math.max(11,typical+3),low=total<=Math.min(5,typical-3);
- const hatTrick=topScorers.find(([,n])=>n>=3),star=topScorers[0];
- const pick=(options)=>options[Math.abs([...String(match.id)].reduce((n,c)=>n+c.charCodeAt(0),0))%options.length];
- let headline,summary;
- if(high){
-  headline=pick(['GOL YAĞMURU! KALELER MESAİYE KALDI','FİLELERİN İZİN GÜNÜ YOK!','SAVUNMALAR TATİLDE, GOLLER MESAİDE!','GOL SAĞANAĞI: SKOR TABELASI YETİŞEMEDİ']);
-  summary='Toplam '+total+' gol atıldı. Bu maçta fileler dinlenemedi; '+red+'-'+white+' biten karşılaşma gol rekoru tartışmalarını yeniden açtı.';
- }else if(low){
-  headline=pick(['KISIR GECE: GOLLER İZNE ÇIKTI','KALECİLER RAHAT, FORVETLER DÜŞÜNCELİ','GOL KITLIĞI: TABELA SAKİN KALDI','TOP DOLAŞTI, GOL UĞRAMADI']);
-  summary=total===0?'Karşılaşma golsüz bitti. Skor tabelası bütün gece dinlendi.':'Sahada toplam '+total+' gol görüldü. '+red+'-'+white+' biten maçta hücum hattının gelecek hafta daha kalabalık çalışması bekleniyor.';
- }else if(difference>=5){
-  headline=pick(['FARK AÇILDI, HESAP MAKİNELERİ ÇIKTI!','TEK TARAFLI TRAFİK: SAVUNMA ALARM VERDİ','SKOR TABELASINDA AĞIR MESAİ']);
-  summary=winningTeam+' takımı '+red+'-'+white+' kazandı. '+difference+' gollük farkın ardından rövanş beklentisi yükseldi.';
- }else if(red===white){
-  headline=pick(['PUANLAR PAYLAŞILDI, TARTIŞMA BİTMEDİ!','SAHADA DENGE, SOYUNMA ODASINDA İDDİA','KAZANAN YOK, KONUŞACAK ÇOK ŞEY VAR']);
-  summary='Maç '+red+'-'+white+' sona erdi. İki taraf da galibiyete uzanamadı; dostluk kazandı demek için henüz erken.';
- }else if(hatTrick){
-  headline=pick(['HAT-TRICK ALARMI: '+hatTrick[0].toLocaleUpperCase('tr-TR')+' DURDURULAMADI!','ÜÇÜ BULDU, GÜNDEMİ ALDI: '+hatTrick[0].toLocaleUpperCase('tr-TR')]);
-  summary=hatTrick[0]+' '+hatTrick[1]+' golle maçın gol dosyasına damga vurdu. Son skor '+red+'-'+white+'.';
- }else if(difference===1){
-  headline=pick(['SON DÜDÜĞE KADAR NEFESLER TUTULDU','BİR GOL, BİN TARTIŞMA!','KIL PAYI GALİBİYET: NABIZLAR YÜKSELDİ']);
-  summary=winningTeam+' takımı '+red+'-'+white+' kazandı. Tek gollük fark, rövanş sohbetini şimdiden başlattı.';
- }else if(star&&star[1]>=2){
-  headline=pick(['GOL DOSYASININ BAŞROLÜ: '+star[0].toLocaleUpperCase('tr-TR'),'FİLELERE İMZAYI '+star[0].toLocaleUpperCase('tr-TR')+' ATTI!']);
-  summary=star[0]+' '+star[1]+' golle öne çıktı. '+winningTeam+' takımının '+red+'-'+white+' biten maçında golcüler konuştu.';
- }else if(winners.length>1){
-  headline=pick(['MANŞETİ PAYLAŞAMADILAR!','MVP KÜRSÜSÜNDE ORTAKLIK VAR']);
-  summary='Maçın Adamı oylamasında eşitlik çıktı. '+red+'-'+white+' biten maçta ödül tek kişiye sığmadı.';
- }else{
-  headline=pick(['SAHADA MÜCADELE, MANŞETTE REKABET!','HAFTALIK MAÇTA HESAPLAR YENİDEN YAPILIYOR','SKOR KONUŞTU, RÖVANŞ MASADA','MAÇ BİTTİ, MUHABBET BİTMEDİ']);
-  summary=winningTeam+' takımının '+red+'-'+white+' tamamlanan maçında mücadele öne çıktı. MVP ödülü '+winners[0]+'un oldu.';
+ const currentPeople=weeklyPlayers.filter(p=>String(p.match_id)===String(match.id));
+ const playersInMatch=new Map();
+ const resolveId=(p,g)=>{
+  if(p)return String(p);
+  const guest=guests.find(x=>String(x.id)===String(g));
+  return String(linkedPlayerId(guest)||'');
+ };
+ for(const p of currentPeople)if(['red','white'].includes(p.team_color))playersInMatch.set(String(p.player_id),p.team_color);
+ for(const g of guests)if(linkedPlayerId(g)&&['red','white'].includes(g.team_color))playersInMatch.set(String(linkedPlayerId(g)),g.team_color);
+ const getName=id=>formatPersonName(cardsById.get(String(id))||publicProfiles.find(p=>String(p.id)===String(id))?.display_name||'');
+ const scoreWinner=red>white?'red':white>red?'white':null;
+ const winnerSide=scoreWinner==='red'?'KIRMIZI':'BEYAZ';
+ // Her sayı, aynı maç için aynı kalır; tarih ve maç kimliği manşet çeşitliliğini sağlar.
+ const hash=[...String(match.id)].reduce((n,c)=>((n*31+c.charCodeAt(0))>>>0),7);
+ const stories=[];
+ const add=(type,weight,headlines,description)=>{if(!headlines.length)return;stories.push({type,weight,headline:headlines[(hash+stories.length*7)%headlines.length],summary:description})};
+ if(total>=Math.max(11,typical+3)){
+  add('gol-yagmuru',3,['GOL YAĞMURU! KALELER MESAİYE KALDI','FİLELERİN İZİN GÜNÜ YOK!','SAVUNMALAR TATİLDE, GOLLER MESAİDE!','GOL SAĞANAĞI: TABELA YETİŞEMEDİ'],total+' golün atıldığı maç '+red+'-'+white+' sonuçlandı. Kale ağları bu hafta fazla mesai yaptı.');
  }
+ if(total<=Math.min(5,typical-3)){
+  add('kisir',3,['KISIR GECE: GOLLER İZNE ÇIKTI','GOL KITLIĞI: TABELA SAKİN KALDI','FORVETLER BUGÜN GÖREVDE MİYDİ?'],total===0?'Maç golsüz bitti. Skor tabelası gece boyunca sessiz kaldı.':'Toplam '+total+' gol görülen mücadele '+red+'-'+white+' bitti. Gol yolları bu hafta pek işlek değildi.');
+ }
+ if(scoreWinner&&Math.min(red,white)<=3){
+  const conceded=Math.min(red,white);
+  add('savunma',3,[winnerSide+' SAVUNMASI GEÇİT VERMEDİ!','ARKAYI SAĞLAM TUTTULAR, SONUCU ALDILAR','SAVUNMA DUVARI: RAKİBE '+conceded+' GOL İZNİ'],winnerSide+' takımı '+conceded+' gol yiyerek '+red+'-'+white+' kazandı. Savunma hattının katkısı skora yansıdı.');
+ }
+ if(scoreWinner&&Math.max(red,white)>=7){
+  add('hucum',3,[winnerSide+' HÜCUM HATTI VİTES YÜKSELTTİ!','KALEYE ABONE OLDULAR: '+Math.max(red,white)+' GOL','HÜCUMDA FRENİ UNUTTULAR!'],winnerSide+' takımı '+Math.max(red,white)+' gol bulup '+red+'-'+white+' kazandı. Rakip savunmaya rahat bir gece yaşatmadılar.');
+ }
+ if(scoreWinner&&Math.min(red,white)>=5){
+  const loser=scoreWinner==='red'?'BEYAZ':'KIRMIZI';
+  add('kaybeden',3,[loser+' KAYBETTİ AMA PES ETMEDİ','MAĞLUBİYETİN İÇİNDEN '+Math.min(red,white)+' GOL ÇIKTI!','BU KADAR GOLLE KAYBETMEK DE MARİFET!'],loser+' takımı '+Math.min(red,white)+' gol atmasına rağmen '+red+'-'+white+' mağlup oldu. Hücumun mesaisi galibiyete yetmedi.');
+ }
+ if(difference>=5)add('fark',2,['FARK AÇILDI, HESAP MAKİNELERİ ÇIKTI!','SAHADA TEK TARAFLI TRAFİK','SKOR TABELASINDA AĞIR MESAİ'],winnerSide+' takımı '+difference+' farkla kazandı. Son skor '+red+'-'+white+'.');
+ if(red===white)add('beraberlik',3,['PUANLAR PAYLAŞILDI, TARTIŞMA BİTMEDİ','SAHADA DENGE, SOHBETTE REKABET','KAZANAN YOK, KONUŞACAK ÇOK ŞEY VAR'],red+'-'+white+' biten maçta iki takım birbirine üstünlük kuramadı.');
+ const hatTrick=topScorers.find(([,n])=>n>=3);
+ if(hatTrick)add('golcu',4,['HAT-TRICK ALARMI: '+hatTrick[0].toLocaleUpperCase('tr-TR')+' DURDURULAMADI!','GOL DOSYASINI '+hatTrick[0].toLocaleUpperCase('tr-TR')+' KAPATTI!'],hatTrick[0]+' kayıtlara geçen '+hatTrick[1]+' golle maçın öne çıkan golcüsü oldu.');
+ else if(topScorers[0]?.[1]>=2){
+  const scorer=topScorers[0];
+  add('golcu',2,['FİLELERİ '+scorer[0].toLocaleUpperCase('tr-TR')+' YOKLADI!','GOLCÜ SAHNEDE: '+scorer[0].toLocaleUpperCase('tr-TR')],scorer[0]+' '+scorer[1]+' gol attı. Maç '+red+'-'+white+' bitti.');
+ }
+ // Kaydedilmiş gol-asist bağlantıları: sadece gerçek ikililer gazeteye girer.
+ const byEventId=new Map(extras.events.filter(e=>String(e.match_id)===String(match.id)&&e.kind==='goal').map(e=>[String(e.id),e]));
+ const collaborations=new Map();
+ for(const assist of extras.events.filter(e=>String(e.match_id)===String(match.id)&&e.kind==='assist')){
+  const goal=byEventId.get(String(assist.goal_event_id||''));
+  if(!goal)continue;
+  const assister=resolveId(assist.player_id,assist.guest_id),scorer=resolveId(goal.player_id,goal.guest_id);
+  const assistedName=assister?getName(assister):findName('g:'+String(assist.guest_id||''));
+  const scoredName=scorer?getName(scorer):findName('g:'+String(goal.guest_id||''));
+  if(!assistedName||!scoredName||assistedName===scoredName)continue;
+  const key=assistedName+'|'+scoredName;
+  collaborations.set(key,(collaborations.get(key)||0)+1);
+ }
+ const pairs=[...collaborations].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'tr'));
+ if(pairs.length){
+  const [pair,n]=pairs[0],[assister,scorer]=pair.split('|');
+  add('asist',3,[assister.toLocaleUpperCase('tr-TR')+' SERVİS ETTİ, '+scorer.toLocaleUpperCase('tr-TR')+' BİTİRDİ!','GOLÜN ADRESİ: '+assister.toLocaleUpperCase('tr-TR')+' → '+scorer.toLocaleUpperCase('tr-TR'),'PASIN SAHİBİ BELLİ, GOLÜN DE!'],assister+' kaydedilen '+n+' golde '+scorer+' için asist yaptı. Bu ortaklık skor kâğıdına geçti.');
+ }
+ // H2H ve takım arkadaşlığı: aynı maçta bulunan kayıtlı/eşleşmiş oyuncuların
+ // yalnızca daha önce tamamlanmış karşılaşmalarını say; hayalî seri üretme.
+ const prior=leagueMatches.filter(m=>m.status==='completed'&&validScore(m)&&new Date(m.match_date)<new Date(match.match_date));
+ const currentIds=[...playersInMatch.keys()].filter(id=>getName(id));
+ const histories=prior.map(m=>{
+  const sides=new Map();
+  for(const p of weeklyPlayers)if(String(p.match_id)===String(m.id)&&['red','white'].includes(p.team_color))sides.set(String(p.player_id),p.team_color);
+  for(const g of extras.guests)if(String(g.match_id)===String(m.id)&&linkedPlayerId(g)&&['red','white'].includes(g.team_color))sides.set(String(linkedPlayerId(g)),g.team_color);
+  return {m,sides,winner:Number(m.red_score)>Number(m.white_score)?'red':Number(m.white_score)>Number(m.red_score)?'white':null};
+ });
+ let dominant=null,duo=null;
+ for(let i=0;i<currentIds.length;i++)for(let j=i+1;j<currentIds.length;j++){
+  const a=currentIds[i],b=currentIds[j],currentSame=playersInMatch.get(a)===playersInMatch.get(b);
+  let together=0,togetherWins=0,opposed=0,aWins=0,bWins=0;
+  for(const row of histories){
+   const sa=row.sides.get(a),sb=row.sides.get(b);
+   if(!sa||!sb)continue;
+   if(sa===sb){together++;if(row.winner===sa)togetherWins++}
+   else{opposed++;if(row.winner===sa)aWins++;else if(row.winner===sb)bWins++}
+  }
+  if(!currentSame&&opposed>=3&&Math.abs(aWins-bWins)>=3){
+   const leader=aWins>bWins?a:b,lagger=aWins>bWins?b:a,lead=Math.max(aWins,bWins);
+   if(!dominant||lead>dominant.lead)dominant={leader,lagger,lead,opposed};
+  }
+  if(currentSame&&together>=3&&togetherWins>=3){
+   if(!duo||togetherWins>duo.wins)duo={a,b,wins:togetherWins,played:together};
+  }
+ }
+ if(dominant){
+  const leader=getName(dominant.leader),lagger=getName(dominant.lagger);
+  add('rekabet',4,[leader.toLocaleUpperCase('tr-TR')+' RAKİBİNE ŞANS TANIMIYOR!','EZELİ REKABETTE İBRE '+leader.toLocaleUpperCase('tr-TR')+' TARAFINDA!'],leader+' ile '+lagger+' daha önce '+dominant.opposed+' kez rakip oldu. '+leader+' bu karşılaşmaların '+dominant.lead+' tanesini kazandı. Rövanş kapıda.');
+ }
+ if(duo){
+  const a=getName(duo.a),b=getName(duo.b);
+  add('arkadaslik',3,['AYNI FORMADA GÜÇ BİRLİĞİ: '+a.toLocaleUpperCase('tr-TR')+' & '+b.toLocaleUpperCase('tr-TR'),'BU İKİLİ BİRBİRİNİ BULDU!'],a+' ve '+b+' daha önce '+duo.played+' kez takım arkadaşı oldu, bunların '+duo.wins+' tanesini birlikte kazandı.');
+ }
+ if(winners.length>1)add('mvp',2,['MVP KÜRSÜSÜNDE ORTAKLIK VAR!','MANŞETİ PAYLAŞAMADILAR!'],'Maçın Adamı oylamasında '+winners.length+' oyuncu aynı en yüksek oya ulaştı.');
+ if(!stories.length)add('mac',1,['MAÇ BİTTİ, MUHABBET BİTMEDİ','SAHADA MÜCADELE, MANŞETTE REKABET','SKOR KONUŞTU, RÖVANŞ MASADA'],red+'-'+white+' biten karşılaşma yeni haftanın rekabetini başlattı.');
+ // Skor ve gol hikâyelerinin hepsi adaydır; baskın maç olayları daha sık seçilir.
+ const weighted=stories.flatMap(story=>Array.from({length:story.weight},()=>story));
+ const chosen=weighted[hash%weighted.length];
+ const headline=chosen.headline,summary=chosen.summary;
  return {match,winners,headline,summary,topScorers,red,white,winningTeam,votes:Number(mv.vote_count||0)};
 }
 function szfNewspaperMarkup(id){

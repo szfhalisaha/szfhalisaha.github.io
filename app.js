@@ -527,7 +527,26 @@ function szfNewspaperMarkup(id){
  const names=d.winners.join(' & ');
  const scorerText=d.topScorers.length?d.topScorers.slice(0,5).map(([name,count])=>esc(name)+' <b>'+count+' gol</b>').join(' · '):'Golcü bilgisi henüz kaydedilmedi.';
  const mvpLabel=d.winners.length>1?'ORTAK MVP':'MAÇIN ADAMI';
- return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(date)+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ SONU ÖZEL SAYISI</div><h1>'+esc(d.headline)+'</h1><p class="szf-news-deck">'+esc(d.summary)+'</p><div class="szf-news-score"><span>KIRMIZI</span><strong>'+d.red+' <i>–</i> '+d.white+'</strong><span>BEYAZ</span></div><div class="szf-news-caption">'+esc(d.winningTeam==='BERABERLİK'?'Beraberlik: takımlar puanları paylaştı.':d.winningTeam+' sahadan galibiyetle ayrıldı.')+'</div><div class="szf-news-columns"><section><div class="szf-news-kicker">🏆 '+mvpLabel+'</div><h2>'+esc(names)+'</h2><p>Oylama tamamlandı. '+d.votes+' oy kullanıldı ve haftanın yıldızı belli oldu.</p></section><section><div class="szf-news-kicker">⚽ GOL DOSYASI</div><h2>Sahanın rakamları konuşuyor</h2><p>'+scorerText+'</p></section></div><div class="szf-news-bottom"><strong>SON DAKİKA</strong><span>Bir sonraki maçın gündemi şimdiden merak ediliyor.</span></div><footer>SZF SPOR · SAYI: '+esc(String(m.id).slice(0,6).toUpperCase())+' · KAYNAK: RESMÎ MAÇ KAYITLARI</footer></article>';
+ const mvpPraise=(()=>{
+  const choices=[];
+  const winner=d.winners[0];
+  const scored=d.topScorers.find(([name])=>name===winner);
+  if(d.winners.length>1)return 'Saha performansları oylamayı böldü; yıldızlık koltuğuna tek isim sığmadı!';
+  if(scored?.[1]>=3)choices.push('Gol yollarında fırtına gibi esti, ödülü de kimseye bırakmadı!');
+  else if(scored?.[1]>=2)choices.push('Golleriyle öne çıktı, gecenin alkışlarını da topladı!');
+  else if(scored?.[1]===1)choices.push('Golünü yazdırdı, gecenin yıldızı unvanını da kaptı!');
+  choices.push(
+   'Sahadaki izini arkadaşları unutmadı; gecenin yıldızı ilan edildi!',
+   'Spor servisinin yorumu net: Bu haftanın alkışları ona gidiyor!',
+   'Rakipler hesap yapadursun, haftanın yıldızı çoktan belli oldu!',
+   'Kameralar onu arıyor, manşetler peşinden geliyor!',
+   'Bu haftanın sahne ışıkları onun üzerinde. Tebrikler!',
+   'Maç bitti, yıldız tartışması da kapandı: Alkışlar ona!'
+  );
+  const seed=[...String(m.id)].reduce((n,c)=>n+c.charCodeAt(0),0);
+  return choices[seed%choices.length];
+ })();
+ return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(date)+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ SONU ÖZEL SAYISI</div><h1>'+esc(d.headline)+'</h1><p class="szf-news-deck">'+esc(d.summary)+'</p><div class="szf-news-score"><span>KIRMIZI</span><strong>'+d.red+' <i>–</i> '+d.white+'</strong><span>BEYAZ</span></div><div class="szf-news-caption">'+esc(d.winningTeam==='BERABERLİK'?'Beraberlik: takımlar puanları paylaştı.':d.winningTeam+' sahadan galibiyetle ayrıldı.')+'</div><div class="szf-news-columns"><section><div class="szf-news-kicker">🏆 '+mvpLabel+'</div><h2>'+esc(names)+'</h2><p>'+esc(mvpPraise)+'</p></section><section><div class="szf-news-kicker">⚽ GOL DOSYASI</div><h2>Sahanın rakamları konuşuyor</h2><p>'+scorerText+'</p></section></div><div class="szf-news-bottom"><strong>SON DAKİKA</strong><span>Bir sonraki maçın gündemi şimdiden merak ediliyor.</span></div><footer>SZF SPOR · SAYI: '+esc(String(m.id).slice(0,6).toUpperCase())+' · KAYNAK: RESMÎ MAÇ KAYITLARI</footer></article>';
 }
 /* v211: 17 Kasım'a özel, maç yapılmadan yayımlanan mizahi SZF SPOR sayısı. */
 function szfEmreSpecialActive(){

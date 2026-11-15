@@ -1,0 +1,7 @@
+SZF v179 - Kalecileri Degistir
+
+1. Supabase SQL Editor: SZF_v179_Kalecileri_Degistir.sql dosyasini calistirin.
+2. ZIP icindeki site dosyalarini Cloudflare Pages veya mevcut hostinge yayinlayin.
+3. Maclar > yaklasan mac > Kadroyu gor > Kalecileri Degistir.
+
+Yalnizca admin, tamamlanmamis ve 7-7 kaydedilmis maclarda görünür. Önceki tamamlanmis maclar degismez.

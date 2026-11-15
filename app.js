@@ -538,7 +538,7 @@ function renderAssessment(){
  const picker=`${focus.match?`<p class="soft">⚽ Önce birlikte oynadığın maçın kadrosu: ${esc(matchDateText(focus.match.match_date))}. Diğer oyuncular listenin sonunda.</p>`:''}<select id="v70Target" class="text-input">${everyone.map((c,i)=>`<option value="${i}" ${i===weeklyIndex?'selected':''}>${focus.ids.has(String(c.id))?'⚽ ':''}${esc(formatPersonName(c.display_name))}${focus.ids.has(String(c.id))?' · Son maç':''}</option>`).join('')}</select>`;
  const explain=permission.mode==='first'?'İlk değerlendirme: maç şartı ve süre sınırı yok. Altı özelliğe 1–99 arasında puan ver. İlk 24 saat serbestçe düzeltebilirsin.':permission.mode==='free'?'İlk oyunun üzerinden henüz 24 saat geçmedi: +3/−3 yerine 1–99 puanlarını serbestçe düzeltebilirsin. Bu süre dolduktan sonra ortak maç güncellemesi açılır.':permission.mode==='match'?`Ortak maç sonrası güncelleme: ${esc(matchDateText(permission.match.match_date))}. Her özellik için −3 / 0 / +3 seç. Oyunu aynı maç içinde değiştirmen artışı biriktirmez.`:'Önceki verdiğin puanlar aşağıda görüntülenir ancak şu anda değiştirilemez. Yeni değişiklik için ortak maç sonrası değerlendirme penceresi açılmalıdır.';
  return sectionHead('Oyuncu Değerlendir','İlk puanlama serbest; sonraki değişiklikler yalnızca ortak maçtan sonra −3 / 0 / +3.',picker)
- +`<div class="assessment-layout"><div class="assessment-preview"><p class="soft">${Number(c.v70_count||0)}/10 değerlendirme tamamlandı</p>${assessmentCardHTML(c)}</div><div class="assessment-panel"><h3>${esc(formatPersonName(c.display_name))}</h3><p class="soft">${explain}</p>${summaryWarning}${votesReadWarning}${permission.mode==='locked'&&vote?'<p class="notice">Şu anda bu oyuncunun puanlarını değiştiremezsin.</p>':''}<form id="v70VoteForm" data-target="${attrs(c.id)}" data-mode="${permission.mode}" data-match="${attrs(permission.match?.id||'')}"><div class="v70-rating-fields">${fields}</div><div id="szf-live-rating" class="szf-live-rating" aria-live="polite">${permission.mode==='match'?`<strong id="v181-old-average">${baseline?.length===6?Math.round(baseline.reduce((sum,n)=>sum+Number(n),0)/6):'—'}</strong> <span class="v153-arrow">→</span> <strong id="v153-new-average">${baseline?.length===6?Math.round(baseline.map((v,i)=>Math.max(1,Math.min(99,Number(v)+Number(savedDeltas?.[i]||0)))).reduce((sum,n)=>sum+n,0)/6):'—'}</strong><p class="v153-help">Bu değişiklik yalnızca senin verdiğin oyu etkiler; kartın genel rating'i tüm oyların ortalamasıdır.</p>`:`Verdiğin genel rating: <strong>${baseline?.length===6?Math.round(baseline.reduce((sum,n)=>sum+Number(n),0)/6):'—'}</strong>`}</div><button class="btn lime" type="submit" id="v70SubmitBtn" ${permission.mode==='locked'||ownVotesReadError||permission.mode==='match'&&!savedDeltas?'disabled':''}>${permission.mode==='match'?'Oyumu Güncelle (−3 / 0 / +3)':vote?'Puanlarımı düzelt':'Değerlendirmeyi kaydet'}</button></form><div class="mode-buttons"><button type="button" class="btn ghost" data-assess-prev ${weeklyIndex===0?'disabled aria-disabled="true" title="İlk oyuncudasın"':''}>← Önceki</button><button type="button" class="btn lime" data-assess-next ${weeklyIndex===everyone.length-1?'disabled aria-disabled="true" title="Son oyuncudasın"':''}>Sonraki →</button></div></div></div>`;
+ +`<div class="assessment-layout"><div class="assessment-preview"><p class="soft">${Number(c.v70_count||0)}/10 değerlendirme tamamlandı</p>${assessmentCardHTML(c)}</div><div class="assessment-panel"><h3>${esc(formatPersonName(c.display_name))}</h3><p class="soft">${explain}</p>${summaryWarning}${votesReadWarning}${permission.mode==='locked'&&vote?'<p class="notice">Şu anda bu oyuncunun puanlarını değiştiremezsin.</p>':''}<form id="v70VoteForm" data-target="${attrs(c.id)}" data-mode="${permission.mode}" data-match="${attrs(permission.match?.id||'')}"><div class="v70-rating-fields">${fields}</div><div id="szf-live-rating" class="szf-live-rating" aria-live="polite">${permission.mode==='match'?`<strong id="v181-old-average">${baseline?.length===6?Math.round(baseline.reduce((sum,n)=>sum+Number(n),0)/6):'—'}</strong> <span class="v153-arrow">→</span> <strong id="v153-new-average">${baseline?.length===6?Math.round(baseline.map((v,i)=>Math.max(1,Math.min(99,Number(v)+Number(savedDeltas?.[i]||0)))).reduce((sum,n)=>sum+n,0)/6):'—'}</strong><p class="v153-help">Bu değişiklik yalnızca senin verdiğin oyu etkiler; kartın genel rating'i tüm oyların ortalamasıdır.</p>`:`Verdiğin genel rating: <strong>${baseline?.length===6?Math.round(baseline.reduce((sum,n)=>sum+Number(n),0)/6):'—'}</strong>`}</div><button class="btn lime" type="submit" id="v70SubmitBtn" ${permission.mode==='locked'||ownVotesReadError?'disabled':''}>${permission.mode==='match'?'Oyumu Güncelle (−3 / 0 / +3)':vote?'Puanlarımı düzelt':'Değerlendirmeyi kaydet'}</button></form><div class="mode-buttons"><button type="button" class="btn ghost" data-assess-prev ${weeklyIndex===0?'disabled aria-disabled="true" title="İlk oyuncudasın"':''}>← Önceki</button><button type="button" class="btn lime" data-assess-next ${weeklyIndex===everyone.length-1?'disabled aria-disabled="true" title="Son oyuncudasın"':''}>Sonraki →</button></div></div></div>`;
 }
 function updateMatchDeltaUI(form){
  if(!form||form.dataset.mode!=='match')return;
@@ -1253,18 +1253,7 @@ function bindContent(){
  document.querySelectorAll('[data-red]').forEach(el=>el.addEventListener('change',()=>{el.checked?manualRed.add(el.dataset.red):manualRed.delete(el.dataset.red);render()}));
  document.querySelector('[data-assess-prev]')?.addEventListener('click',()=>saveAssessmentBeforeNavigation(Math.max(0,weeklyIndex-1)));
  document.querySelector('[data-assess-next]')?.addEventListener('click',()=>saveAssessmentBeforeNavigation(Math.min(weeklyIndex+1,orderedAssessmentPlayers().length-1)));
- document.querySelectorAll('.v181-delta-btn').forEach(button=>button.addEventListener('click',()=>{
-  const form=button.closest('#v70VoteForm');
-  if(!form||form.dataset.mode!=='match')return;
-  const key=button.dataset.v181Delta;
-  form.querySelectorAll('.v181-delta-btn').forEach(peer=>{
-    if(peer.dataset.v181Delta!==key)return;
-    const active=peer===button;
-    peer.classList.toggle('selected',active);
-    peer.setAttribute('aria-pressed',String(active));
-  });
-  updateMatchDeltaUI(form);
- }));
+ // v182: delta clicks handled via a persistent delegated handler (safe across rerenders).
  document.querySelectorAll('[data-assessment-select]').forEach(el=>el.addEventListener('click',()=>{weeklyIndex=Number(el.dataset.assessmentSelect);render()}));
  document.querySelectorAll('[data-assess]').forEach(el=>el.addEventListener('click',()=>submitAssessment(el.dataset.match,el.dataset.player,el.dataset.assess,Number(el.dataset.delta))));
  document.querySelectorAll('[data-bet]').forEach(el=>el.addEventListener('click',()=>submitBet(el.dataset.bet)));
@@ -1860,7 +1849,26 @@ async function completeMatch(match){
 }
 
 async function signOut(){if(!db)return;const{error}=await db.auth.signOut();if(error){toast(formatError(error),true);return}user=null;profile=null;cards=[];myVotes=[];view='home';selectedPlayer=null;teamData=null;teamSelections.clear();leagueMatches=[];leagueWallet=null;render();toast('Çıkış yapıldı.')}
+// v182: Persistent event delegation avoids losing handlers when content is rerendered.
+// This listener is independent of bindContent(), so transient errors in other sections
+// cannot disable the rating controls.
+function onRatingDeltaClick(event){
+ const button=event.target.closest?.('[data-v181-delta]');
+ if(!button)return;
+ const form=button.closest('form#v70VoteForm');
+ if(!form||form.dataset.mode!=='match')return;
+ event.preventDefault();
+ const key=button.dataset.v181Delta;
+ for(const peer of form.querySelectorAll('[data-v181-delta]')){
+  if(peer.dataset.v181Delta!==key)continue;
+  const selected=peer===button;
+  peer.classList.toggle('selected',selected);
+  peer.setAttribute('aria-pressed',String(selected));
+ }
+ updateMatchDeltaUI(form);
+}
 async function initialize(){
+ document.addEventListener('click',onRatingDeltaClick,true);
  setInterval(async()=>{if(user&&view==='home'&&!document.querySelector('.szf-home-mvp input:checked')){try{await loadLeagueData();render()}catch(e){console.warn(e)}}},60000);
  setInterval(()=>{if(!user||view!=='matches')return;const el=document.activeElement;if(el&&el.closest?.('.szf-inline-forms, #rosterPickerDialog, .match-create-dialog'))return;if([...document.querySelectorAll('input[id^="guest-name-"]')].some(x=>x.value.trim()))return;if(document.getElementById('rosterPickerDialog')?.open)return;render();},15000);
 

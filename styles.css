@@ -596,3 +596,7 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .v181-delta-btn:focus-visible{outline:2px solid white;outline-offset:2px}
 #szf-live-rating #v181-old-average,#szf-live-rating #v153-new-average{font-size:24px;color:#bafa72;font-variant-numeric:tabular-nums}
 #szf-live-rating .v153-help{font-size:12px;font-weight:400;line-height:1.5;color:#c8dbc9}
+
+/* v182: enable reliably clickable rating controls on desktop and mobile */
+#v70VoteForm .v181-delta-btn{position:relative;z-index:2;pointer-events:auto!important;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+#v70VoteForm .v181-delta-btn.selected{background:#315126!important;border-color:#bcfb75!important;color:#d0ff9b!important}

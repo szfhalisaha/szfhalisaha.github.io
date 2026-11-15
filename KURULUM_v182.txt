@@ -1,0 +1,4 @@
+SZF v182 - +3 / 0 / -3 secim butonlari
+Sitedeki tum dosyalari GitHub Pages ana dizinine yukleyin.
+Supabase icin daha once basariyla kurdugunuz v181 SQL tekrar gerekmiyor.
+Yayindan sonra Ctrl+Shift+R ile yenileyin.

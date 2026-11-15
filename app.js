@@ -339,6 +339,42 @@ function szfNewspaperData(match){
   const a=getName(duo.a),b=getName(duo.b);
   add('arkadaslik',3,['AYNI FORMADA GÜÇ BİRLİĞİ: '+a.toLocaleUpperCase('tr-TR')+' & '+b.toLocaleUpperCase('tr-TR'),'BU İKİLİ BİRBİRİNİ BULDU!'],a+' ve '+b+' daha önce '+duo.played+' kez takım arkadaşı oldu, bunların '+duo.wins+' tanesini birlikte kazandı.');
  }
+ // Sonuç serileri: oyuncunun sadece katıldığı, sonuçlandırılmış maçlar hesaba katılır.
+ const currentOutcome=id=>{
+  const side=playersInMatch.get(id);
+  if(!side||!scoreWinner)return null;
+  return scoreWinner===side?'W':'L';
+ };
+ let winStreak=null,lossStreak=null;
+ for(const id of currentIds){
+  const latest=currentOutcome(id);
+  if(!latest)continue;
+  let run=1;
+  for(let n=histories.length-1;n>=0;n--){
+   const row=histories[n],side=row.sides.get(id);
+   if(!side)continue; // Oynamadığı hafta seriyi bozmaz.
+   const outcome=!row.winner?'D':row.winner===side?'W':'L';
+   if(outcome!==latest)break;
+   run++;
+  }
+  if(latest==='W'&&run>=3&&(!winStreak||run>winStreak.run))winStreak={id,run};
+  if(latest==='L'&&run>=3&&(!lossStreak||run>lossStreak.run))lossStreak={id,run};
+ }
+ if(winStreak){
+  const name=getName(winStreak.id);
+  add('galibiyet-serisi',4,[name.toLocaleUpperCase('tr-TR')+' DURDURULAMIYOR!','KAZANMAYA ABONE OLDU: '+name.toLocaleUpperCase('tr-TR'),'BU SERİYİ KİM BOZACAK?'],name+' oynadığı son '+winStreak.run+' maçtan galibiyetle ayrıldı. Kazanma alışkanlığı rakipleri düşündürüyor.');
+ }
+ if(lossStreak){
+  const name=getName(lossStreak.id);
+  add('maglubiyet-serisi',4,[name.toLocaleUpperCase('tr-TR')+' İÇİN ÇIKIŞ KAPISI ARANIYOR!','KARA BULUTLAR DAĞILMIYOR: '+name.toLocaleUpperCase('tr-TR'),'GALİBİYET HASRETİ MANŞET OLDU!'],name+' forma giydiği son '+lossStreak.run+' maçta yenildi. Spor servisi, çıkış için yeni taktikler bekliyor.');
+ }
+ // Eğlenceli kulis başlıkları; gerçek kavga, tartışma veya oyuncu açıklaması iddia edilmez.
+ if(scoreWinner&&difference>=4){
+  const losingColor=scoreWinner==='red'?'BEYAZ':'KIRMIZI';
+  add('mizahi-kulis',3,[losingColor+' SOYUNMA ODASINDA NELER OLUYOR?','BU SKORDAN SONRA TAKTİK TAHTASI TEHLİKEDE!','TAKIM İÇİNDE TAKTİK ANLAŞMAZLIK MI VAR?'],losingColor+' takımı '+red+'-'+white+' kaybetti. “Taktik anlaşmazlık mı var?” sorusu tamamen gazetenin esprili yorumu; gerçek bir anlaşmazlık bilgisi bulunmuyor.');
+ }else if(scoreWinner&&lossStreak){
+  add('mizahi-kulis',2,['SOYUNMA ODASINDA BİRİLERİ HESAP SORUYOR MU?','GALİBİYET NEREDE? KULİSLER HAREKETLİ!'],getName(lossStreak.id)+' için yenilgi serisi sürüyor. Kulisten haber değil, skor tabelasına bakıp yapılmış bir spor gazetesi şakası.');
+ }
  if(winners.length>1)add('mvp',2,['MVP KÜRSÜSÜNDE ORTAKLIK VAR!','MANŞETİ PAYLAŞAMADILAR!'],'Maçın Adamı oylamasında '+winners.length+' oyuncu aynı en yüksek oya ulaştı.');
  if(!stories.length)add('mac',1,['MAÇ BİTTİ, MUHABBET BİTMEDİ','SAHADA MÜCADELE, MANŞETTE REKABET','SKOR KONUŞTU, RÖVANŞ MASADA'],red+'-'+white+' biten karşılaşma yeni haftanın rekabetini başlattı.');
  // Skor ve gol hikâyelerinin hepsi adaydır; baskın maç olayları daha sık seçilir.

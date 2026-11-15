@@ -388,7 +388,82 @@ function szfNewspaperData(match){
  // Hiçbir hikâye zorunlu manşet değildir: uygun konulardan dengeli seçim yap.
  // Özellikle gol-asist ortaklığı, MVP veya başka tek bir konu manşeti ele geçirmesin.
  const chosen=stories[(hash>>>3)%stories.length];
- const headline=chosen.headline,summary=chosen.summary;
+ // v210: Manşetler gerçek oyuncuları anmalı; sadece renk veya skor arkadaşlara hitap etmiyor.
+ const sideRoster=color=>{
+  const seen=new Set(),result=[];
+  const push=(id,name,position)=>{
+   const k=String(id||name||'').trim();if(!k||seen.has(k)||!name)return;
+   seen.add(k);result.push({id:k,name:formatPersonName(name),position:String(position||'').toUpperCase()});
+  };
+  for(const p of currentPeople.filter(p=>p.team_color===color)){
+   const card=currentCards().find(c=>String(c.id)===String(p.player_id));
+   const profile=publicProfiles.find(c=>String(c.id)===String(p.player_id));
+   push(p.player_id,card?.display_name||profile?.display_name,card?.position||profile?.position);
+  }
+  for(const g of guests.filter(g=>g.team_color===color)){
+   const linked=linkedPlayerId(g),card=linked?currentCards().find(c=>String(c.id)===String(linked)):null;
+   const profile=linked?publicProfiles.find(p=>String(p.id)===String(linked)):null;
+   push(linked||'guest:'+g.id,card?.display_name||profile?.display_name||g.display_name,card?.position||profile?.position||g.position);
+  }
+  return result;
+ };
+ const redPlayers=sideRoster('red'),whitePlayers=sideRoster('white');
+ const winningPlayers=scoreWinner==='red'?redPlayers:whitePlayers;
+ const losingPlayers=scoreWinner==='red'?whitePlayers:redPlayers;
+ const choosePerson=(list,preferred)=>{
+  const matching=preferred?list.filter(x=>preferred.includes(x.position)):[];
+  const group=matching.length?matching:list;
+  return group.length?group[hash%group.length]:null;
+ };
+ const winningKeeper=winningPlayers.find(x=>x.position==='KL');
+ const defensiveHero=winningKeeper||choosePerson(winningPlayers,['DEF'])||choosePerson(winningPlayers);
+ const attackingHero=topScorers.find(([name])=>winningPlayers.some(x=>x.name===name));
+ const losingHero=topScorers.find(([name])=>losingPlayers.some(x=>x.name===name));
+ const winName=choosePerson(winningPlayers)?.name||winners[0];
+ const loseName=choosePerson(losingPlayers)?.name||winners[0];
+ const sampleNames=[...redPlayers,...whitePlayers].map(p=>p.name);
+ const pickedName=sampleNames.length?sampleNames[hash%sampleNames.length]:winners[0];
+ const caps=name=>String(name||'').toLocaleUpperCase('tr-TR');
+ let headline=chosen.headline,summary=chosen.summary;
+ if(chosen.type==='savunma'&&defensiveHero){
+  const name=defensiveHero.name;
+  headline=defensiveHero.position==='KL'
+   ?caps(name)+' DUVARI: RAKİP '+Math.min(red,white)+' GOLDE KALDI!'
+   :caps(name)+' VE ARKADAŞLARI SAVUNMADA NÖBETTE!';
+  summary=defensiveHero.position==='KL'
+   ?name+' kalede, '+winningTeam+' savunması sahadaydı. '+red+'-'+white+' biten maçta rakip '+Math.min(red,white)+' gol bulabildi.'
+   :name+' ve '+winningTeam+' takım arkadaşları rakibe '+Math.min(red,white)+' gol izni verdi. Skor '+red+'-'+white+'.';
+ }else if(chosen.type==='hucum'&&attackingHero){
+  headline=caps(attackingHero[0])+' VİTES YÜKSELTTİ, '+winningTeam+' GOLLE COŞTU!';
+  summary=attackingHero[0]+' '+attackingHero[1]+' gol kaydetti. '+winningTeam+' takımının '+Math.max(red,white)+' gollü hücum gösterisi '+red+'-'+white+' sonuçlandı.';
+ }else if(chosen.type==='kaybeden'&&losingHero){
+  headline=caps(losingHero[0])+' ATTI ATTI, GALİBİYET GELMEDİ!';
+  summary=losingHero[0]+' '+losingHero[1]+' gol buldu ama takımı '+red+'-'+white+' kaybetti. Soyunma odasında skora bakıp iç çekme serbest.';
+ }else if(chosen.type==='mizahi-kulis'&&losingPlayers.length){
+  headline=caps(loseName)+' VE EKİBİNDE TAKTİK ANLAŞMAZLIK MI VAR?';
+  summary=loseName+' ve takım arkadaşları '+red+'-'+white+' kaybetti. Bu sadece skorun ardından yazılmış mizahi bir gazete sorusu; gerçek anlaşmazlık iddiası değil.';
+ }else if(['gol-yagmuru','kisir','fark','beraberlik','hucum','kaybeden','mac'].includes(chosen.type)){
+  if(chosen.type==='gol-yagmuru'){
+   headline=caps(pickedName)+' BU GOL YAĞMURUNDA ISLANDI!';
+   summary=pickedName+' da sahadaydı; toplam '+total+' gol atıldı. Maç '+red+'-'+white+' tamamlandı, savunmaların işi zordu.';
+  }else if(chosen.type==='kisir'){
+   headline=caps(pickedName)+' DA SAHADAYDI, GOLLER İZİNDEYDİ!';
+   summary=pickedName+' ve arkadaşlarının maçında toplam '+total+' gol çıktı. '+red+'-'+white+' biten karşılaşmada hücumculara haftalık hatırlatma gerekebilir.';
+  }else if(chosen.type==='fark'){
+   headline=caps(winName)+' VE ARKADAŞLARI FARKI AÇTI!';
+   summary=winName+' '+winningTeam+' takımındaydı. Maç '+red+'-'+white+' tamamlandı, '+difference+' gol fark oluştu.';
+  }else if(chosen.type==='beraberlik'){
+   const a=redPlayers[0]?.name||winners[0],b=whitePlayers[0]?.name||winners[0];
+   headline=caps(a)+' İLE '+caps(b)+' YENİŞEMEDİ!';
+   summary=a+' ve '+b+' karşı takımlardaydı. '+red+'-'+white+' biten maçta taraflar galibiyeti paylaşamadı.';
+  }else{
+   headline=caps(pickedName)+' SAHNEDE, '+red+'-'+white+' TABELADA!';
+   summary=pickedName+' bu maçın kadrosundaydı. '+chosen.summary;
+  }
+ }
+ // Oyuncu adı içermeyen manşet kalmasın; MVP ve golcü gibi özel isimli başlıklar korunur.
+ const mentioned=sampleNames.concat(winners).some(n=>n&&headline.toLocaleLowerCase('tr-TR').includes(n.toLocaleLowerCase('tr-TR')));
+ if(!mentioned){headline=caps(pickedName)+': '+headline;summary=pickedName+' da maçın kadrosundaydı. '+summary;}
  return {match,winners,headline,summary,topScorers,red,white,winningTeam,votes:Number(mv.vote_count||0)};
 }
 function szfNewspaperMarkup(id){

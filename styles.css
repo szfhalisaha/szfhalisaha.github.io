@@ -753,9 +753,27 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 }
 
 
-/* v217 — Deniz transparent cutout experiment: only his card, unchanged Supabase photo. */
+/* v218 — Deniz portrait: larger cutout rises through upper card and ends at nameplate.
+   Only experimental card, no changes to saved avatar or other player portraits. */
+.fut-card.szf-deniz-cutout-trial .fut-photo{
+ width:92%;
+ height:60%;
+ aspect-ratio:auto;
+ top:11%;
+ left:51%;
+ right:auto;
+ transform:translateX(-50%);
+ overflow:hidden;
+ border-radius:0;
+ -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 85%,transparent 100%);
+ mask-image:linear-gradient(to bottom,#000 0%,#000 85%,transparent 100%);
+}
 .fut-card.szf-deniz-cutout-trial .fut-photo img{
+ display:block;
+ width:100%;
+ height:100%;
  object-fit:contain!important;
  object-position:center bottom!important;
  transform:none!important;
+ filter:none!important;
 }

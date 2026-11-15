@@ -670,3 +670,10 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-v193-shirt-number{flex:0 0 25px;text-align:right;font-weight:900;font-variant-numeric:tabular-nums;color:#b9f46d}
 .szf-v190-team li>span:last-child{min-width:0;overflow-wrap:anywhere}
 @media(max-width:480px){.szf-v193-shirt-number{flex-basis:20px}}
+
+/* v195 — completed match MVP on historical and shared posters */
+.szf-v195-mvp{position:relative;margin:18px 0 5px;padding:16px 12px;border-radius:14px;text-align:center;background:linear-gradient(135deg,#26391e,#172c20 55%,#26391e);border:1px solid #a1ba62;box-shadow:inset 0 1px 0 #ffffff14}
+.szf-v195-mvp-title{font-size:clamp(13px,2.7vw,17px);font-weight:950;letter-spacing:.1em;color:#dbf6a0}
+.szf-v195-mvp-names{display:flex;justify-content:center;align-items:center;gap:9px;flex-wrap:wrap;margin-top:8px;font-size:clamp(16px,3.2vw,22px);color:#fff;overflow-wrap:anywhere}
+.szf-v195-mvp-separator{color:#a4c46d}
+.szf-v195-mvp small{display:block;margin-top:5px;color:#c6d6b7}

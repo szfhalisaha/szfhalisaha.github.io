@@ -209,6 +209,83 @@ function guestStatsPanel(){
  const a=recurringGuestStats();
  return `<details class="szf-guest-history"><summary>👤 Misafir İstatistikleri (${a.length})</summary><p class="soft">Aynı tam adla gelen eşleştirilmemiş misafirlerin geçmiş maçları birlikte gösterilir. Farklı kişilerin aynı adı kullanmamasına dikkat edin.</p>${a.length?a.map(g=>`<div class="szf-guest-stat"><div class="szf-guest-stat-name"><strong>${esc(g.name)} (Misafir)</strong><button type="button" class="btn small lime" data-link-guest-group="${attrs(g.rows.map(x=>x.id).join(','))}">Eşleştir</button></div><span>${g.matches.size} maç · ${g.goals} gol · ${g.assists} asist · ${g.wins} G / ${g.draws} B / ${g.losses} M</span></div>`).join(''):'<p class="soft">Henüz misafir kaydı yok.</p>'}</details>`;
 }
+
+/* v201 — SZF SPOR: serious-looking newspaper, playful headlines, real match facts. */
+function szfNewspaperData(match){
+ if(!match||match.red_score==null||match.white_score==null)return null;
+ const mv=mvpStates[String(match.id)];
+ if(!mv?.finished||Number(mv.vote_count||0)<1||!Array.isArray(mv.winners)||!mv.winners.length)return null;
+ const guests=extras.guests.filter(g=>String(g.match_id)===String(match.id));
+ const cardsById=new Map(currentCards().map(c=>[String(c.id),c.display_name]));
+ const findName=key=>{
+  const k=String(key);
+  if(k.startsWith('p:'))return cardsById.get(k.slice(2))||publicProfiles.find(p=>String(p.id)===k.slice(2))?.display_name||'';
+  if(k.startsWith('g:')){
+   const guest=guests.find(g=>String(g.id)===k.slice(2));
+   if(!guest)return '';
+   return (linkedPlayerId(guest)&&cardsById.get(String(linkedPlayerId(guest))))||guest.display_name||'';
+  }
+  return '';
+ };
+ const winners=[...new Set(mv.winners.map(findName).filter(Boolean).map(formatPersonName))];
+ if(!winners.length)return null;
+ const events=extras.events.filter(e=>String(e.match_id)===String(match.id)&&e.kind==='goal');
+ const scorers=new Map();
+ for(const event of events){
+  const guest=event.guest_id?guests.find(g=>String(g.id)===String(event.guest_id)):null;
+  const name=guest?(linkedPlayerId(guest)&&cardsById.get(String(linkedPlayerId(guest))))||guest.display_name:cardsById.get(String(event.player_id))||publicProfiles.find(p=>String(p.id)===String(event.player_id))?.display_name;
+  if(name)scorers.set(formatPersonName(name),(scorers.get(formatPersonName(name))||0)+1);
+ }
+ const topScorers=[...scorers].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'tr'));
+ const red=Number(match.red_score),white=Number(match.white_score);
+ const winningTeam=red>white?'KIRMIZI':white>red?'BEYAZ':'BERABERLİK';
+ const headline=winners.length>1?'ZİRVEYE ORTAK OLDULAR!':[
+  winners[0].toLocaleUpperCase('tr-TR')+' MANŞETLERİ KAPATTI!',
+  'SAHADA SON SÖZ '+winners[0].toLocaleUpperCase('tr-TR')+'’UN!',
+  winners[0].toLocaleUpperCase('tr-TR')+' GÜNDEMİ BELİRLEDİ!'
+ ][Math.abs([...String(match.id)].reduce((a,c)=>a+c.charCodeAt(0),0))%3];
+ const summary=winners.length>1?'Maçın Adamı oylamasında eşitlik çıktı. Spor servisinde tek manşet yetmedi.':winners[0]+' Maçın Adamı seçildi. Rakiplerin yeni taktik arayışına girip girmeyeceği merak konusu.';
+ return {match,winners,headline,summary,topScorers,red,white,winningTeam,votes:Number(mv.vote_count||0)};
+}
+function szfNewspaperMarkup(id){
+ const m=leagueMatches.find(x=>String(x.id)===String(id)),d=szfNewspaperData(m);
+ if(!d)return '<p>Gazete, Maçın Adamı oylaması sonuçlandığında yayımlanır.</p>';
+ const date=matchDateText(m.match_date);
+ const names=d.winners.join(' & ');
+ const scorerText=d.topScorers.length?d.topScorers.slice(0,5).map(([name,count])=>esc(name)+' <b>'+count+' gol</b>').join(' · '):'Golcü bilgisi henüz kaydedilmedi.';
+ const mvpLabel=d.winners.length>1?'ORTAK MVP':'MAÇIN ADAMI';
+ return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(date)+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ SONU ÖZEL SAYISI</div><h1>'+esc(d.headline)+'</h1><p class="szf-news-deck">'+esc(d.summary)+'</p><div class="szf-news-score"><span>KIRMIZI</span><strong>'+d.red+' <i>–</i> '+d.white+'</strong><span>BEYAZ</span></div><div class="szf-news-caption">'+esc(d.winningTeam==='BERABERLİK'?'Beraberlik: takımlar puanları paylaştı.':d.winningTeam+' sahadan galibiyetle ayrıldı.')+'</div><div class="szf-news-columns"><section><div class="szf-news-kicker">🏆 '+mvpLabel+'</div><h2>'+esc(names)+'</h2><p>Oylama tamamlandı. '+d.votes+' oy kullanıldı ve haftanın yıldızı belli oldu.</p></section><section><div class="szf-news-kicker">⚽ GOL DOSYASI</div><h2>Sahanın rakamları konuşuyor</h2><p>'+scorerText+'</p></section></div><div class="szf-news-bottom"><strong>SON DAKİKA</strong><span>Bir sonraki maçın gündemi şimdiden merak ediliyor.</span></div><footer>SZF SPOR · SAYI: '+esc(String(m.id).slice(0,6).toUpperCase())+' · KAYNAK: RESMÎ MAÇ KAYITLARI</footer></article>';
+}
+function szfLatestNewspaperHome(){
+ const match=[...leagueMatches].filter(m=>szfNewspaperData(m)).sort((a,b)=>new Date(b.match_date)-new Date(a.match_date))[0];
+ if(!match)return '';
+ const d=szfNewspaperData(match);
+ return '<section class="szf-news-home"><div class="szf-news-home-heading"><strong>📰 SZF SPOR</strong><span>SON SAYI · MVP SONRASI</span></div><div class="szf-news-home-body"><div class="szf-news-home-mast">SZF <b>SPOR</b></div><div class="szf-news-home-kicker">HAFTANIN MANŞETİ · '+esc(matchDateText(match.match_date))+'</div><h2>'+esc(d.headline)+'</h2><p>'+esc(d.summary)+'</p><button type="button" class="btn lime" data-szf-newspaper="'+attrs(match.id)+'">📰 Gazeteyi Oku</button></div></section>';
+}
+async function szfOpenNewspaper(id){
+ const match=leagueMatches.find(m=>String(m.id)===String(id));
+ if(!szfNewspaperData(match))return toast('Gazete, MVP oylaması tamamlanınca yayımlanır.',true);
+ document.getElementById('szf-news-overlay')?.remove();
+ const layer=document.createElement('div');layer.id='szf-news-overlay';layer.className='szf-share-overlay szf-news-overlay';
+ layer.innerHTML='<section class="szf-news-dialog" role="dialog" aria-modal="true" aria-label="SZF Spor gazetesi"><div class="szf-news-toolbar"><strong>📰 SZF SPOR · Gazete Arşivi</strong><button type="button" class="btn ghost" data-news-close>✕ Kapat</button></div><div class="szf-news-scroll"><div class="szf-news-capture">'+szfNewspaperMarkup(id)+'</div></div><div class="szf-news-actions"><button type="button" class="btn lime" data-news-export>↗ Gazeteyi Kaydet / Paylaş</button></div></section>';
+ document.body.appendChild(layer);
+ const close=()=>layer.remove();layer.querySelector('[data-news-close]').onclick=close;layer.onclick=e=>{if(e.target===layer)close()};
+ layer.querySelector('[data-news-export]').onclick=async()=>{
+  const btn=layer.querySelector('[data-news-export]');if(btn.disabled)return;
+  btn.disabled=true;btn.textContent='Gazete hazırlanıyor...';
+  try{
+   const capture=await szfLoadPosterCapture();
+   const canvas=await capture(layer.querySelector('.szf-news-paper'),{scale:2,backgroundColor:'#f2ecdf',useCORS:true,logging:false,scrollX:0,scrollY:-window.scrollY});
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('PNG oluşturulamadı');
+   const file=new File([blob],'SZF-SPOR-'+String(id).slice(0,8)+'.png',{type:'image/png'});
+   try{if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'SZF SPOR'});return}}catch(e){if(e.name==='AbortError')return}
+   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
+   toast('Gazete PNG olarak kaydedildi.');
+  }catch(e){console.error('SZF SPOR gazete:',e);toast('Gazete görseli oluşturulamadı.',true)}
+  finally{btn.disabled=false;btn.textContent='↗ Gazeteyi Kaydet / Paylaş'}
+ };
+}
+
 function renderHome(){
  const playerCount=currentCards().length;
  const future=leagueMatches.filter(m=>m.status==='open'&&new Date(m.match_date).getTime()>Date.now()).sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
@@ -231,6 +308,7 @@ function renderHome(){
   const opts=[...people.map(x=>({key:'p:'+x.player_id,name:currentCards().find(p=>String(p.id)===String(x.player_id))?.display_name||'Oyuncu'})),...guests.filter(g=>!g.linked_user_id||!people.some(p=>String(p.player_id)===String(g.linked_user_id))).map(g=>({key:'g:'+g.id,name:guestDisplayName(g)}))].filter(x=>x.key!=='p:'+user?.id&&!guests.some(g=>x.key==='g:'+g.id&&String(g.linked_user_id)===String(user?.id)));
   return `<section class="szf-home-mvp"><h2>🏆 Maçın Adamını Seç</h2><p>${esc(m.title||'Haftalık Maç')} · ${esc(matchDateText(m.match_date))} · Oylama 24 saat açıktır. Oy sayıları gizlidir.</p><p class="szf-v200-mvp-prize"><span>✦ ŞAMPİYONLUK ÖDÜLÜ</span> Oylama sona erdiğinde Maçın Adamı seçilen oyuncunun tüm özelliklerine <b>+1 güç bonusu</b> eklenir.</p>${v.voted?'<strong>Oyun kaydedildi.</strong>':(v.eligible||localEligible)?`<div class="szf-mvp-options">${opts.map(x=>`<label class="szf-mvp-option"><input type="radio" name="mvp-${attrs(m.id)}" value="${attrs(x.key)}"><span>${esc(formatPersonName(x.name))}</span></label>`).join('')}</div><button class="btn lime" data-mvp="${attrs(m.id)}">Oyumu Onayla</button>`:'<p class="soft">Yalnızca maçın katılımcıları oy verebilir.</p>'}</section>`;
  }).join('')}
+ ${szfLatestNewspaperHome()}
  ${next?homeNextMatchCard(next):`<div class="home-next"><small>SIRADAKİ MAÇ</small><h2>Henüz planlanmış maç yok</h2></div>`}
  <h2 class="home-shortcuts-title">Hızlı erişim</h2><div class="home-shortcuts"><button data-home-nav="players">◈ <strong>Oyuncu Kartları</strong><span>Tüm oyuncuları gör</span></button><button data-home-nav="matches">⚽ <strong>Maçlar</strong><span>Katıl veya oyuncu ekle</span></button><button data-home-nav="ranking">▥ <strong>Sıralama</strong><span>Oyuncu puanlarını incele</span></button></div>
  <div class="home-summary" aria-label="Genel sayılar"><div><small>OYUNCU KARTLARI</small><strong>${playerCount}</strong><span>Kayıtlı oyuncu</span></div><div><small>MAÇLAR</small><strong>${leagueMatches.length}</strong><span>Toplam maç</span></div></div></section>`;
@@ -949,7 +1027,7 @@ function matchBlock(m){
   };
   return '<div class="szf-v191-goal-columns"><section class="szf-v191-goal-red"><h5>🔴 KIRMIZI · '+events.filter(g=>g.kind==='goal'&&playerSide(g)==='red'||g.kind==='own_goal'&&playerSide(g)==='white').length+' GOL</h5>'+rows('red')+'</section><section class="szf-v191-goal-white"><h5>⚪ BEYAZ · '+events.filter(g=>g.kind==='goal'&&playerSide(g)==='white'||g.kind==='own_goal'&&playerSide(g)==='red').length+' GOL</h5>'+rows('white')+'</section></div>';
  };
- const detailHTML=`<div class="szf-extra-details">${teamsReady?'':`<h4>👥 Takım Kadroları</h4><div class="team-cols szf-saved-rosters">${['red','white'].map(color=>{const arr=[...people.filter(x=>x.team_color===color).map(x=>({name:currentCards().find(c=>String(c.id)===String(x.player_id))?.display_name||'Oyuncu',pos:currentCards().find(c=>String(c.id)===String(x.player_id))?.position||'—'})),...guests.filter(x=>x.team_color===color).map(x=>({name:guestDisplayName(x),pos:linkedCard(x)?.position||x.position||'—'}))];return `<div class="team-result"><h3>${color==='red'?'🔴 Kırmızı takım':'⚪ Beyaz takım'} (${arr.length}/7)</h3><ol>${arr.map(p=>`<li><b>${esc(p.pos)}</b> · ${esc(formatPersonName(p.name))}</li>`).join('')||'<li>Henüz oyuncu atanmadı.</li>'}</ol></div>`}).join('')}</div>`}<h4>Maç Sonucu</h4>${adminInfo&&m.status!=='completed'?`<p class="soft">Skoru kaydettiğinde maç otomatik sonuçlandırılır; gol ve asistleri aynı ekrandan düzenleyebilirsin.</p>`:''}${adminInfo?`<div class="szf-inline-forms"><label>🔴 Kırmızı <input type="number" min="0" max="99" id="score-red-${attrs(m.id)}" value="${m.red_score??''}" placeholder="Gol"></label><label>⚪ Beyaz <input type="number" min="0" max="99" id="score-white-${attrs(m.id)}" value="${m.white_score??''}" placeholder="Gol"></label><button class="btn small lime" data-save-score="${attrs(m.id)}">Sonucu Kaydet</button></div>`:`<p>🔴 ${m.red_score??'—'} – ${m.white_score??'—'} ⚪</p>`}<h4>Gol ve asistler</h4>${szfTeamGoalEditor()}${adminInfo?`<div class="szf-inline-forms"><select id="event-person-${attrs(m.id)}"><option value="">Oyuncu seç</option>${eventPersonOptions}</select><select id="event-kind-${attrs(m.id)}"><option value="goal">Gol</option><option value="own_goal">Kendi Kalesine Gol (KK)</option></select><select id="event-assist-${attrs(m.id)}"><option value="">Asist yok</option>${eventPersonOptions}</select><button class="btn small lime" data-add-event="${attrs(m.id)}">Golü kaydet</button></div>`:''}${mvpMarkup}</div>`;
+ const detailHTML=`<div class="szf-extra-details">${szfNewspaperData(m)?`<div class="szf-news-history-link"><strong>📰 SZF SPOR · Bu Maçın Gazetesi</strong><button type="button" class="btn lime" data-szf-newspaper="${attrs(m.id)}">Gazeteyi Oku</button></div>`:''}${teamsReady?'':`<h4>👥 Takım Kadroları</h4><div class="team-cols szf-saved-rosters">${['red','white'].map(color=>{const arr=[...people.filter(x=>x.team_color===color).map(x=>({name:currentCards().find(c=>String(c.id)===String(x.player_id))?.display_name||'Oyuncu',pos:currentCards().find(c=>String(c.id)===String(x.player_id))?.position||'—'})),...guests.filter(x=>x.team_color===color).map(x=>({name:guestDisplayName(x),pos:linkedCard(x)?.position||x.position||'—'}))];return `<div class="team-result"><h3>${color==='red'?'🔴 Kırmızı takım':'⚪ Beyaz takım'} (${arr.length}/7)</h3><ol>${arr.map(p=>`<li><b>${esc(p.pos)}</b> · ${esc(formatPersonName(p.name))}</li>`).join('')||'<li>Henüz oyuncu atanmadı.</li>'}</ol></div>`}).join('')}</div>`}<h4>Maç Sonucu</h4>${adminInfo&&m.status!=='completed'?`<p class="soft">Skoru kaydettiğinde maç otomatik sonuçlandırılır; gol ve asistleri aynı ekrandan düzenleyebilirsin.</p>`:''}${adminInfo?`<div class="szf-inline-forms"><label>🔴 Kırmızı <input type="number" min="0" max="99" id="score-red-${attrs(m.id)}" value="${m.red_score??''}" placeholder="Gol"></label><label>⚪ Beyaz <input type="number" min="0" max="99" id="score-white-${attrs(m.id)}" value="${m.white_score??''}" placeholder="Gol"></label><button class="btn small lime" data-save-score="${attrs(m.id)}">Sonucu Kaydet</button></div>`:`<p>🔴 ${m.red_score??'—'} – ${m.white_score??'—'} ⚪</p>`}<h4>Gol ve asistler</h4>${szfTeamGoalEditor()}${adminInfo?`<div class="szf-inline-forms"><select id="event-person-${attrs(m.id)}"><option value="">Oyuncu seç</option>${eventPersonOptions}</select><select id="event-kind-${attrs(m.id)}"><option value="goal">Gol</option><option value="own_goal">Kendi Kalesine Gol (KK)</option></select><select id="event-assist-${attrs(m.id)}"><option value="">Asist yok</option>${eventPersonOptions}</select><button class="btn small lime" data-add-event="${attrs(m.id)}">Golü kaydet</button></div>`:''}${mvpMarkup}</div>`;
  const result=completed?({red:'🔴 Kırmızı takım kazandı',draw:'🤝 Beraberlik',white:'⚪ Beyaz takım kazandı'}[m.result]||'Maç tamamlandı'):'';
  return `<article class="match-new-card ${selectedMatchTab==='history'?'szf-history-compact':''}">${selectedMatchTab==='history'?`<button type="button" class="szf-history-toggle" data-roster="${attrs(m.id)}" aria-label="Maç ayrıntılarını aç veya kapat"><span>${esc(d.day)} ${esc(d.month)} · ${esc(t.title)}</span><strong>🔴 ${m.red_score??'—'} - ${m.white_score??'—'} ⚪</strong><span>Detaylar ▾</span></button>`:''}<div class="match-date-box"><small>${esc(d.weekday)}</small><strong>${esc(d.day)}</strong><span>${esc(d.month)}</span></div>
  <div class="match-new-body"><div class="match-badges"><span class="match-status ${completed?'ended':''}">${completed?'TAMAMLANDI':m.status==='open'?'KAYIT AÇIK':'KAYIT KAPALI'}</span><span>${esc(matchDateText(m.match_date).split(' ').slice(-1)[0])}</span></div>
@@ -1453,6 +1531,7 @@ function bindContent(){
  await loadLeagueData();openMatchRosters.add(id);render();toast('Maç sonucu kaydedildi.');}));
  document.querySelectorAll('[data-add-event]').forEach(el=>el.addEventListener('click',()=>{if(!scoreEntryAllowed(el.dataset.addEvent))return toast('Gol ve asist girişi maç başladıktan 1 saat sonra açılır.',true);addEvent(el.dataset.addEvent)}));
  document.querySelectorAll('[data-mvp]').forEach(el=>el.addEventListener('click',()=>voteMvp(el.dataset.mvp)));
+ document.querySelectorAll('[data-szf-newspaper]').forEach(el=>el.addEventListener('click',()=>szfOpenNewspaper(el.dataset.szfNewspaper)));
  document.querySelectorAll('[data-share-match]').forEach(el=>el.addEventListener('click',()=>shareMatchCard(el.dataset.shareMatch)));
  document.querySelectorAll('[data-match-scoreboard]').forEach(el=>el.addEventListener('click',()=>shareMatchCard(el.dataset.matchScoreboard)));
  document.querySelectorAll('[data-delete-event]').forEach(el=>el.addEventListener('click',async()=>{if(!confirm('Gol/asist kaydını sil?'))return;const {error}=await db.rpc('szf_delete_event_v53',{p_event:el.dataset.deleteEvent});if(error)return toast(formatError(error),true);await loadLeagueData();render()}));

@@ -11,6 +11,7 @@ let teamRatingOverrides={}; // Yönetici tarafından, yalnızca takım dengesi i
 let playerSort='rating_desc', rankingSort='rating_desc', rosterPickerMatch=null, rosterSearch='';
 let assessmentFlash=null;
 let ownVotesReadError=null;
+let myMatchRatingChanges=[];
 let v70Ready=false;
 let publicProfiles = [], db = null, user = null, profile = null, cards = [], myVotes = [], view = 'home', search = '', selectedPlayer = null, signup = false, teamSelections = new Set(), teamData = null, loading = false;
 const demoCards = [
@@ -493,17 +494,20 @@ function renderAssessment(){
  weeklyIndex=Math.max(0,Math.min(weeklyIndex,everyone.length-1));
  const c=everyone[weeklyIndex],f=getFeatures(c),vote=myVotes.find(v=>String(v.target_id)===String(c.id));
  const permission=assessmentPermission(c.id);
+ const savedChange=permission.mode==='match'?myMatchRatingChanges.find(x=>String(x.target_id)===String(c.id)&&String(x.match_id)===String(permission.match.id)):null;
+ const baseline=savedChange?.base_scores?.length===6?savedChange.base_scores:vote?.scores;
+ const savedDeltas=savedChange?.deltas?.length===6?savedChange.deltas:null;
  const votesReadWarning=ownVotesReadError?`<p class="notice">Oy geçmişin okunamadı: ${esc(ownVotesReadError)}. Yanlışlıkla ikinci oy kaydı yapılmaması için kaydetme devre dışı. Bu hata düzeltilmeli.</p>`:'';
  const summaryWarning=!v70Ready?'<p class="notice">Puan özeti alınamadı. Bu durum ilk değerlendirme yapmana engel değildir.</p>':'';
  const fields=f.map(([key,short,label],i)=>{
-  const old=Number(vote?.scores?.[i]||0);
-  if(permission.mode==='match')return `<div class="v153-field"><div class="v153-field-head"><strong>${esc(label)}</strong><span class="v153-values">${old} → <b data-v153-result="${key}">${old}</b></span></div><div class="v153-options" role="group" aria-label="${esc(label)} puan değişimi">${[-3,0,3].map(d=>`<label class="v153-choice"><input type="radio" name="v153-${key}" data-v70-delta="${key}" value="${d}" ${d===0?'checked':''}><span>${d>0?'+3':d===0?'0':'−3'}</span></label>`).join('')}</div></div>`;
+  const old=Number((permission.mode==='match'?baseline:vote?.scores)?.[i]||0);
+  if(permission.mode==='match')return `<div class="v153-field"><div class="v153-field-head"><strong>${esc(label)}</strong><span class="v153-values">${old} → <b data-v153-result="${key}">${Math.max(1,Math.min(99,old+Number(savedDeltas?.[i]??0)))}</b></span></div><div class="v153-options" role="group" aria-label="${esc(label)} puan değişimi">${[-3,0,3].map(d=>`<label class="v153-choice"><input type="radio" name="v153-${key}" data-v70-delta="${key}" value="${d}" ${d===Number(savedDeltas?.[i]??0)?'checked':''}><span>${d>0?'+3':d===0?'0':'−3'}</span></label>`).join('')}</div></div>`;
   return `<label class="v70-rating-field"><span>${esc(label)}</span><input type="text" inputmode="numeric" pattern="[1-9][0-9]?" maxlength="2" autocomplete="off" autocorrect="off" spellcheck="false" class="text-input szf-score-entry" data-v70-score="${key}" required placeholder="Puan yaz (1–99)" ${permission.mode==='locked'?'disabled':''} value="${attrs(assessmentDrafts.get(String(c.id))?.[key]??vote?.scores?.[i]??'')}"></label>`;
  }).join('');
  const picker=`<select id="v70Target" class="text-input">${everyone.map((c,i)=>`<option value="${i}" ${i===weeklyIndex?'selected':''}>${esc(formatPersonName(c.display_name))}</option>`).join('')}</select>`;
  const explain=permission.mode==='first'?'İlk değerlendirme: maç şartı ve süre sınırı yok. Altı özelliğe 1–99 arasında puan ver. İlk 24 saat serbestçe düzeltebilirsin.':permission.mode==='free'?'İlk değerlendirmenden sonraki 24 saat içindesin: altı puanı 1–99 arasında serbestçe düzeltebilirsin.':permission.mode==='match'?`Ortak maç sonrası güncelleme: ${esc(matchDateText(permission.match.match_date))}. Her özellik için −3 / 0 / +3 seç. Oyunu aynı maç içinde değiştirmen artışı biriktirmez.`:'Önceki verdiğin puanlar aşağıda görüntülenir ancak şu anda değiştirilemez. Yeni değişiklik için ortak maç sonrası değerlendirme penceresi açılmalıdır.';
  return sectionHead('Oyuncu Değerlendir','İlk puanlama serbest; sonraki değişiklikler yalnızca ortak maçtan sonra −3 / 0 / +3.',picker)
- +`<div class="assessment-layout"><div class="assessment-preview"><p class="soft">${Number(c.v70_count||0)}/10 değerlendirme tamamlandı</p>${assessmentCardHTML(c)}</div><div class="assessment-panel"><h3>${esc(formatPersonName(c.display_name))}</h3><p class="soft">${explain}</p>${summaryWarning}${votesReadWarning}${permission.mode==='locked'&&vote?'<p class="notice">Şu anda bu oyuncunun puanlarını değiştiremezsin.</p>':''}<form id="v70VoteForm" data-target="${attrs(c.id)}" data-mode="${permission.mode}" data-match="${attrs(permission.match?.id||'')}"><div class="v70-rating-fields">${fields}</div><div id="szf-live-rating" class="szf-live-rating" aria-live="polite">${permission.mode==='match'?'Senin verdiğin genel rating':'Verdiğin genel rating'}: <strong>${vote?.scores?.length===6?Math.round(vote.scores.reduce((sum,n)=>sum+Number(n),0)/6):'—'}</strong>${permission.mode==='match'?` <span class="v153-arrow">→</span> <strong id="v153-new-average">${Math.round(vote.scores.reduce((sum,n)=>sum+Number(n),0)/6)}</strong><p class="v153-help">Bu değişiklikler yalnızca senin oyuna uygulanır. Oyuncunun gerçek kart rating'i herkesin oylarının ortalamasıdır; doğrudan 3 puan artmaz.</p>`:''}</div><button class="btn lime" type="submit" id="v70SubmitBtn" ${permission.mode==='locked'||ownVotesReadError||permission.mode==='match'?'disabled':''}>${permission.mode==='match'?'Oyumu Güncelle (−3 / 0 / +3)':vote?'Puanlarımı düzelt':'Değerlendirmeyi kaydet'}</button></form><div class="mode-buttons"><button type="button" class="btn ghost" data-assess-prev ${weeklyIndex===0?'disabled aria-disabled="true" title="İlk oyuncudasın"':''}>← Önceki</button><button type="button" class="btn lime" data-assess-next ${weeklyIndex===everyone.length-1?'disabled aria-disabled="true" title="Son oyuncudasın"':''}>Sonraki →</button></div></div></div>`;
+ +`<div class="assessment-layout"><div class="assessment-preview"><p class="soft">${Number(c.v70_count||0)}/10 değerlendirme tamamlandı</p>${assessmentCardHTML(c)}</div><div class="assessment-panel"><h3>${esc(formatPersonName(c.display_name))}</h3><p class="soft">${explain}</p>${summaryWarning}${votesReadWarning}${permission.mode==='locked'&&vote?'<p class="notice">Şu anda bu oyuncunun puanlarını değiştiremezsin.</p>':''}<form id="v70VoteForm" data-target="${attrs(c.id)}" data-mode="${permission.mode}" data-match="${attrs(permission.match?.id||'')}"><div class="v70-rating-fields">${fields}</div><div id="szf-live-rating" class="szf-live-rating" aria-live="polite">${permission.mode==='match'?'Maç öncesi verdiğin genel rating':'Verdiğin genel rating'}: <strong>${baseline?.length===6?Math.round(baseline.reduce((sum,n)=>sum+Number(n),0)/6):'—'}</strong>${permission.mode==='match'?` <span class="v153-arrow">→</span> <strong id="v153-new-average">${Math.round((savedDeltas?baseline.map((v,i)=>Math.max(1,Math.min(99,Number(v)+Number(savedDeltas[i])))):vote.scores).reduce((sum,n)=>sum+Number(n),0)/6)}</strong><p class="v153-help">Bu değişiklikler yalnızca senin oyuna uygulanır. Oyuncunun gerçek kart rating'i herkesin oylarının ortalamasıdır; doğrudan 3 puan artmaz.</p>`:''}</div><button class="btn lime" type="submit" id="v70SubmitBtn" ${permission.mode==='locked'||ownVotesReadError||permission.mode==='match'&&!savedDeltas?'disabled':''}>${permission.mode==='match'?'Oyumu Güncelle (−3 / 0 / +3)':vote?'Puanlarımı düzelt':'Değerlendirmeyi kaydet'}</button></form><div class="mode-buttons"><button type="button" class="btn ghost" data-assess-prev ${weeklyIndex===0?'disabled aria-disabled="true" title="İlk oyuncudasın"':''}>← Önceki</button><button type="button" class="btn lime" data-assess-next ${weeklyIndex===everyone.length-1?'disabled aria-disabled="true" title="Son oyuncudasın"':''}>Sonraki →</button></div></div></div>`;
 }
 function assessmentPermission(target){
  const vote=myVotes.find(v=>String(v.target_id)===String(target));
@@ -587,7 +591,7 @@ async function submitV70Vote(e){
  }
  const btn=form.querySelector('[type=submit]');if(btn)btn.disabled=true;
  const {error}=await db.rpc('szf_submit_rating_v148',{p_target:target,p_scores:scores,p_match:permission.mode==='match'?permission.match.id:null});
- if(error){if(btn)btn.disabled=false;return toast('Puan kaydedilemedi: '+formatError(error),true);}
+ if(error){if(btn)btn.disabled=false;return toast('Puan kaydedilemedi (v177 SQL kurulumunu kontrol et): '+formatError(error),true);}
  assessmentDrafts.delete(String(target));await loadProfileAndCards();render();toast('Değerlendirme kaydedildi.');
 }
 
@@ -1153,19 +1157,24 @@ function bindContent(){
  document.querySelectorAll('.v153-choice input').forEach(input=>input.addEventListener('change',()=>{
   const form=$('v70VoteForm');if(!form||form.dataset.mode!=='match')return;
   const vote=myVotes.find(v=>String(v.target_id)===String(form.dataset.target));
-  if(!Array.isArray(vote?.scores)||vote.scores.length!==6)return;
+  const saved=myMatchRatingChanges.find(x=>String(x.target_id)===String(form.dataset.target)&&String(x.match_id)===String(form.dataset.match));
+  const base=saved?.base_scores?.length===6?saved.base_scores:vote?.scores;
+  if(!Array.isArray(base)||base.length!==6)return;
   const player=currentCards().find(c=>String(c.id)===String(form.dataset.target));
   const featuresList=player?getFeatures(player):features;
   let changed=false;let total=0;
   featuresList.forEach(([key],i)=>{
     const delta=Number(form.querySelector(`input[data-v70-delta="${key}"]:checked`)?.value||0);
-    const next=Math.max(1,Math.min(99,Number(vote.scores[i])+delta));
+    const next=Math.max(1,Math.min(99,Number(base[i])+delta));
     const field=form.querySelector(`[data-v153-result="${key}"]`);
     if(field)field.textContent=String(next);
     total+=next;if(delta!==0)changed=true;
   });
   const out=$('v153-new-average');if(out)out.textContent=String(Math.round(total/6));
-  const btn=$('v70SubmitBtn');if(btn)btn.disabled=!changed;
+  const btn=$('v70SubmitBtn');if(btn){
+    const selected=featuresList.map(([key])=>Number(form.querySelector(`input[data-v70-delta="${key}"]:checked`)?.value||0));
+    btn.disabled=!changed && !saved || !!saved && selected.every((n,i)=>n===Number(saved.deltas[i]));
+  }
  }));
  document.querySelectorAll('[data-assessment-select]').forEach(el=>el.addEventListener('click',()=>{weeklyIndex=Number(el.dataset.assessmentSelect);render()}));
  document.querySelectorAll('[data-assess]').forEach(el=>el.addEventListener('click',()=>submitAssessment(el.dataset.match,el.dataset.player,el.dataset.assess,Number(el.dataset.delta))));
@@ -1599,6 +1608,9 @@ async function loadLeagueData(){
  }
 
  if(!extraReady)console.warn('Bazı v53 ek özellikleri okunamadı (katılım yine denenebilir):',extraCalls.filter(r=>r.error).map(r=>r.error));
+ const ratingChanges=await db.rpc('szf_my_match_rating_changes_v177');
+ myMatchRatingChanges=ratingChanges.error?[]:(ratingChanges.data||[]);
+ if(ratingChanges.error)console.warn('v177 oy geçmişi sorgusu kurulmalı:',ratingChanges.error.message);
  if(calls[5].error)console.warn('Kredi tanımlama:',calls[4].error.message);
 }
 async function submitAssessment(match,player,category,delta){

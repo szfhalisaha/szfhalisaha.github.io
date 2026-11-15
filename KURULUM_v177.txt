@@ -1,0 +1,14 @@
+SZF Airport Halı Saha v177 — +3 / 0 / -3 MAÇ DEĞERLENDİRMESİ
+
+1. Supabase > SQL Editor > SZF_v177_Arti3_Eksi3_Kalici_Duzeltme.sql dosyasını çalıştır.
+2. Cloudflare Pages'e bu ZIP içindeki site dosyalarını yükle.
+3. Yeniden giriş yap veya Yenile; önbellekteki eski sayfayı gerekiyorsa sert yenile.
+4. Bu maçın BAŞLANGICINDAN 1 SAAT SONRA, iki oyuncu da aynı maçtaysa,
+   önceden verilen puanlar -3, 0, +3 ile değiştirilebilir.
+   Pencere başlangıçtan sonraki 25. saatte kapanır.
+   İlk kez verilen oylar eskisi gibi 1-99; ilk oydan sonra 24 saat serbest düzeltme.
+5. Aynı maçta tekrar seçilen değerler birikmez, önceki seçim güncellenir.
+
+ÖNCEKİ MAÇLARA GERİYE DÖNÜK HİÇBİR OY / PUAN GÜNCELLEMESİ YAPILMAZ.
+Not: v176 kredi düzeltmesi bu pakette korunmuştur; daha önce çalıştırdıysan
+tekrar çalıştırman gerekmez. Veritabanı yedeği al.

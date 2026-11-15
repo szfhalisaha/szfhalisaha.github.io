@@ -972,7 +972,26 @@ function buildInlineSharePreviewMarkup(id){
  const guestName=g=>g?.linked_player_id?nameOf(g.linked_player_id):(g?.display_name||'Misafir');
  const personName=e=>e?.guest_id?guestName(guests.find(g=>String(g.id)===String(e.guest_id))):nameOf(e?.player_id);
  const sideOf=e=>e?.guest_id?guests.find(g=>String(g.id)===String(e.guest_id))?.team_color:people.find(p=>String(p.player_id)===String(e?.player_id))?.team_color;
- const roster=color=>[...people.filter(p=>p.team_color===color).map(p=>nameOf(p.player_id)),...guests.filter(g=>g.team_color===color).filter(g=>!g.linked_player_id||!people.some(p=>String(p.player_id)===String(g.linked_player_id))).map(guestName)];
+ const rankRole={KL:0,DEF:1,ORT:2,FOR:3};
+ const jerseyOf=(card,guest)=>{
+  const profile=card?publicProfiles.find(p=>String(p.id)===String(card.id)):null;
+  const n=Number(profile?.jersey_number??card?.jersey_number??guest?.jersey_number);
+  return Number.isInteger(n)&&n>=1&&n<=99?String(n):'';
+ };
+ const roster=color=>{
+  const entries=[
+   ...people.filter(p=>p.team_color===color).map(p=>{
+    const card=cards.find(c=>String(c.id)===String(p.player_id));
+    return {name:nameOf(p.player_id),number:jerseyOf(card),position:card?.position||'ORT',secondary_position:card?.secondary_position||''};
+   }),
+   ...guests.filter(g=>g.team_color===color).filter(g=>!linkedPlayerId(g)||!people.some(p=>String(p.player_id)===String(linkedPlayerId(g)))).map(g=>{
+    const card=linkedCard(g);
+    return {name:guestName(g),number:jerseyOf(card,g),position:card?.position||g.position||'ORT',secondary_position:card?.secondary_position||g.secondary_position||''};
+   })
+  ];
+  const arranged=entries.length===7?pitchFormation(entries):entries.map(p=>({...p,assigned_role:p.position}));
+  return arranged.sort((a,b)=>(rankRole[a.assigned_role]??4)-(rankRole[b.assigned_role]??4));
+ };
  const assists=events.filter(e=>e.kind==='assist');
  const goals=color=>events.filter(e=>(e.kind==='goal'&&sideOf(e)===color)||(e.kind==='own_goal'&&sideOf(e)&&sideOf(e)!==color));
  const goalMarkup=color=>{
@@ -992,7 +1011,7 @@ function buildInlineSharePreviewMarkup(id){
  const winner=red>white?'KIRMIZI KAZANDI':white>red?'BEYAZ KAZANDI':'BERABERE';
  const team=(color,label)=>{
   const names=roster(color);
-  return '<section class="szf-v190-team szf-v190-'+color+'"><div class="szf-v190-team-title"><strong>'+label+'</strong><span>'+names.length+'/7</span></div><ol>'+names.map(n=>'<li>'+esc(n)+'</li>').join('')+'</ol><h4>⚽ GOLLER</h4>'+goalMarkup(color)+'</section>';
+  return '<section class="szf-v190-team szf-v190-'+color+'"><div class="szf-v190-team-title"><strong>'+label+'</strong><span>'+names.length+'/7</span></div><ol>'+names.map(n=>'<li>'+(n.number?'<span class="szf-v193-shirt-number">'+esc(n.number)+'</span>':'')+'<span>'+esc(n.name)+'</span></li>').join('')+'</ol><h4>⚽ GOLLER</h4>'+goalMarkup(color)+'</section>';
  };
  return '<div class="szf-v190-poster" role="img" aria-label="SZF maç sonucu, Kırmızı '+red+', Beyaz '+white+'"><div class="szf-v190-top"><div class="szf-v190-brand">✈ SZF AIRPORT <span>HALI SAHA</span></div><div class="szf-v190-overline">MAÇ SONU</div><div class="szf-v190-title">'+esc((m.title||'Haftalık Maç').split('[Saha:')[0].trim())+'</div><div class="szf-v190-date">'+esc(matchDateText(m.match_date))+'</div></div><div class="szf-v190-score"><span>KIRMIZI</span><strong>'+red+'<i>–</i>'+white+'</strong><span>BEYAZ</span></div><div class="szf-v190-winner">'+winner+'</div><div class="szf-v190-teams">'+team('red','KIRMIZI')+team('white','BEYAZ')+'</div><div class="szf-v190-footer">SZF AIRPORT HALI SAHA · BİRLİKTE DAHA GÜÇLÜ</div></div>';
 }

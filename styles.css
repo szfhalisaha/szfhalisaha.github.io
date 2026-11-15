@@ -677,3 +677,8 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-v195-mvp-names{display:flex;justify-content:center;align-items:center;gap:9px;flex-wrap:wrap;margin-top:8px;font-size:clamp(16px,3.2vw,22px);color:#fff;overflow-wrap:anywhere}
 .szf-v195-mvp-separator{color:#a4c46d}
 .szf-v195-mvp small{display:block;margin-top:5px;color:#c6d6b7}
+
+/* v200 — homepage MVP prize announcement */
+.szf-v200-mvp-prize{display:flex;flex-wrap:wrap;align-items:center;gap:6px 9px;padding:12px 14px;margin:12px 0 16px;border-radius:12px;border:1px solid rgba(190,239,111,.36);background:linear-gradient(110deg,rgba(183,237,98,.14),rgba(183,237,98,.035));color:#efffe1;line-height:1.55}
+.szf-v200-mvp-prize>span{font-size:11px;font-weight:900;letter-spacing:.09em;color:#ceff90}
+.szf-v200-mvp-prize b{font-weight:900;color:#ceff90}

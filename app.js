@@ -41,7 +41,49 @@ const roleQuota = {KL:1,DEF:3,ORT:2,FOR:1};
 const toast=(message,error=false)=>{const x=$('toast');if(!x)return;clearTimeout(toast.timer);x.textContent=message;x.className='show'+(error?' error':'');toast.timer=setTimeout(()=>{x.className='';x.textContent='';},3000)};
 const avatarUrl=(path)=>path&&db?db.storage.from('avatars').getPublicUrl(path).data.publicUrl:null;
 const isDemo=()=>!configured || !user;
-const currentCards=()=>configured?(user?cards:[]):demoCards;
+/* v199 MVP bonuses: derived from finished server tally, applied after rating averages. */
+let szfMvpBonusCounts=new Map(),szfMvpBonusRevision=0;
+let szfBonusCardsCache={base:null,revision:-1,items:[]};
+function szfRebuildMvpBonuses(){
+ const awards=new Map();
+ // 29 October exhibition vote is excluded. 3 November and later qualify.
+ const firstEligible=Date.parse('2026-11-03T00:00:00+03:00');
+ for(const match of leagueMatches){
+  if(new Date(match.match_date).getTime()<firstEligible)continue;
+  const state=mvpStates[String(match.id)];
+  if(!state?.finished||Number(state.vote_count||0)<1||!Array.isArray(state.winners))continue;
+  const winnersInMatch=new Set();
+  for(const candidate of state.winners){
+   const key=String(typeof candidate==='object'&&candidate!==null?(candidate.target||candidate.id||candidate.player_id||''):candidate);
+   let id='';
+   if(key.startsWith('p:'))id=key.slice(2);
+   else if(key.startsWith('g:')){
+    const guest=extras.guests.find(g=>String(g.match_id)===String(match.id)&&String(g.id)===key.slice(2));
+    id=String(linkedPlayerId(guest)||'');
+   }else if(/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(key))id=key;
+   if(id)winnersInMatch.add(id);
+  }
+  for(const id of winnersInMatch)awards.set(id,(awards.get(id)||0)+1);
+ }
+ szfMvpBonusCounts=awards;
+ szfMvpBonusRevision++;
+}
+function szfCardsWithMvpBonus(){
+ if(szfBonusCardsCache.base===cards&&szfBonusCardsCache.revision===szfMvpBonusRevision)return szfBonusCardsCache.items;
+ const items=cards.map(card=>{
+  const count=szfMvpBonusCounts.get(String(card.id))||0;
+  if(!count)return card;
+  const adjusted={...card,mvp_bonus_count:count};
+  // The six displayed position-specific attributes receive +1 for each MVP win.
+  // The underlying average, individual votes and raw database rows remain unchanged.
+  for(const [key] of getFeatures(card))adjusted[key]=Math.min(99,Math.max(1,ability(card,key)+count));
+  adjusted.overall_rating=score(adjusted);
+  return adjusted;
+ });
+ szfBonusCardsCache={base:cards,revision:szfMvpBonusRevision,items};
+ return items;
+}
+const currentCards=()=>configured?(user?szfCardsWithMvpBonus():[]):demoCards;
 // player_cards view contains distinct voter count, not the individual number of votes.
 function myStatsFromCards(){return cards.reduce((n,c)=>n+Number(c.voter_count||0),0)+' kişi';}
 function displayMode(){
@@ -1793,6 +1835,7 @@ async function loadLeagueData(){
    const v=states[i].data||{};
    mvpStates[String(matchesForVoting[i].id)]={...v,winners:v.winners||[],totals:v.totals||[]};
  }
+ szfRebuildMvpBonuses();
 
  if(!extraReady)console.warn('Bazı v53 ek özellikleri okunamadı (katılım yine denenebilir):',extraCalls.filter(r=>r.error).map(r=>r.error));
  const ratingChanges=await db.rpc('szf_my_match_rating_changes_v177');

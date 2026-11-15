@@ -1,0 +1,22 @@
+SZF AIRPORT HALI SAHA — HIZLI MAÇ AFİŞİ v140
+
+Bu paket SİTENİZE HENÜZ KURULMAMIŞTIR. Mevcut GitHub Pages dosyalarınızla kurulabilir.
+
+1. GitHub deponuzun EN GÜNCEL app.js, styles.css ve index.html dosyalarını tek klasöre indirin.
+2. Paketteki patch_app.py, fast-poster-function.js ve szf-fast-poster.css dosyalarını aynı klasöre koyun.
+3. Python 3 ile bu klasörde `python patch_app.py` çalıştırın.
+4. Oluşan app.js, index.html, szf-fast-poster.css dosyalarını GitHub'a yükleyin.
+5. CTRL+F5 ile önbelleği temizleyin.
+
+DEĞİŞENLER
+- Maç geçmişinin açılan kartındaki önizleme Canvas/PNG yerine anında HTML + CSS'dir.
+- Tüm 7+7 oyuncu, tüm kaydedilmiş goller, asistler ve KK gösterilir; golcüler tek satırda gol sayısıyla gösterilir; asistler kaybolmaz.
+- Mevcut paylaşma/PNG indirme kodu aynen bırakılmıştır: yalnızca kullanıcı isteyince çalışır.
+- Supabase tabloları, RLS, bahis, MVP, istatistik ve admin özellikleri değişmez.
+- Yalnızca bu önizlemenin CPU maliyeti azaltılır; diğer veri yükleme gecikmeleri bu yama ile garanti edilmez.
+
+GÜVENLİK
+- Patch mevcut app.js fonksiyonunun sınırlarını kontrol eder; bulamazsa hiçbir değişiklik yapmaz.
+- Orijinal app.js ve index.html dosyaları .before-v140.bak olarak saklanır.
+- İlk kurulumdan önce mevcut sürümü ayrıca GitHub'da yedekleyin.
+- Gerçek site ve mevcut veri üzerinde bu konuşmada uçtan uca test yapılmamıştır.

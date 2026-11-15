@@ -1,0 +1,1 @@
+SZF v187: Tum 0 secimlerinde kaydetme aktif; kayit oncesi onay penceresi gosterilir. Ayni kayit varsa tekrarlanmaz. SQL gerekmez.

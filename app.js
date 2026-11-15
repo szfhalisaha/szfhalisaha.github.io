@@ -587,9 +587,10 @@ function updateMatchDeltaUI(form){
  if(out)out.textContent=String(Math.round(selected.reduce((n,v)=>n+v.next,0)/6));
  const btn=form.querySelector('#v70SubmitBtn');
  if(btn){
-  const changed=selected.some(v=>v.delta!==0);
-  const unchanged=!!saved&&selected.every((v,i)=>v.delta===Number(saved.deltas?.[i]??0));
-  btn.disabled=!!ownVotesReadError||(!saved&&!changed)||unchanged;
+  // 0/0/0/0/0/0 is an intentional match assessment, not a disabled form.
+  // The database is responsible for validating that a match update is allowed.
+  btn.disabled=!!ownVotesReadError;
+  btn.setAttribute('aria-disabled',String(btn.disabled));
  }
 }
 function assessmentPermission(target){
@@ -667,6 +668,19 @@ function szfRatingStatus186(form,message,isError=false){
 }
 async function szfPerformRatingSave186(form){
  if(szfRatingSaveInProgress186)return;
+ if(form.dataset.mode==='match'){
+  const target=String(form.dataset.target);
+  const card=currentCards().find(c=>String(c.id)===target);
+  const choices=(card?getFeatures(card):features).map(([key])=>szfSelected185(form,key));
+  if(choices.length===6 && choices.every(value=>value===0)){
+   if(!window.confirm('Tüm özellikler için 0 seçtin. Puanları değiştirmeden bu maçın değerlendirmesini kaydetmek istediğine emin misin?'))return;
+  }
+  const prior=myMatchRatingChanges.find(x=>String(x.target_id)===target&&String(x.match_id)===String(form.dataset.match));
+  if(prior && choices.every((v,i)=>v===Number(prior.deltas?.[i]??0))){
+   szfRatingStatus186(form,'Bu maç için aynı değerlendirmeni zaten kaydetmişsin. Değişiklik yapılmadı.');
+   return;
+  }
+ }
  szfRatingSaveInProgress186=true;
  const button=form.querySelector('#v70SubmitBtn');
  if(button){button.disabled=true;button.textContent='Kaydediliyor…';}

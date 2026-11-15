@@ -342,7 +342,19 @@ function achievementData(c){
   const against=entry.team_color==='red'?m.white_score:m.red_score;
   return against!==null&&against!==undefined&&against!==''&&Number.isInteger(Number(against))&&Number(against)>=0&&Number(against)<5;
  }).length;
- const mvp=Object.values(mvpStates).filter(v=>v&&!v.open&&Array.isArray(v.winners)&&v.winners.some(w=>String(typeof w==='object'?(w.player_id||w.id||w.target_id):w)===id)).length;
+ // v198: MVP RPC kimlikleri "p:uuid" / "g:uuid" kullanır.
+ // Eski misafir hesap eşleştirmeleri de rozet hakkını korur.
+ const mvp=Object.values(mvpStates).filter(v=>{
+  if(!v||v.finished!==true||!Array.isArray(v.winners))return false;
+  return v.winners.some(w=>{
+   const raw=typeof w==='object'&&w!==null?(w.target||w.player_id||w.id||w.target_id||''):w;
+   const key=String(raw);
+   if(key==='p:'+id||key===id)return true;
+   if(!key.startsWith('g:'))return false;
+   const guest=extras.guests.find(g=>String(g.id)===key.slice(2));
+   return !!guest&&String(linkedPlayerId(guest)||'')===id;
+  });
+ }).length;
  return [
   {emoji:'⚽',name:'İlk Maç',value:stat.played,target:1,unit:'maç',description:'En az 1 tamamlanmış maçta oyna.'},
   {emoji:'🏅',name:'Deneyimli',value:stat.played,target:10,unit:'maç',description:'En az 10 tamamlanmış maçta oyna.'},

@@ -475,7 +475,20 @@ function szfNewspaperMarkup(id){
  const mvpLabel=d.winners.length>1?'ORTAK MVP':'MAÇIN ADAMI';
  return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(date)+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ SONU ÖZEL SAYISI</div><h1>'+esc(d.headline)+'</h1><p class="szf-news-deck">'+esc(d.summary)+'</p><div class="szf-news-score"><span>KIRMIZI</span><strong>'+d.red+' <i>–</i> '+d.white+'</strong><span>BEYAZ</span></div><div class="szf-news-caption">'+esc(d.winningTeam==='BERABERLİK'?'Beraberlik: takımlar puanları paylaştı.':d.winningTeam+' sahadan galibiyetle ayrıldı.')+'</div><div class="szf-news-columns"><section><div class="szf-news-kicker">🏆 '+mvpLabel+'</div><h2>'+esc(names)+'</h2><p>Oylama tamamlandı. '+d.votes+' oy kullanıldı ve haftanın yıldızı belli oldu.</p></section><section><div class="szf-news-kicker">⚽ GOL DOSYASI</div><h2>Sahanın rakamları konuşuyor</h2><p>'+scorerText+'</p></section></div><div class="szf-news-bottom"><strong>SON DAKİKA</strong><span>Bir sonraki maçın gündemi şimdiden merak ediliyor.</span></div><footer>SZF SPOR · SAYI: '+esc(String(m.id).slice(0,6).toUpperCase())+' · KAYNAK: RESMÎ MAÇ KAYITLARI</footer></article>';
 }
+/* v211: 17 Kasım'a özel, maç yapılmadan yayımlanan mizahi SZF SPOR sayısı. */
+function szfEmreSpecialActive(){
+ const now=Date.now();
+ return now>=Date.parse('2026-11-17T00:00:00+03:00')&&now<Date.parse('2026-11-18T00:00:00+03:00');
+}
+function szfEmreSpecialMarkup(){
+ return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>17 Kasım 2026 · ÖZEL SAYI</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">SPOR SERVİSİ · ÖZEL HABER</div><h1>EMRE’DEN 3’TE 0! GALİBİYET ARANIYOR</h1><p class="szf-news-deck">Üç maç, sıfır galibiyet… Emre’nin galibiyet hasreti manşetlere taşındı. Spor servisimiz, ilk zaferin hangi maçta geleceğini merak ediyor.</p><div class="szf-news-score"><span>OYNANAN MAÇ</span><strong>3 <i>–</i> 0</strong><span>GALİBİYET</span></div><div class="szf-news-caption">Bu bir maç skoru değil; Emre’nin üç maçlık galibiyet bilançosudur.</div><div class="szf-news-columns"><section><div class="szf-news-kicker">⚽ GÜNÜN DOSYASI</div><h2>İlk galibiyet ne zaman?</h2><p>Üç karşılaşmada henüz kazanamayan Emre, bir sonraki maçında bu tabloyu değiştirmeye çalışacak.</p></section><section><div class="szf-news-kicker">📰 SPOR KULİSİ</div><h2>Galibiyetin adresi soruluyor!</h2><p>Saha muhabirlerimiz arıyor; galibiyet için kayıp ilanı verilmesi şimdilik gündemde değil.</p></section></div><footer>SZF SPOR · 17 KASIM ÖZEL SAYISI · MİZAHİ HABER</footer></article>';
+}
+function szfEmreSpecialHome(){
+ return '<section class="szf-news-home"><div class="szf-news-home-heading"><strong>📰 SZF SPOR</strong><span>17 KASIM · ÖZEL SAYI</span></div><div class="szf-news-home-body"><div class="szf-news-home-mast">SZF <b>SPOR</b></div><div class="szf-news-home-kicker">BUGÜNÜN MANŞETİ · 17 KASIM 2026</div><h2>EMRE’DEN 3’TE 0! GALİBİYET ARANIYOR</h2><p>Üç maç, sıfır galibiyet… Spor servisimiz ilk zaferi bekliyor.</p><button type="button" class="btn lime" data-szf-newspaper="emre-17-kasim-2026">📰 Gazeteyi Oku</button></div></section>';
+}
+
 function szfLatestNewspaperHome(){
+ if(szfEmreSpecialActive())return szfEmreSpecialHome();
  // Ana sayfadaki gazete, MVP sonucunun gösterildiği 24 saatlik pencereyle aynı anda kalkar.
  const now=Date.now();
  const match=[...leagueMatches].filter(m=>{const start=new Date(m.match_date).getTime(),v=mvpStates[String(m.id)];return v?.finished&&now>=start+90000000&&now<start+176400000&&szfNewspaperData(m);}).sort((a,b)=>new Date(b.match_date)-new Date(a.match_date))[0];
@@ -484,11 +497,12 @@ function szfLatestNewspaperHome(){
  return '<section class="szf-news-home"><div class="szf-news-home-heading"><strong>📰 SZF SPOR</strong><span>SON SAYI · MVP SONRASI</span></div><div class="szf-news-home-body"><div class="szf-news-home-mast">SZF <b>SPOR</b></div><div class="szf-news-home-kicker">HAFTANIN MANŞETİ · '+esc(matchDateText(match.match_date))+'</div><h2>'+esc(d.headline)+'</h2><p>'+esc(d.summary)+'</p><button type="button" class="btn lime" data-szf-newspaper="'+attrs(match.id)+'">📰 Gazeteyi Oku</button></div></section>';
 }
 async function szfOpenNewspaper(id){
+ const special=id==='emre-17-kasim-2026'&&szfEmreSpecialActive();
  const match=leagueMatches.find(m=>String(m.id)===String(id));
- if(!szfNewspaperData(match))return toast('Gazete, MVP oylaması tamamlanınca yayımlanır.',true);
+ if(!special&&!szfNewspaperData(match))return toast('Gazete, MVP oylaması tamamlanınca yayımlanır.',true);
  document.getElementById('szf-news-overlay')?.remove();
  const layer=document.createElement('div');layer.id='szf-news-overlay';layer.className='szf-share-overlay szf-news-overlay';
- layer.innerHTML='<section class="szf-news-dialog" role="dialog" aria-modal="true" aria-label="SZF Spor gazetesi"><div class="szf-news-toolbar"><strong>📰 SZF SPOR · Gazete Arşivi</strong><button type="button" class="btn ghost" data-news-close>✕ Kapat</button></div><div class="szf-news-scroll"><div class="szf-news-capture">'+szfNewspaperMarkup(id)+'</div></div><div class="szf-news-actions"><button type="button" class="btn lime" data-news-export>↗ Gazeteyi Kaydet / Paylaş</button></div></section>';
+ layer.innerHTML='<section class="szf-news-dialog" role="dialog" aria-modal="true" aria-label="SZF Spor gazetesi"><div class="szf-news-toolbar"><strong>📰 SZF SPOR · Gazete Arşivi</strong><button type="button" class="btn ghost" data-news-close>✕ Kapat</button></div><div class="szf-news-scroll"><div class="szf-news-capture">'+(special?szfEmreSpecialMarkup():szfNewspaperMarkup(id))+'</div></div><div class="szf-news-actions"><button type="button" class="btn lime" data-news-export>↗ Gazeteyi Kaydet / Paylaş</button></div></section>';
  document.body.appendChild(layer);
  const close=()=>layer.remove();layer.querySelector('[data-news-close]').onclick=close;layer.onclick=e=>{if(e.target===layer)close()};
  layer.querySelector('[data-news-export]').onclick=async()=>{

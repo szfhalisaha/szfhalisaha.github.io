@@ -1,0 +1,10 @@
+SZF v178 | Bahis kredisi kontrol ve onarim
+
+1. Supabase SQL Editor'de VERITABANI YEDEGI ALIN.
+2. SZF_v178_Kredi_Onarimi.sql dosyasini calistirin.
+3. Son sorguda en son tamamlanan mac icin 1000/500 odeme sayilarini kontrol edin.
+4. Eger tetikleyici listesinde satir yoksa veya odenen hesap sayisi 0 ise SQL hata vermis olabilir; hatayi kaydedin.
+5. Cloudflare'a bu klasordeki site dosyalarini yayinlayin (eski v177 degerlendirme kurallari korunur).
+
+UYARI: Son tamamlanan mac icin onceki sistemde defter kaydi olmadan ELLE kredi yatirilmissa tekrar odeme riski vardir. Dogrulamadan calistirmayin.
+Bu paket CALISAN SUPABASE SISTEMINE KENDILIGINDEN YUKLENMEZ.

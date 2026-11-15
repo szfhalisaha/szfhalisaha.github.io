@@ -532,7 +532,7 @@ function renderAssessment(){
  const summaryWarning=!v70Ready?'<p class="notice">Puan özeti alınamadı. Bu durum ilk değerlendirme yapmana engel değildir.</p>':'';
  const fields=f.map(([key,short,label],i)=>{
   const old=Number((permission.mode==='match'?baseline:vote?.scores)?.[i]||0);
-  if(permission.mode==='match')return `<div class="v153-field"><div class="v153-field-head"><strong>${esc(label)}</strong><span class="v153-values">${old} → <b data-v153-result="${key}">${Math.max(1,Math.min(99,old+Number(savedDeltas?.[i]??0)))}</b></span></div><div class="v153-options" role="group" aria-label="${esc(label)} puan değişimi">${[-3,0,3].map(d=>`<button type="button" class="v181-delta-btn ${d===Number(savedDeltas?.[i]??0)?'selected':''}" data-v181-delta="${key}" data-value="${d}" aria-pressed="${d===Number(savedDeltas?.[i]??0)}">${d>0?'+3':d===0?'0':'−3'}</button>`).join('')}</div></div>`;
+  if(permission.mode==='match')return `<div class="v153-field"><div class="v153-field-head"><strong>${esc(label)}</strong><span class="v153-values">${old} → <b data-v153-result="${key}">${Math.max(1,Math.min(99,old+Number(savedDeltas?.[i]??0)))}</b></span></div><div class="v153-options" role="group" aria-label="${esc(label)} puan değişimi">${[-3,0,3].map(d=>`<label class="v184-choice"><input type="radio" name="szf-delta-${key}" value="${d}" data-v184-delta="${key}" ${d===Number(savedDeltas?.[i]??0)?'checked':''}><span>${d>0?'+3':d===0?'0':'−3'}</span></label>`).join('')}</div></div>`;
   return `<label class="v70-rating-field"><span>${esc(label)}</span><input type="text" inputmode="numeric" pattern="[1-9][0-9]?" maxlength="2" autocomplete="off" autocorrect="off" spellcheck="false" class="text-input szf-score-entry" data-v70-score="${key}" required placeholder="Puan yaz (1–99)" ${permission.mode==='locked'?'disabled':''} value="${attrs(assessmentDrafts.get(String(c.id))?.[key]??vote?.scores?.[i]??'')}"></label>`;
  }).join('');
  const picker=`${focus.match?`<p class="soft">⚽ Önce birlikte oynadığın maçın kadrosu: ${esc(matchDateText(focus.match.match_date))}. Diğer oyuncular listenin sonunda.</p>`:''}<select id="v70Target" class="text-input">${everyone.map((c,i)=>`<option value="${i}" ${i===weeklyIndex?'selected':''}>${focus.ids.has(String(c.id))?'⚽ ':''}${esc(formatPersonName(c.display_name))}${focus.ids.has(String(c.id))?' · Son maç':''}</option>`).join('')}</select>`;
@@ -550,8 +550,8 @@ function updateMatchDeltaUI(form){
  const player=currentCards().find(c=>String(c.id)===target);
  const list=player?getFeatures(player):features;
  const selected=list.map(([key],i)=>{
-  const choice=form.querySelector(`.v181-delta-btn.selected[data-v181-delta="${key}"]`);
-  const delta=Number(choice?.dataset.value??0);
+  const choice=form.querySelector(`input[data-v184-delta="${key}"]:checked`);
+  const delta=Number(choice?.value??0);
   const next=Math.max(1,Math.min(99,Number(base[i])+delta));
   const node=form.querySelector(`[data-v153-result="${key}"]`);
   if(node)node.textContent=String(next);
@@ -640,7 +640,7 @@ async function submitV70Vote(e){
  if(permission.mode==='match'){
   if(String(permission.match?.id)!==String(form.dataset.match))return toast('Maç penceresi değişti; sayfayı yenile.',true);
   const card=currentCards().find(c=>String(c.id)===String(target));
-  const delta=(card?getFeatures(card):features).map(([key])=>Number(form.querySelector(`.v181-delta-btn.selected[data-v181-delta="${key}"]`)?.dataset.value));
+  const delta=(card?getFeatures(card):features).map(([key])=>Number(form.querySelector(`input[data-v184-delta="${key}"]:checked`)?.value));
   if(delta.length!==6||delta.some(x=>![-3,0,3].includes(x)))return toast('Geçersiz puan değişikliği.',true);
   scores=delta;
  }else{
@@ -1868,7 +1868,7 @@ function onRatingDeltaClick(event){
  updateMatchDeltaUI(form);
 }
 async function initialize(){
- document.addEventListener('click',onRatingDeltaClick,true);
+ // v184: native radio selections update through the change event in bindContent().
  setInterval(async()=>{if(user&&view==='home'&&!document.querySelector('.szf-home-mvp input:checked')){try{await loadLeagueData();render()}catch(e){console.warn(e)}}},60000);
  setInterval(()=>{if(!user||view!=='matches')return;const el=document.activeElement;if(el&&el.closest?.('.szf-inline-forms, #rosterPickerDialog, .match-create-dialog'))return;if([...document.querySelectorAll('input[id^="guest-name-"]')].some(x=>x.value.trim()))return;if(document.getElementById('rosterPickerDialog')?.open)return;render();},15000);
 

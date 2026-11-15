@@ -1,0 +1,3 @@
+SZF v184 — +3 / 0 / -3 icin tarayici-native radio secimi.
+GitHub Pages: dosyalari kok dizine yukleyin.
+Veritabani degisikligi yok; SQL gerekli degil.

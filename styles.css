@@ -611,3 +611,37 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 /* v185 direct, reliable delta buttons */
 #v70VoteForm .v185-choice { flex:1; min-width:0; min-height:44px; padding:8px 3px; font:800 14px inherit; font-weight:800; font-size:14px; border:1px solid #486250; border-radius:9px; background:#20332a; color:#e9f5ed; cursor:pointer; position:relative; z-index:10; pointer-events:auto!important; touch-action:manipulation; }
 #v70VoteForm .v185-choice.selected { background:#315126!important; border-color:#bcfb75!important; color:#d0ff9b!important; box-shadow:0 0 0 1px #bcfb75; }
+
+
+/* v190 — hızlı, görsel dosyasız maç geçmişi afişi */
+.szf-inline-share-preview{max-width:680px;margin:16px auto}
+.szf-v190-poster{position:relative;isolation:isolate;overflow:hidden;width:100%;padding:26px 22px 16px;border:1px solid #426d4e;border-radius:22px;color:#f4f8f2;background:radial-gradient(ellipse at 50% 0%,#285a38 0%,transparent 48%),repeating-linear-gradient(90deg,transparent 0 72px,rgba(255,255,255,.025) 72px 144px),linear-gradient(160deg,#071a13,#0e2b1e 65%,#07150e);box-shadow:0 15px 45px #0005}
+.szf-v190-poster:before{content:"";position:absolute;inset:10px;border:1px solid #ffffff1c;border-radius:15px;pointer-events:none}
+.szf-v190-top{text-align:center;position:relative}
+.szf-v190-brand{font-weight:950;letter-spacing:.1em;font-size:clamp(13px,2.8vw,19px);color:#fff}.szf-v190-brand span{color:#b9f46d}
+.szf-v190-overline{margin:18px auto 5px;color:#c2fb81;font-size:clamp(18px,4vw,29px);letter-spacing:.12em;font-weight:950}
+.szf-v190-title{font-weight:850;font-size:clamp(15px,3vw,21px);text-transform:uppercase}
+.szf-v190-date{color:#a5c0aa;font-size:12px;margin:5px 0 18px}
+.szf-v190-score{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr);align-items:center;gap:7px;position:relative;border:1px solid #4c7855;border-radius:15px;background:#0b2019;padding:12px 7px}
+.szf-v190-score>span{display:flex;align-items:center;justify-content:center;min-height:82px;padding:6px 3px;border-radius:10px;font-size:clamp(10px,2.3vw,17px);font-weight:900}
+.szf-v190-score>span:first-child{background:linear-gradient(145deg,#a22538,#5a202c);color:#fff}
+.szf-v190-score>span:last-child{background:linear-gradient(145deg,#fff,#dbe4de);color:#102419}
+.szf-v190-score>strong{white-space:nowrap;text-align:center;font-weight:1000;font-size:clamp(36px,8vw,80px);letter-spacing:-.055em;font-variant-numeric:tabular-nums}
+.szf-v190-score i{font-style:normal;color:#b9f46d;margin:0 .07em}
+.szf-v190-winner{max-width:max-content;margin:10px auto 18px;border-radius:30px;background:#b9f46d;color:#152d17;padding:7px 19px;text-align:center;font-size:12px;font-weight:950;letter-spacing:.06em}
+.szf-v190-teams{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:stretch}
+.szf-v190-team{min-width:0;background:#102b20;border:1px solid #41684d;border-radius:13px;overflow:hidden;padding:0 12px 16px}
+.szf-v190-team-title{display:flex;justify-content:space-between;gap:5px;align-items:center;margin:0 -12px 12px;padding:13px 12px;font-size:clamp(12px,2.5vw,17px)}
+.szf-v190-red .szf-v190-team-title{background:#90263a;color:#fff}.szf-v190-white .szf-v190-team-title{background:#e1ebe4;color:#14291d}
+.szf-v190-team-title span{font-size:12px;opacity:.85}
+.szf-v190-team ol{padding:0;list-style:none;counter-reset:players;margin:0 0 19px;min-height:160px}
+.szf-v190-team li{counter-increment:players;display:flex;gap:8px;align-items:baseline;overflow-wrap:anywhere;padding:5px 0;border-bottom:1px solid #ffffff14;font-size:clamp(11px,2.3vw,14px);font-weight:650}
+.szf-v190-team li:before{content:counter(players,decimal-leading-zero);color:#95b39f;font-weight:900;font-size:10px}
+.szf-v190-team h4{margin:6px 0 9px;color:#c5f885;font-size:14px;font-weight:900}
+.szf-v190-goal{border-top:1px solid #ffffff20;padding:9px 0;font-size:clamp(11px,2.3vw,14px)}
+.szf-v190-goal>div{display:flex;justify-content:space-between;gap:6px;align-items:center}
+.szf-v190-goal strong{overflow-wrap:anywhere;min-width:0}.szf-v190-goal b{color:#c5f885;white-space:nowrap}
+.szf-v190-goal small{display:block;margin-top:3px;color:#abc7b1;font-size:clamp(10px,2vw,12px);overflow-wrap:anywhere;line-height:1.4}
+.szf-v190-empty{font-size:12px;color:#9bb4a3}
+.szf-v190-footer{margin-top:17px;text-align:center;font-size:10px;font-weight:850;letter-spacing:.08em;color:#bad49e}
+@media(max-width:480px){.szf-v190-poster{padding:16px 9px 13px;border-radius:13px}.szf-v190-teams{gap:6px}.szf-v190-team{padding:0 6px 9px}.szf-v190-team-title{margin:0 -6px 8px;padding:10px 6px}.szf-v190-team ol{min-height:165px}.szf-v190-score>span{min-height:64px}}

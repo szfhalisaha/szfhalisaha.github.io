@@ -299,9 +299,17 @@ function szfNewspaperData(match){
   collaborations.set(key,(collaborations.get(key)||0)+1);
  }
  const pairs=[...collaborations].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'tr'));
- if(pairs.length){
+ // Aynı golcüye aynı maçta en az iki kayıtlı asist yoksa ortaklık manşeti yazma.
+ if(pairs.length&&pairs[0][1]>=2){
   const [pair,n]=pairs[0],[assister,scorer]=pair.split('|');
-  add('asist',3,[assister.toLocaleUpperCase('tr-TR')+' SERVİS ETTİ, '+scorer.toLocaleUpperCase('tr-TR')+' BİTİRDİ!','GOLÜN ADRESİ: '+assister.toLocaleUpperCase('tr-TR')+' → '+scorer.toLocaleUpperCase('tr-TR'),'PASIN SAHİBİ BELLİ, GOLÜN DE!'],assister+' kaydedilen '+n+' golde '+scorer+' için asist yaptı. Bu ortaklık skor kâğıdına geçti.');
+  const titles=n>=3?[
+   'MUHTEŞEM ORTAKLIK! '+assister.toLocaleUpperCase('tr-TR')+' HAZIRLADI, '+scorer.toLocaleUpperCase('tr-TR')+' BİTİRDİ!',
+   'BU İKİLİ DURDURULAMIYOR: '+n+' GOLDE AYNI İMZA!'
+  ]:[
+   'MÜTHİŞ İKİLİ! '+assister.toLocaleUpperCase('tr-TR')+' & '+scorer.toLocaleUpperCase('tr-TR'),
+   'İKİ KEZ AYNI TARİFE: '+assister.toLocaleUpperCase('tr-TR')+' → '+scorer.toLocaleUpperCase('tr-TR')
+  ];
+  add('asist',n>=3?5:3,titles,assister+' aynı maçta '+scorer+' için '+n+' gol pası verdi. '+n+' golde aynı ikili sahneye çıktı.');
  }
  // H2H ve takım arkadaşlığı: aynı maçta bulunan kayıtlı/eşleşmiş oyuncuların
  // yalnızca daha önce tamamlanmış karşılaşmalarını say; hayalî seri üretme.

@@ -899,79 +899,62 @@ function matchBlock(m){
  ${!agedMatch?(teamsReady?`<div class="szf-postmatch">${completed?(scoreEntryReady?detailHTML:`<p class="soft">⚽ Maç sonucu, gol ve asist girişi maçın başlamasından 1 saat sonra açılır.</p>${mvpMarkup}`):''}</div>`:(adminInfo&&scoreEntryReady?detailHTML:(completed?mvpMarkup:''))):''}
  </div></div></article>`;
 }
+/* v192: Sonucu Paylaş ile maç geçmişi aynı hafif afişi kullanır. PNG yalnızca istek üzerine üretilir. */
+let szfPosterCapturePromise;
+function szfLoadPosterCapture(){
+ if(window.html2canvas)return Promise.resolve(window.html2canvas);
+ if(szfPosterCapturePromise)return szfPosterCapturePromise;
+ szfPosterCapturePromise=new Promise((resolve,reject)=>{
+  const script=document.createElement('script');
+  script.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+  script.async=true;
+  script.onload=()=>window.html2canvas?resolve(window.html2canvas):reject(new Error('Görsel kütüphanesi açılamadı'));
+  script.onerror=()=>reject(new Error('Görsel kütüphanesi yüklenemedi'));
+  document.head.appendChild(script);
+ }).catch(err=>{szfPosterCapturePromise=null;throw err;});
+ return szfPosterCapturePromise;
+}
 async function shareMatchCard(id){
  const m=leagueMatches.find(x=>String(x.id)===String(id));
- const red=Number(m?.red_score), white=Number(m?.white_score);
- if(!m||m.red_score==null||m.white_score==null||!Number.isInteger(red)||!Number.isInteger(white)||red<0||white<0)return toast('Önce maç skorunu kaydet.',true);
- const guests=extras.guests.filter(g=>String(g.match_id)===String(id));
- const people=weeklyPlayers.filter(p=>String(p.match_id)===String(id));
- const cards=currentCards();
- const nameOf=id=>cards.find(c=>String(c.id)===String(id))?.display_name||'Oyuncu';
- const guestName=g=>g?.linked_player_id?nameOf(g.linked_player_id):(g?.display_name||'Misafir');
- const roster=color=>[...people.filter(x=>x.team_color===color).map(x=>({name:nameOf(x.player_id),id:String(x.player_id)})),...guests.filter(x=>x.team_color===color).filter(x=>!x.linked_player_id||!people.some(p=>String(p.player_id)===String(x.linked_player_id))).map(x=>({name:guestName(x),id:String(x.id)}))];
- const teams=[roster('red'),roster('white')];
- const events=extras.events.filter(e=>String(e.match_id)===String(id));
- const eventName=e=>e.guest_id?guestName(guests.find(g=>String(g.id)===String(e.guest_id))):nameOf(e.player_id);
- const stats=kind=>{const map=new Map();for(const e of events.filter(e=>e.kind===kind)){const n=eventName(e);map.set(n,(map.get(n)||0)+1);}return [...map].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'tr'));};
- const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1480;
- const c=canvas.getContext('2d');if(!c)return toast('Görsel oluşturulamadı.',true);
- const W=1080,H=1480;
- const round=(x,y,w,h,r,fill,stroke)=>{c.beginPath();c.roundRect(x,y,w,h,r);if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=2;c.stroke();}};
- const text=(str,x,y,size=26,color='#fff',weight=600,align='left',max=0)=>{c.font=`${weight} ${size}px Arial, sans-serif`;c.fillStyle=color;c.textAlign=align;c.textBaseline='middle';let t=String(str??'');if(max){while(t.length>1&&c.measureText(t).width>max)t=t.slice(0,-2);if(t!==String(str??''))t+='…';}c.fillText(t,x,y);};
- const rule=(x,y,w,color='#385844')=>round(x,y,w,2,1,color);
- const bg=c.createLinearGradient(0,0,1080,1480);bg.addColorStop(0,'#132f23');bg.addColorStop(.5,'#081c16');bg.addColorStop(1,'#071510');c.fillStyle=bg;c.fillRect(0,0,W,H);
- // Stadium lighting and faint pitch lines
- const glow=c.createRadialGradient(540,220,20,540,260,690);glow.addColorStop(0,'rgba(174,245,99,.14)');glow.addColorStop(1,'rgba(174,245,99,0)');c.fillStyle=glow;c.fillRect(0,0,W,1000);
- c.globalAlpha=.12;c.strokeStyle='#a7d3a2';c.lineWidth=2;c.strokeRect(35,35,1010,1280);c.strokeRect(55,56,970,1240);c.globalAlpha=1;
- round(74,80,932,58,12,'#b6f36c');text('SZF  AIRPORT  HALI SAHA',540,110,23,'#10231a',900,'center');
- text('MAÇ GÜNÜ  /  FİNAL SKORU',540,183,19,'#b8d49f',800,'center');
- text((m.title||'Haftalık Maç').split('[Saha:')[0].trim().toLocaleUpperCase('tr-TR'),540,233,40,'#f4f9ef',900,'center',860);
- text(matchDateText(m.match_date),540,280,22,'#aac0ab',500,'center',820);
- // Hero scoreboard
- round(74,325,932,313,30,'#112b20','#496d4c');
- round(93,346,273,270,22,'#632c36','#9e4654');round(714,346,273,270,22,'#dce4de','#ffffff');
- text('KIRMIZI',230,389,26,'#ffd8d9',900,'center');text('BEYAZ',850,389,26,'#1f3728',900,'center');
- text('TAKIM',230,421,18,'#ffc1c1',650,'center');text('TAKIM',850,421,18,'#4a5a4f',650,'center');
- text(red,445,478,122,'#ffffff',900,'center');text('–',540,474,64,'#b9f66d',700,'center');text(white,635,478,122,'#ffffff',900,'center');
- const winner=red>white?'KIRMIZI TAKIM KAZANDI':white>red?'BEYAZ TAKIM KAZANDI':'BERABERE';
- round(376,554,328,49,25,'#20422c');text(winner,540,579,17,'#c2f784',900,'center',306);
- // Squad panels
- const drawTeam=(list,x,label,accent)=>{
-  round(x,662,451,366,25,'#123126','#3b624b');round(x+20,684,8,30,4,accent);
-  text(label,x+42,701,24,'#f3f8f0',900);text(`${list.length}/7`,x+418,701,20,'#b9cfb7',800,'right');rule(x+24,738,403);
-  list.slice(0,7).forEach((p,i)=>{const yy=766+i*35;text(String(i+1).padStart(2,'0'),x+30,yy,18,'#8aa996',800);text(p.name,x+74,yy,22,'#f3f9f0',650,'left',336);});
-  if(!list.length)text('Kadro kaydı bulunamadı',x+26,795,20,'#a6b8aa',500);
- };
- drawTeam(teams[0],74,'KIRMIZI','#fa6474');drawTeam(teams[1],555,'BEYAZ','#e8f0ed');
- // Each goal belongs to the scoring side. Own goals count for the opposing side.
- const goalEvents=events.filter(e=>e.kind==='goal'||e.kind==='own_goal');
- const assists=events.filter(e=>e.kind==='assist');
- const teamFor=e=>{if(e.guest_id)return guests.find(g=>String(g.id)===String(e.guest_id))?.team_color;return people.find(p=>String(p.player_id)===String(e.player_id))?.team_color;};
- const goalLines=color=>goalEvents.filter(e=>{const side=teamFor(e);return e.kind==='own_goal'?(side&&side!==color):side===color;}).map(e=>{const a=assists.find(a=>String(a.goal_event_id||'')===String(e.id));return `${eventName(e)}${e.kind==='own_goal'?' (KK)':a?' ('+eventName(a)+')':''}`;});
- const drawGoalPanel=(color,x,accent)=>{const lines=goalLines(color);round(x,1052,451,315,25,'#112b21','#41634a');round(x+20,1072,8,29,4,accent);text('GOLLER',x+43,1088,23,'#d0f88d',900);if(!lines.length)text('Gol kaydı bulunamadı',x+25,1135,19,'#9bb5a4',500);lines.slice(0,8).forEach((line,i)=>text(line,x+24,1130+i*29,19,'#eef8ec',600,'left',405));if(lines.length>8)text(`+${lines.length-8} gol daha`,x+24,1340,17,'#b8d49f');};
- drawGoalPanel('red',74,'#fa6474');drawGoalPanel('white',555,'#e8f0ed');
- text('SZF AIRPORT HALI SAHA  •  BİRLİKTE DAHA GÜÇLÜ',540,1422,17,'#9db9a1',800,'center');
- const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
- if(!blob)return toast('Afiş oluşturulamadı.',true);
- const url=URL.createObjectURL(blob);
+ if(!m||m.red_score==null||m.white_score==null)return toast('Önce maç skorunu kaydet.',true);
  document.getElementById('szf-share-preview')?.remove();
- const layer=document.createElement('div');layer.id='szf-share-preview';layer.className='szf-share-overlay';
- layer.innerHTML=`<section class="szf-share-dialog" role="dialog" aria-modal="true" aria-label="Maç sonucu afişi"><div class="szf-share-toolbar"><strong>Maç sonucu · Paylaşım önizlemesi</strong><button type="button" class="szf-share-close" aria-label="Kapat">✕</button></div><img class="szf-share-image" alt="Maç sonucu afişi"/><div class="szf-share-actions"><button type="button" class="btn lime" data-share-export>Görseli kaydet / paylaş</button><button type="button" class="btn" data-share-dismiss>Kapat</button></div></section>`;
- document.body.appendChild(layer);layer.querySelector('img').src=url;
- const close=()=>{layer.remove();URL.revokeObjectURL(url);};
- layer.querySelector('.szf-share-close').onclick=close;layer.querySelector('[data-share-dismiss]').onclick=close;
+ const layer=document.createElement('div');
+ layer.id='szf-share-preview';
+ layer.className='szf-share-overlay szf-share-v192';
+ layer.innerHTML='<section class="szf-share-dialog" role="dialog" aria-modal="true" aria-label="Maç sonucu paylaşım afişi"><div class="szf-share-toolbar"><strong>Maç sonucu · Paylaşım afişi</strong><button type="button" class="szf-share-close" aria-label="Kapat">✕</button></div><div class="szf-share-poster-wrap"><div class="szf-share-poster-capture">'+buildInlineSharePreviewMarkup(id)+'</div></div><div class="szf-share-actions"><button type="button" class="btn lime" data-share-export>Görseli kaydet / paylaş</button><button type="button" class="btn" data-share-dismiss>Kapat</button></div></section>';
+ document.body.appendChild(layer);
+ const close=()=>layer.remove();
+ layer.querySelector('.szf-share-close').onclick=close;
+ layer.querySelector('[data-share-dismiss]').onclick=close;
  layer.onclick=e=>{if(e.target===layer)close();};
  layer.querySelector('[data-share-export]').onclick=async()=>{
-  const filename=`SZF-Mac-Sonucu-${String(id).slice(0,8)}.png`;
-  const file=new File([blob],filename,{type:'image/png'});
-  try{if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'SZF Airport Halı Saha'});return;}}catch(e){if(e.name==='AbortError')return;}
-  const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();toast('Maç afişi PNG olarak kaydedildi.');
+  const btn=layer.querySelector('[data-share-export]');
+  if(btn.disabled)return;
+  btn.disabled=true;
+  const original=btn.textContent;
+  btn.textContent='Görsel oluşturuluyor...';
+  try{
+   const html2canvas=await szfLoadPosterCapture();
+   const poster=layer.querySelector('.szf-share-poster-capture .szf-v190-poster');
+   if(!poster)throw new Error('Afiş bulunamadı');
+   const canvas=await html2canvas(poster,{scale:2,backgroundColor:'#08150e',useCORS:true,logging:false,scrollX:0,scrollY:-window.scrollY});
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!blob)throw new Error('PNG oluşturulamadı');
+   const filename='SZF-Mac-Sonucu-'+String(id).slice(0,8)+'.png';
+   const file=new File([blob],filename,{type:'image/png'});
+   try{
+    if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'SZF Airport Halı Saha'});return;}
+   }catch(err){if(err.name==='AbortError')return;}
+   const url=URL.createObjectURL(blob);
+   const link=document.createElement('a');link.href=url;link.download=filename;
+   document.body.appendChild(link);link.click();link.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),15000);
+   toast('Maç afişi PNG olarak kaydedildi.');
+  }catch(err){console.error('Maç afişi kaydı:',err);toast('Afiş indirilemedi. İnternet bağlantını kontrol edip tekrar dene.',true);}
+  finally{btn.disabled=false;btn.textContent=original;}
  };
 }
 
-
-
-/* v190: Maç geçmişi önizlemesi SVG/Canvas üretmeden, doğrudan hafif HTML ile çizilir. */
 function inlineSharePreviewSignature(m){
  const events=extras.events.filter(e=>String(e.match_id)===String(m.id));
  const guests=extras.guests.filter(g=>String(g.match_id)===String(m.id));

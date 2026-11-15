@@ -752,3 +752,10 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
   .top-right .btn.small{padding:8px 10px}
 }
 
+
+/* v217 — Deniz transparent cutout experiment: only his card, unchanged Supabase photo. */
+.fut-card.szf-deniz-cutout-trial .fut-photo img{
+ object-fit:contain!important;
+ object-position:center bottom!important;
+ transform:none!important;
+}

@@ -1,0 +1,16 @@
+SZF Airport Hali Saha v176 — Mac Sonrasi Kredi Duzeltmesi
+
+1) Supabase > SQL Editor: SZF_v176_Mac_Sonrasi_Kredi_Onarimi.sql dosyasini calistirin.
+   Bu adim olmadan Cloudflare'a ZIP yuklemek kredi dagitimini DUZELTMEZ.
+2) SQL sonunda son 5 maca ait 1000/500 odeme sayilarini kontrol edin.
+3) ZIP icindeki site dosyalarini Cloudflare Pages'e yayinlayin.
+
+Kurallar: Sonuclanan her macta oynayan onayli hesap +1000, oynamayan
+onayli hesap +500. Misafir hesaba baglanmissa oynayan sayilir.
+Bir mac-kullanici cifti yalnizca 1 defa kredilendirilir.
+Kurulum, son TAMAMLANMIS maca ait eksik odemeleri telafi eder.
+Eski diger maclar otomatik geriye donuk odenmez.
+
+UYARI: Veritabaninda daha once manuel/baska sistemle kredi odemesi yapildiysa
+ve odeme defteri kaydi yoksa, bu SQL tekrar odeme yapabilir. Calistirmadan once
+yedek alin ve mevcut odemeleri kontrol edin.

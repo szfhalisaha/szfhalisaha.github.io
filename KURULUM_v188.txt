@@ -1,0 +1,1 @@
+SZF v188: Her ortak maçta her hedef oyuncu için +3/0/-3 tek sefer kaydedilir. ÖNCE SZF_v188_Tek_Sefer_Oy.sql Supabase SQL Editor'de çalıştırın, sonra bu ZIP içeriğini GitHub Pages'e yükleyin.

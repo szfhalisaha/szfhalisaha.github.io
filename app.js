@@ -309,7 +309,7 @@ function szfNewspaperData(match){
    'MÜTHİŞ İKİLİ! '+assister.toLocaleUpperCase('tr-TR')+' & '+scorer.toLocaleUpperCase('tr-TR'),
    'İKİ KEZ AYNI TARİFE: '+assister.toLocaleUpperCase('tr-TR')+' → '+scorer.toLocaleUpperCase('tr-TR')
   ];
-  add('asist',n>=3?5:3,titles,assister+' aynı maçta '+scorer+' için '+n+' gol pası verdi. '+n+' golde aynı ikili sahneye çıktı.');
+  add('asist',2,titles,assister+' aynı maçta '+scorer+' için '+n+' gol pası verdi. '+n+' golde aynı ikili sahneye çıktı.');
  }
  // H2H ve takım arkadaşlığı: aynı maçta bulunan kayıtlı/eşleşmiş oyuncuların
  // yalnızca daha önce tamamlanmış karşılaşmalarını say; hayalî seri üretme.
@@ -385,9 +385,9 @@ function szfNewspaperData(match){
  }
  if(winners.length>1)add('mvp',2,['MVP KÜRSÜSÜNDE ORTAKLIK VAR!','MANŞETİ PAYLAŞAMADILAR!'],'Maçın Adamı oylamasında '+winners.length+' oyuncu aynı en yüksek oya ulaştı.');
  if(!stories.length)add('mac',1,['MAÇ BİTTİ, MUHABBET BİTMEDİ','SAHADA MÜCADELE, MANŞETTE REKABET','SKOR KONUŞTU, RÖVANŞ MASADA'],red+'-'+white+' biten karşılaşma yeni haftanın rekabetini başlattı.');
- // Skor ve gol hikâyelerinin hepsi adaydır; baskın maç olayları daha sık seçilir.
- const weighted=stories.flatMap(story=>Array.from({length:story.weight},()=>story));
- const chosen=weighted[hash%weighted.length];
+ // Hiçbir hikâye zorunlu manşet değildir: uygun konulardan dengeli seçim yap.
+ // Özellikle gol-asist ortaklığı, MVP veya başka tek bir konu manşeti ele geçirmesin.
+ const chosen=stories[(hash>>>3)%stories.length];
  const headline=chosen.headline,summary=chosen.summary;
  return {match,winners,headline,summary,topScorers,red,white,winningTeam,votes:Number(mv.vote_count||0)};
 }

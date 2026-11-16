@@ -115,17 +115,113 @@ function cardDisplayName(c,showNumber=false){
    Each value adjusts the visible card portrait only; stored avatars are unchanged.
    x/y are percentages of portrait box; scale is a multiplier. */
 const szfPortraitOverrides={
-  // Deniz reference: Murat's head and upper torso occupy the same card area.
-  'ed6c37d5-da9c-49d6-9be8-c4bb06e8b7a4': {x:0,y:0,scale:1.00},
+ 'ed6c37d5-da9c-49d6-9be8-c4bb06e8b7a4': {x:0,y:0,scale:1},
 };
+let szfStoredCardPhotoSettings=new Map();
+let szfEditorDraft=null;
+let szfEditorPlayerId='';
+function szfCardSettings(c){
+ return szfStoredCardPhotoSettings.get(String(c?.id))||szfPortraitOverrides[String(c?.id)]||{x:0,y:0,scale:1};
+}
 function szfPortraitStyle(c){
- const override=szfPortraitOverrides[String(c.id)]||szfPortraitOverrides[String(c.display_name||'').trim().toLocaleLowerCase('tr')];
- if(!override)return '';
+ const settings=szfCardSettings(c);
  const clamp=(n,min,max,def)=>Number.isFinite(Number(n))?Math.max(min,Math.min(max,Number(n))):def;
- const x=clamp(override.x,-35,35,0);
- const y=clamp(override.y,-30,30,0);
- const scale=clamp(override.scale,0.65,1.4,1);
+ const x=clamp(settings.x,-35,35,0);
+ const y=clamp(settings.y,-35,35,0);
+ const scale=clamp(settings.scale,0.65,2.2,1);
  return ` style="--szf-portrait-x:${x}%;--szf-portrait-y:${y}%;--szf-portrait-scale:${scale}"`;
+}
+async function szfLoadCardPhotoSettings(){
+ if(!db||!user)return;
+ const result=await db.from('szf_card_photo_settings_v232').select('player_id,mode,x,y,scale');
+ if(result.error){console.warn('Fotoğraf düzenleri yüklenemedi:',result.error);return}
+ szfStoredCardPhotoSettings=new Map((result.data||[]).map(row=>[String(row.player_id),row]));
+}
+function szfCutoutAvailable(c){
+ return String(c.id)==='2a56dc03-3fbd-416d-9533-ff53e4331241'||
+ !!szfGeneratedPhotoManifest[String(c.id)]?.path;
+}
+function szfEditorCardPanel(){
+ if(!adminInfo||!user)return '';
+ const players=publicProfiles.filter(p=>p.avatar_path).sort((a,b)=>String(a.display_name).localeCompare(String(b.display_name),'tr'));
+ if(!players.length)return '';
+ const selected=players.find(p=>String(p.id)===String(szfEditorPlayerId))||players[0];
+ szfEditorPlayerId=String(selected.id);
+ const card=currentCards().find(c=>String(c.id)===String(selected.id))||selected;
+ const stored=szfStoredCardPhotoSettings.get(String(selected.id));
+ const mode=stored?.mode||(SZF_APPROVED_CUTOUT_PLAYER_IDS.has(String(selected.id))?'cutout':'original');
+ const initial=szfEditorDraft&&szfEditorDraft.id===String(selected.id)?szfEditorDraft:{id:String(selected.id),mode,x:Number(stored?.x??0),y:Number(stored?.y??0),scale:Number(stored?.scale??1)};
+ const opt=players.map(p=>`<option value="${attrs(p.id)}" ${String(p.id)===String(selected.id)?'selected':''}>${esc(p.display_name)}</option>`).join('');
+ const available=szfCutoutAvailable(card);
+ const cutoutOption=available?'<option value="cutout">Arka plansız fotoğraf</option>':'';
+ return `<section class="profile-panel szf-card-editor" id="szf-card-editor"><h3>🖼️ Kart Fotoğrafı Düzenle</h3>
+ <p class="soft">Sadece yöneticiler düzenler. Deniz kartını örnek alarak fotoğrafı büyüt, taşı ve kaydet. Orijinal dosya değişmez.</p>
+ <div class="szf-editor-layout">
+  <div class="szf-editor-controls">
+   <label>Oyuncu<select id="szf-editor-player" class="text-input">${opt}</select></label>
+   <label>Fotoğraf türü<select id="szf-editor-mode" class="text-input"><option value="original">Orijinal fotoğraf</option>${cutoutOption}</select></label>
+   <label>Yakınlaştır <output id="szf-editor-scale-label"></output><input id="szf-editor-scale" type="range" min="65" max="220" step="1" value="${Math.round(initial.scale*100)}"></label>
+   <label>Sağa / sola <output id="szf-editor-x-label"></output><input id="szf-editor-x" type="range" min="-35" max="35" step="1" value="${initial.x}"></label>
+   <label>Yukarı / aşağı <output id="szf-editor-y-label"></output><input id="szf-editor-y" type="range" min="-35" max="35" step="1" value="${initial.y}"></label>
+   <div class="szf-editor-actions"><button type="button" class="btn lime" id="szf-editor-save">Kaydet</button>
+   <button type="button" class="btn ghost" id="szf-editor-reset">Sıfırla</button>
+   <button type="button" class="btn ghost" id="szf-editor-original">Eski fotoğrafa dön</button></div>
+   <p class="micro" id="szf-editor-status" role="status">Önizleme değişiklikleri kaydedilene kadar yalnızca burada görünür.</p>
+  </div>
+  <div class="szf-editor-preview"><p class="micro">Canlı kart önizlemesi</p><div id="szf-editor-preview-card" class="szf-editor-card-host">${cardHTML(card,true)}</div></div>
+ </div></section>`;
+}
+function szfEditorBind(){
+ if(!adminInfo||view!=='account')return;
+ const area=document.getElementById('szf-card-editor');
+ if(!area)return;
+ const cardEl=area.querySelector('.fut-card');
+ const imageEl=cardEl?.querySelector('.fut-photo img');
+ const selected=publicProfiles.find(p=>String(p.id)===String(szfEditorPlayerId));
+ if(!selected||!imageEl)return;
+ const settings=szfStoredCardPhotoSettings.get(String(selected.id));
+ const mode=settings?.mode||(SZF_APPROVED_CUTOUT_PLAYER_IDS.has(String(selected.id))?'cutout':'original');
+ const current=szfEditorDraft&&szfEditorDraft.id===String(selected.id)?szfEditorDraft:{id:String(selected.id),mode,x:Number(settings?.x??0),y:Number(settings?.y??0),scale:Number(settings?.scale??1)};
+ const controls={mode:area.querySelector('#szf-editor-mode'),scale:area.querySelector('#szf-editor-scale'),x:area.querySelector('#szf-editor-x'),y:area.querySelector('#szf-editor-y')};
+ const paint=()=>{
+  current.mode=controls.mode.value;
+  current.scale=Number(controls.scale.value)/100;
+  current.x=Number(controls.x.value);
+  current.y=Number(controls.y.value);
+  szfEditorDraft={...current};
+  for(const key of ['scale','x','y']){
+   const label=area.querySelector('#szf-editor-'+key+'-label');
+   if(label)label.textContent=key==='scale'?Math.round(current.scale*100)+'%':current[key]+'%';
+  }
+  cardEl.style.setProperty('--szf-portrait-scale',String(current.scale));
+  cardEl.style.setProperty('--szf-portrait-x',current.x+'%');
+  cardEl.style.setProperty('--szf-portrait-y',current.y+'%');
+  const c=currentCards().find(p=>String(p.id)===String(selected.id))||selected;
+  const source=publicProfiles.find(p=>String(p.id)===String(selected.id))?.avatar_path;
+  imageEl.src=szfPlayerPhotoUrl(c,source,current.mode);
+ };
+ controls.mode.value=current.mode==='cutout'&&szfCutoutAvailable(selected)?'cutout':'original';
+ controls.scale.value=Math.round(current.scale*100);controls.x.value=current.x;controls.y.value=current.y;
+ Object.values(controls).forEach(el=>el?.addEventListener('input',paint));
+ area.querySelector('#szf-editor-player')?.addEventListener('change',event=>{szfEditorPlayerId=event.target.value;szfEditorDraft=null;render()});
+ const persist=async(modeOverride,reset)=>{
+  const next=reset?{id:String(selected.id),mode:modeOverride||'original',scale:1,x:0,y:0}:{...current,mode:modeOverride||controls.mode.value};
+  const status=area.querySelector('#szf-editor-status');
+  const save=area.querySelector('#szf-editor-save');if(save)save.disabled=true;
+  if(status)status.textContent='Kaydediliyor…';
+  const {error}=await db.from('szf_card_photo_settings_v232').upsert({
+   player_id:selected.id,mode:next.mode,x:next.x,y:next.y,scale:next.scale,updated_by:user.id,updated_at:new Date().toISOString()
+  },{onConflict:'player_id'});
+  if(error){if(status)status.textContent='Kaydedilemedi: '+formatError(error);if(save)save.disabled=false;return}
+  szfStoredCardPhotoSettings.set(String(selected.id),{player_id:selected.id,...next});
+  szfEditorDraft=null;render();toast('Kart fotoğrafı kaydedildi. Herkes yeni konumu görecek.');
+ };
+ area.querySelector('#szf-editor-save')?.addEventListener('click',()=>persist(null,false));
+ area.querySelector('#szf-editor-original')?.addEventListener('click',()=>persist('original',true));
+ area.querySelector('#szf-editor-reset')?.addEventListener('click',()=>{
+  controls.scale.value='100';controls.x.value='0';controls.y.value='0';paint();
+ });
+ paint();
 }
 
 /* v225 — generated cutouts can be disabled globally, without touching avatars.
@@ -153,11 +249,12 @@ const SZF_APPROVED_CUTOUT_PLAYER_IDS=new Set([
  'ab3b9a8b-0df8-48a9-bbf8-56e7b345daf0', // Serkan Yücel (profile: Serkanycl)
  'ede12ef4-f7e6-4f10-a9f5-4a2b88e37350'  // Ozan Aydın
 ]);
-function szfPlayerPhotoUrl(c,originalPath){
+function szfPlayerPhotoUrl(c,originalPath,previewMode){
  const original=avatarUrl(originalPath);
  const forceOriginal=new URLSearchParams(location.search).has('originalPhotos');
- if(!originalPath||forceOriginal||!SZF_USE_GENERATED_CARD_PHOTOS||
-    !SZF_APPROVED_CUTOUT_PLAYER_IDS.has(String(c.id)))return original;
+ const configured=previewMode||szfStoredCardPhotoSettings.get(String(c.id))?.mode;
+ const useCutout=configured==='cutout'||(configured!=='original'&&SZF_APPROVED_CUTOUT_PLAYER_IDS.has(String(c.id)));
+ if(!originalPath||forceOriginal||!SZF_USE_GENERATED_CARD_PHOTOS||!useCutout)return original;
  if(String(c.id)==='2a56dc03-3fbd-416d-9533-ff53e4331241')
    return 'deniz-cutout-preview.svg?v=219';
  const match=szfGeneratedPhotoManifest[String(c.id)];
@@ -201,7 +298,7 @@ function assessmentCardHTML(c){
   const flash=assessmentFlash?.target===String(c.id)&&assessmentFlash?.category===k?assessmentFlash:null;
   return `<div class="fut-attr assessment-fut-attr ${delta>0?'boosted':delta<0?'reduced':delta===0?'neutral':''} ${flash?'assessment-flash '+flash.tone:''}"><span>${l}</span><div class="assessment-fut-stat"><b>${publicAbility(c,k)}</b>${assessmentDeltaHTML(delta)}</div></div>`;
  }).join('');
- return `<div class="assessment-card-box"><div class="card-face fut-card assessment-static-card tier-${rankTier(c)}">
+ return `<div class="assessment-card-box"><div class="card-face fut-card assessment-static-card tier-${rankTier(c)}"${szfPortraitStyle(c)}>
  <div class="fut-head"><div class="fut-overall">${publicRating(c)}</div><div class="fut-pos">${esc(c.position==='ORT'?'OS':c.position)}</div></div>
  <div class="fut-photo">${photo?`<img src="${attrs(cardPhotoUrl)}" alt="" loading="lazy">`:`<span>${esc(initials)}</span>`}</div>
  <div class="fut-name">${esc(cardDisplayName(c))}</div><div class="fut-stats assessment-fut-stats">${values}</div><div class="fut-emblems"><img class="fut-flag-img" src="turkiye-bayragi.svg" alt="Türkiye"></div></div></div>`;
@@ -961,7 +1058,7 @@ function renderAccount(){
  const numberOptions='<option value="">Forma numarası seç</option>'+Array.from({length:99},(_,i)=>i+1).map(n=>`<option value="${n}" ${used.has(n)?'disabled':''} ${Number(profile?.jersey_number)===n?'selected':''}>${n}${used.has(n)?' — dolu':''}</option>`).join('');
  const positions=(selected,empty=false)=>`${empty?'<option value="">Yok</option>':''}`+Object.entries(posName).map(([k,v])=>`<option value="${k}" ${selected===k?'selected':''}>${v}</option>`).join('');
  const avatar=profile?.avatar_path?`<img class="profile-photo" src="${attrs(avatarUrl(profile.avatar_path))}" alt="Profil fotoğrafın">`:'<span class="profile-photo-placeholder">📷</span>';
- return sectionHead('Hesabım','Profilini tamamla ve dilediğin zaman güncelle.')+`<section class="profile-panel"><div class="profile-info">${profile?.display_name&&profile?.jersey_number?'✅ Profilin hazır.':'📝 Profilini tamamla.'} ${!profile?.display_name||!profile?.jersey_number?'Profilini aşağıdan tamamla.':''}</div><label>E-posta<input class="text-input" disabled value="${attrs(user.email||'')}" /></label><form id="profileForm"><div class="photo-row">${avatar}<div><label>Oyuncu fotoğrafı (kart için yakınlaştır / kadrajla · en fazla 5 MB)<input type="file" id="editPhoto" accept="image/jpeg,image/png,image/webp" /></label>${profile?.avatar_path?'<button type="button" id="editCurrentPhoto" class="btn small ghost" style="margin-top:12px">✎ Mevcut fotoğrafı düzenle</button><button type="button" id="removeCurrentPhoto" class="btn small ghost photo-remove-btn" style="margin-top:10px">🗑 Fotoğrafı kaldır</button>':''}</div></div><div id="cropPreview" class="crop-edit hidden"><b>FC kartı fotoğraf önizlemesi</b><p class="micro">Bu önizlemede ayarladığın 4:5 kadraj kartta ikinci kez kırpılmadan gösterilir. Arka plan otomatik silinmez.</p><canvas id="cropCanvas" width="400" height="500"></canvas><label>Yakınlaştır <input id="cropZoom" type="range" min="100" max="280" value="175" step="5"></label><label>Sağa / sola <input id="cropHorizontal" type="range" min="0" max="100" value="50"></label><label>Yukarı / aşağı <input id="cropVertical" type="range" min="0" max="100" value="32"></label></div><label>Ad soyad<input class="text-input" id="editName" required minlength="2" maxlength="60" value="${attrs(profile?.display_name||'')}" /></label><label>Forma numarası (1–99)<select id="editJersey" required class="text-input">${numberOptions}</select></label><label>Asıl mevki<select id="editPos" class="text-input">${positions(profile?.position)}</select></label><label>Alternatif mevki (isteğe bağlı)<select id="editPos2" class="text-input">${positions(profile?.secondary_position,true)}</select></label><div class="profile-actions"><button class="btn lime" type="submit" id="saveProfileBtn">Profili kaydet</button><button type="button" id="signoutAccount" class="btn ghost">Çıkış yap</button></div></form><p class="micro">Her forma numarası tek kişiye aittir. Alternatif mevki asıl mevkiyle aynı olamaz.</p></section>${adminAccountPanel()}`;
+ return sectionHead('Hesabım','Profilini tamamla ve dilediğin zaman güncelle.')+`<section class="profile-panel"><div class="profile-info">${profile?.display_name&&profile?.jersey_number?'✅ Profilin hazır.':'📝 Profilini tamamla.'} ${!profile?.display_name||!profile?.jersey_number?'Profilini aşağıdan tamamla.':''}</div><label>E-posta<input class="text-input" disabled value="${attrs(user.email||'')}" /></label><form id="profileForm"><div class="photo-row">${avatar}<div><label>Oyuncu fotoğrafı (kart için yakınlaştır / kadrajla · en fazla 5 MB)<input type="file" id="editPhoto" accept="image/jpeg,image/png,image/webp" /></label>${profile?.avatar_path?'<button type="button" id="editCurrentPhoto" class="btn small ghost" style="margin-top:12px">✎ Mevcut fotoğrafı düzenle</button><button type="button" id="removeCurrentPhoto" class="btn small ghost photo-remove-btn" style="margin-top:10px">🗑 Fotoğrafı kaldır</button>':''}</div></div><div id="cropPreview" class="crop-edit hidden"><b>FC kartı fotoğraf önizlemesi</b><p class="micro">Bu önizlemede ayarladığın 4:5 kadraj kartta ikinci kez kırpılmadan gösterilir. Arka plan otomatik silinmez.</p><canvas id="cropCanvas" width="400" height="500"></canvas><label>Yakınlaştır <input id="cropZoom" type="range" min="100" max="280" value="175" step="5"></label><label>Sağa / sola <input id="cropHorizontal" type="range" min="0" max="100" value="50"></label><label>Yukarı / aşağı <input id="cropVertical" type="range" min="0" max="100" value="32"></label></div><label>Ad soyad<input class="text-input" id="editName" required minlength="2" maxlength="60" value="${attrs(profile?.display_name||'')}" /></label><label>Forma numarası (1–99)<select id="editJersey" required class="text-input">${numberOptions}</select></label><label>Asıl mevki<select id="editPos" class="text-input">${positions(profile?.position)}</select></label><label>Alternatif mevki (isteğe bağlı)<select id="editPos2" class="text-input">${positions(profile?.secondary_position,true)}</select></label><div class="profile-actions"><button class="btn lime" type="submit" id="saveProfileBtn">Profili kaydet</button><button type="button" id="signoutAccount" class="btn ghost">Çıkış yap</button></div></form><p class="micro">Her forma numarası tek kişiye aittir. Alternatif mevki asıl mevkiyle aynı olamaz.</p></section>${adminAccountPanel()}${szfEditorCardPanel()}`;
 }
 
 
@@ -1672,6 +1769,7 @@ function render(){
  fillInlineSharePreviews();
 }
 function bindContent(){
+ szfEditorBind();
  document.getElementById('szf-delete-account')?.addEventListener('click',async()=>{
   if(!adminInfo||view!=='account')return toast('Bu işlem yalnızca Hesabım bölümündeki yöneticilere açıktır.',true);
   const id=document.getElementById('szf-delete-account-id')?.value;
@@ -2115,7 +2213,7 @@ async function loadProfileAndCards(){if(!db||!user)return;const [p,c,v,all]=awai
  db.from('player_cards').select('*').order('overall_rating',{ascending:false}),
  db.from('szf_ratings_v70').select('target_id,scores,first_submitted_at').eq('voter_id',user.id),
  db.from('profiles').select('id,display_name,position,approved,jersey_number,avatar_path')
-]);if(p.error)toast('Profil alınamadı: '+formatError(p.error),true);if(c.error)toast('Oyuncular alınamadı: '+formatError(c.error),true);ownVotesReadError=v.error?formatError(v.error):null;if(v.error)toast('Oylar alınamadı: '+formatError(v.error)+' — v165 SQL düzeltmesini çalıştır.',true);profile=p.data?{...p.data,display_name:formatPersonName(p.data.display_name)}:null;cards=(c.data||[]).map(c=>({...c,display_name:formatPersonName(c.display_name), overall_rating:Number(c.overall_rating)||60}));myVotes=v.data||[];publicProfiles=(all.data||[]).map(p=>({...p,display_name:formatPersonName(p.display_name)}));await szfLoadGeneratedPhotos();
+]);if(p.error)toast('Profil alınamadı: '+formatError(p.error),true);if(c.error)toast('Oyuncular alınamadı: '+formatError(c.error),true);ownVotesReadError=v.error?formatError(v.error):null;if(v.error)toast('Oylar alınamadı: '+formatError(v.error)+' — v165 SQL düzeltmesini çalıştır.',true);profile=p.data?{...p.data,display_name:formatPersonName(p.data.display_name)}:null;cards=(c.data||[]).map(c=>({...c,display_name:formatPersonName(c.display_name), overall_rating:Number(c.overall_rating)||60}));myVotes=v.data||[];publicProfiles=(all.data||[]).map(p=>({...p,display_name:formatPersonName(p.display_name)}));await Promise.all([szfLoadGeneratedPhotos(),szfLoadCardPhotoSettings()]);
  // A new player may have no old vote-derived player_cards row yet.
  // Show a genuine baseline card from the saved profile, without altering previous scores.
  const existing=new Set(cards.map(x=>x.id));

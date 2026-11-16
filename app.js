@@ -134,24 +134,38 @@ let szfGeneratedPhotoManifest={};
 let szfGeneratedPhotoLoading=null;
 async function szfLoadGeneratedPhotos(){
  if(szfGeneratedPhotoLoading)return szfGeneratedPhotoLoading;
- szfGeneratedPhotoLoading=fetch('card-cutouts/manifest.json?v=227',{cache:'no-store'})
+ szfGeneratedPhotoLoading=fetch('card-cutouts/manifest.json?v=228',{cache:'no-store'})
   .then(r=>r.ok?r.json():null)
   .then(data=>{szfGeneratedPhotoManifest=data?.portraits||{};})
   .catch(e=>{console.info('Cutout manifest unavailable, original portraits remain active',e);szfGeneratedPhotoManifest={};});
  return szfGeneratedPhotoLoading;
 }
+/* v228 — Only the seven approved players use transparent cutout portraits.
+   Others always use their original Supabase avatar, with no data mutation. */
+const SZF_APPROVED_CUTOUT_PLAYER_IDS=new Set([
+ '2a56dc03-3fbd-416d-9533-ff53e4331241', // Deniz
+ '36ce0697-2ce2-4435-ba3a-41d82ba98f78', // Zafer Akgül
+ 'ed6c37d5-da9c-49d6-9be8-c4bb06e8b7a4', // Murat Alptekin
+ '493cd3dd-0c75-4837-879a-8ddd2065cc83', // Üzeyir Bayık
+ 'c877569d-419d-4df4-a873-77ca889fad88', // Bedirhan Çırakoğlu
+ 'd49f4c5a-0335-496c-a449-4be8894f9765', // Hasan Limon
+ 'ab3b9a8b-0df8-48a9-bbf8-56e7b345daf0'  // Serkan Yücel (profile: Serkanycl)
+]);
 function szfPlayerPhotoUrl(c,originalPath){
- if(originalPath&&/^deniz(?:\s|$)/iu.test(String(c.display_name||'').trim()))return 'deniz-cutout-preview.svg?v=219';
  const original=avatarUrl(originalPath);
- if(!SZF_USE_GENERATED_CARD_PHOTOS||new URLSearchParams(location.search).has('originalPhotos')||String(c.id)==='f3bdee37-78d7-4306-a48c-7579f8221417')return original;
+ const forceOriginal=new URLSearchParams(location.search).has('originalPhotos');
+ if(!originalPath||forceOriginal||!SZF_USE_GENERATED_CARD_PHOTOS||
+    !SZF_APPROVED_CUTOUT_PLAYER_IDS.has(String(c.id)))return original;
+ if(String(c.id)==='2a56dc03-3fbd-416d-9533-ff53e4331241')
+   return 'deniz-cutout-preview.svg?v=219';
  const match=szfGeneratedPhotoManifest[String(c.id)];
  if(!match||match.source!==originalPath)return original;
- return './'+match.path+'?v=227';
+ return './'+match.path+'?v=228';
 }
 function cardHTML(c,showNumber=false){
  const f=getFeatures(c),photo=publicProfiles.find(p=>p.id===c.id)?.avatar_path;
  const denizTrial=!!photo&&/^deniz(?:\s|$)/iu.test(String(c.display_name||'').trim());
- const cardPhotoUrl=denizTrial?'deniz-cutout-preview.svg?v=219':szfPlayerPhotoUrl(c,photo);
+ const cardPhotoUrl=szfPlayerPhotoUrl(c,photo);
  const initials=String(c.display_name||'?').split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toLocaleUpperCase('tr');
  const values=f.map(([k,l])=>`<div class="fut-attr"><span>${l}</span><b>${publicAbility(c,k)}</b></div>`).join('');
  return `<button type="button" class="card-face fut-card tier-${rankTier(c)} ${showNumber?'szf-numbered-card':''} ${denizTrial?'szf-deniz-cutout-trial':''}" data-player="${attrs(c.id)}"${szfPortraitStyle(c)} aria-label="${attrs(formatPersonName(c.display_name))} oyuncu kartı">

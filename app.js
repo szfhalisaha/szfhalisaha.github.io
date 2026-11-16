@@ -1595,74 +1595,42 @@ async function shareMatchCard(id){
  const layer=document.createElement('div');
  layer.id='szf-share-preview';
  layer.className='szf-share-overlay szf-share-v192';
- layer.innerHTML='<section class="szf-share-dialog" role="dialog" aria-modal="true" aria-label="Maç sonucu paylaşım afişi"><div class="szf-share-toolbar"><strong>Maç sonucu · Paylaşım afişi</strong><button type="button" class="szf-share-close" aria-label="Kapat">✕</button></div><div class="szf-share-poster-wrap"><div class="szf-share-poster-capture">'+buildInlineSharePreviewMarkup(id)+'</div></div><div class="szf-share-actions"><button type="button" class="btn lime" data-share-export>Görseli hazırla</button><button type="button" class="btn" data-share-dismiss>Kapat</button></div><div data-share-ready style="display:none;padding:10px 18px 18px;text-align:center"><p style="margin:8px 0 12px;color:#d8eed0">PNG hazır. iPhone’da paylaş menüsünden “Görseli Kaydet” seçeneğini kullan.</p><button type="button" class="btn lime" data-share-native>Fotoğraflara Kaydet / Paylaş</button> <button type="button" class="btn" data-share-download>PNG indir</button><p data-share-hint style="font-size:13px;color:#c5d5c4;margin:10px 0 0"></p></div></section>';
+ layer.innerHTML='<section class="szf-share-dialog" role="dialog" aria-modal="true" aria-label="Maç sonucu paylaşım afişi"><div class="szf-share-toolbar"><strong>Maç sonucu · Paylaşım afişi</strong><button type="button" class="szf-share-close" aria-label="Kapat">✕</button></div><div class="szf-share-poster-wrap"><div class="szf-share-poster-capture">'+buildInlineSharePreviewMarkup(id)+'</div></div><div class="szf-share-actions"><button type="button" class="btn lime" data-share-export>Görseli kaydet / paylaş</button><button type="button" class="btn" data-share-dismiss>Kapat</button></div></section>';
  document.body.appendChild(layer);
- let imageUrl=null, imageFile=null;
- const close=()=>{layer.remove();if(imageUrl)setTimeout(()=>URL.revokeObjectURL(imageUrl),60000);};
+ const close=()=>layer.remove();
  layer.querySelector('.szf-share-close').onclick=close;
  layer.querySelector('[data-share-dismiss]').onclick=close;
  layer.onclick=e=>{if(e.target===layer)close();};
- const ready=layer.querySelector('[data-share-ready]');
- const hint=layer.querySelector('[data-share-hint]');
- const download=()=>{
-  if(!imageUrl)return;
-  const link=document.createElement('a');
-  link.href=imageUrl;link.download=imageFile.name;document.body.appendChild(link);link.click();link.remove();
-  hint.textContent='İndirme başlatıldı. iPhone’da dosya İndirilenler’e gidebilir; Fotoğraflar’a otomatik kaydedildiği doğrulanamaz.';
- };
- layer.querySelector('[data-share-download]').onclick=download;
- layer.querySelector('[data-share-native]').onclick=()=>{
-  if(!imageFile)return;
-  // Invoke the native share sheet in the synchronous user-click stack on iOS.
-  if(navigator.share && (!navigator.canShare || navigator.canShare({files:[imageFile]}))){
-   try{
-    Promise.resolve(navigator.share({files:[imageFile],title:'SZF Airport Halı Saha'}))
-     .catch(err=>{if(err?.name!=='AbortError'){hint.textContent='Paylaşım açılamadı. PNG indir veya aşağıdaki görsele basılı tut.';}});
-   }catch(err){hint.textContent='Paylaşım açılamadı. PNG indir veya aşağıdaki görsele basılı tut.';}
-  }else{
-   hint.textContent='Bu tarayıcı paylaşımı desteklemiyor. PNG indir veya görsele basılı tut.';
-  }
- };
  layer.querySelector('[data-share-export]').onclick=async()=>{
   const btn=layer.querySelector('[data-share-export]');
   if(btn.disabled)return;
   btn.disabled=true;
+  const original=btn.textContent;
   btn.textContent='Görsel oluşturuluyor...';
-  const timeout=(ms,msg)=>new Promise((_,reject)=>setTimeout(()=>reject(new Error(msg)),ms));
   try{
-   const html2canvas=await Promise.race([szfLoadPosterCapture(),timeout(12000,'Görsel kütüphanesi zaman aşımı')]);
+   const html2canvas=await szfLoadPosterCapture();
    const poster=layer.querySelector('.szf-share-poster-capture .szf-v190-poster');
    if(!poster)throw new Error('Afiş bulunamadı');
+   // iOS Safari can stall on large 2x canvas exports. Keep the mobile raster within memory limits.
    const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-   const canvas=await Promise.race([
-    html2canvas(poster,{scale:isMobile?1:1.5,backgroundColor:'#08150e',useCORS:true,logging:false,scrollX:0,scrollY:-window.scrollY,imageTimeout:8000}),
-    timeout(18000,'Afiş oluşturma zaman aşımı')
-   ]);
-   const blob=await Promise.race([new Promise(resolve=>canvas.toBlob(resolve,'image/png')),timeout(8000,'PNG oluşturma zaman aşımı')]);
+   const scale=isMobile?1:1.5;
+   const capture=()=>html2canvas(poster,{scale,backgroundColor:'#08150e',useCORS:true,logging:false,scrollX:0,scrollY:-window.scrollY,imageTimeout:8000});
+   const timeout=(ms)=>new Promise((_,reject)=>setTimeout(()=>reject(new Error('Afiş oluşturma zaman aşımı')),ms));
+   const canvas=await Promise.race([capture(),timeout(18000)]);
+   const blob=await Promise.race([new Promise(resolve=>canvas.toBlob(resolve,'image/png')),timeout(8000)]);
    if(!blob)throw new Error('PNG oluşturulamadı');
    const filename='SZF-Mac-Sonucu-'+String(id).slice(0,8)+'.png';
-   imageFile=new File([blob],filename,{type:'image/png'});
-   if(imageUrl)URL.revokeObjectURL(imageUrl);
-   imageUrl=URL.createObjectURL(blob);
-   ready.style.display='block';
-   hint.textContent='';
-   btn.textContent='Görsel hazır ✓';
-   // Persistent genuine image preview is a fallback for iOS long-press Save to Photos.
-   let preview=ready.querySelector('[data-share-image]');
-   if(!preview){
-    preview=document.createElement('img');
-    preview.setAttribute('data-share-image','');
-    preview.alt='Kaydedilebilir maç afişi PNG';
-    preview.style.cssText='display:block;width:100%;max-width:280px;max-height:320px;object-fit:contain;margin:14px auto 0;border-radius:9px;-webkit-touch-callout:default;';
-    ready.appendChild(preview);
-   }
-   preview.src=imageUrl;
-  }catch(err){
-   console.error('Maç afişi kaydı:',err);
-   btn.disabled=false;
-   btn.textContent='Tekrar dene';
-   toast('Afiş hazırlanamadı: '+(err?.message||'Bilinmeyen hata'),true);
-  }
+   const file=new File([blob],filename,{type:'image/png'});
+   try{
+    if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'SZF Airport Halı Saha'});return;}
+   }catch(err){if(err.name==='AbortError')return;}
+   const url=URL.createObjectURL(blob);
+   const link=document.createElement('a');link.href=url;link.download=filename;
+   document.body.appendChild(link);link.click();link.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),15000);
+   toast('Maç afişi PNG olarak kaydedildi.');
+  }catch(err){console.error('Maç afişi kaydı:',err);toast('Afiş oluşturulamadı. Telefonunda sayfayı yenileyip tekrar dene.',true);}
+  finally{btn.disabled=false;btn.textContent=original;}
  };
 }
 

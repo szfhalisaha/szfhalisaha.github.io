@@ -921,3 +921,20 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
  .fut-card .fut-name.szf-name-long{font-size:clamp(9px,2.8vw,12px)!important}
  .fut-card .fut-name.szf-name-very-long{font-size:clamp(8px,2.45vw,10px)!important}
 }
+
+/* v232 — Admin-only portrait adjustment panel embedded in Hesabım */
+.szf-card-editor .szf-editor-layout{display:grid;grid-template-columns:minmax(250px,1fr) minmax(230px,320px);gap:22px;align-items:start}
+.szf-card-editor .szf-editor-controls{min-width:0;display:flex;flex-direction:column;gap:15px}
+.szf-card-editor .szf-editor-controls label{display:flex;flex-direction:column;gap:7px;font-weight:600}
+.szf-card-editor .szf-editor-controls label output{display:inline;color:var(--lime,#b5fc39);font-variant-numeric:tabular-nums;font-size:13px}
+.szf-card-editor input[type="range"]{width:100%;max-width:100%;accent-color:#b5fc39;cursor:pointer}
+.szf-card-editor .szf-editor-actions{display:flex;flex-wrap:wrap;gap:8px}
+.szf-card-editor .szf-editor-preview{min-width:0;text-align:center}
+.szf-card-editor .szf-editor-card-host{margin:auto;width:min(100%,270px)}
+.szf-card-editor .szf-editor-card-host .fut-card{display:block;width:100%;pointer-events:none}
+.szf-card-editor .szf-editor-card-host .fut-photo img{transform-origin:center bottom!important}
+@media(max-width:760px){
+ .szf-card-editor .szf-editor-layout{grid-template-columns:minmax(0,1fr);gap:16px}
+ .szf-card-editor .szf-editor-card-host{width:min(80%,270px)}
+ .szf-card-editor .szf-editor-actions .btn{flex:1 1 auto}
+}

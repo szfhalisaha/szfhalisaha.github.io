@@ -1,0 +1,35 @@
+name: Reframe player cutouts to chest height
+
+on:
+  push:
+    paths:
+      - '.github/workflows/reframe-card-portraits.yml'
+      - 'scripts/reframe_chest_portraits.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  reframe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Pillow
+        run: python -m pip install 'Pillow==11.1.0'
+      - name: Crop to chest and remove artifacts
+        run: python scripts/reframe_chest_portraits.py
+      - name: Publish improved portraits
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add card-cutouts/manifest.json card-cutouts/*.webp
+          if ! git diff --cached --quiet; then
+            git commit -m "Reframe chest-up player cutouts with corrected artifacts"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

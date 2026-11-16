@@ -127,10 +127,30 @@ function szfPortraitStyle(c){
  return ` style="--szf-portrait-x:${x}%;--szf-portrait-y:${y}%;--szf-portrait-scale:${scale}"`;
 }
 
+/* v225 — generated cutouts can be disabled globally, without touching avatars.
+   Also supports ?originalPhotos=1 for side-by-side comparison and easy rollback. */
+const SZF_USE_GENERATED_CARD_PHOTOS=false; // Flip to true only after validation.
+let szfGeneratedPhotoManifest={};
+let szfGeneratedPhotoLoading=null;
+async function szfLoadGeneratedPhotos(){
+ if(szfGeneratedPhotoLoading)return szfGeneratedPhotoLoading;
+ szfGeneratedPhotoLoading=fetch('card-cutouts/manifest.json?v=225',{cache:'no-store'})
+  .then(r=>r.ok?r.json():null)
+  .then(data=>{szfGeneratedPhotoManifest=data?.portraits||{};})
+  .catch(e=>{console.info('Cutout manifest unavailable, original portraits remain active',e);szfGeneratedPhotoManifest={};});
+ return szfGeneratedPhotoLoading;
+}
+function szfPlayerPhotoUrl(c,originalPath){
+ const original=avatarUrl(originalPath);
+ if(!SZF_USE_GENERATED_CARD_PHOTOS||new URLSearchParams(location.search).has('originalPhotos'))return original;
+ const match=szfGeneratedPhotoManifest[String(c.id)];
+ if(!match||match.source!==originalPath)return original;
+ return './'+match.path+'?v=225';
+}
 function cardHTML(c,showNumber=false){
  const f=getFeatures(c),photo=publicProfiles.find(p=>p.id===c.id)?.avatar_path;
  const denizTrial=!!photo&&/^deniz(?:\s|$)/iu.test(String(c.display_name||'').trim());
- const cardPhotoUrl=denizTrial?'deniz-cutout-preview.svg?v=219':avatarUrl(photo);
+ const cardPhotoUrl=denizTrial?'deniz-cutout-preview.svg?v=219':szfPlayerPhotoUrl(c,photo);
  const initials=String(c.display_name||'?').split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toLocaleUpperCase('tr');
  const values=f.map(([k,l])=>`<div class="fut-attr"><span>${l}</span><b>${publicAbility(c,k)}</b></div>`).join('');
  return `<button type="button" class="card-face fut-card tier-${rankTier(c)} ${showNumber?'szf-numbered-card':''} ${denizTrial?'szf-deniz-cutout-trial':''}" data-player="${attrs(c.id)}"${szfPortraitStyle(c)} aria-label="${attrs(formatPersonName(c.display_name))} oyuncu kartı">
@@ -157,6 +177,7 @@ function assessmentDeltaHTML(delta){
 }
 function assessmentCardHTML(c){
  const f=getFeatures(c),photo=publicProfiles.find(p=>p.id===c.id)?.avatar_path;
+ const cardPhotoUrl=szfPlayerPhotoUrl(c,photo);
  const initials=String(c.display_name||'?').split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toLocaleUpperCase('tr');
  const values=f.map(([k,l])=>{
   const vote=null,delta=null;
@@ -165,7 +186,7 @@ function assessmentCardHTML(c){
  }).join('');
  return `<div class="assessment-card-box"><div class="card-face fut-card assessment-static-card tier-${rankTier(c)}">
  <div class="fut-head"><div class="fut-overall">${publicRating(c)}</div><div class="fut-pos">${esc(c.position==='ORT'?'OS':c.position)}</div></div>
- <div class="fut-photo">${photo?`<img src="${attrs(avatarUrl(photo))}" alt="" loading="lazy">`:`<span>${esc(initials)}</span>`}</div>
+ <div class="fut-photo">${photo?`<img src="${attrs(cardPhotoUrl)}" alt="" loading="lazy">`:`<span>${esc(initials)}</span>`}</div>
  <div class="fut-name">${esc(cardDisplayName(c))}</div><div class="fut-stats assessment-fut-stats">${values}</div><div class="fut-emblems"><img class="fut-flag-img" src="turkiye-bayragi.svg" alt="Türkiye"></div></div></div>`;
 }
 function optimisticVotePatch(target,category,newDelta){
@@ -2077,7 +2098,7 @@ async function loadProfileAndCards(){if(!db||!user)return;const [p,c,v,all]=awai
  db.from('player_cards').select('*').order('overall_rating',{ascending:false}),
  db.from('szf_ratings_v70').select('target_id,scores,first_submitted_at').eq('voter_id',user.id),
  db.from('profiles').select('id,display_name,position,approved,jersey_number,avatar_path')
-]);if(p.error)toast('Profil alınamadı: '+formatError(p.error),true);if(c.error)toast('Oyuncular alınamadı: '+formatError(c.error),true);ownVotesReadError=v.error?formatError(v.error):null;if(v.error)toast('Oylar alınamadı: '+formatError(v.error)+' — v165 SQL düzeltmesini çalıştır.',true);profile=p.data?{...p.data,display_name:formatPersonName(p.data.display_name)}:null;cards=(c.data||[]).map(c=>({...c,display_name:formatPersonName(c.display_name), overall_rating:Number(c.overall_rating)||60}));myVotes=v.data||[];publicProfiles=(all.data||[]).map(p=>({...p,display_name:formatPersonName(p.display_name)}));
+]);if(p.error)toast('Profil alınamadı: '+formatError(p.error),true);if(c.error)toast('Oyuncular alınamadı: '+formatError(c.error),true);ownVotesReadError=v.error?formatError(v.error):null;if(v.error)toast('Oylar alınamadı: '+formatError(v.error)+' — v165 SQL düzeltmesini çalıştır.',true);profile=p.data?{...p.data,display_name:formatPersonName(p.data.display_name)}:null;cards=(c.data||[]).map(c=>({...c,display_name:formatPersonName(c.display_name), overall_rating:Number(c.overall_rating)||60}));myVotes=v.data||[];publicProfiles=(all.data||[]).map(p=>({...p,display_name:formatPersonName(p.display_name)}));await szfLoadGeneratedPhotos();
  // A new player may have no old vote-derived player_cards row yet.
  // Show a genuine baseline card from the saved profile, without altering previous scores.
  const existing=new Set(cards.map(x=>x.id));

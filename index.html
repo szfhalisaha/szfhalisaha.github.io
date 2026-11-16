@@ -36,13 +36,6 @@
 .matches-page .szf-history-compact .match-new-body .match-new-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .matches-page .szf-history-compact .match-new-body .match-new-actions>*{max-width:100%}
 @media(max-width:640px){.matches-page .szf-history-compact{width:100%;max-width:100%}.matches-page .szf-history-compact .szf-history-toggle{grid-template-columns:minmax(0,1fr) auto;row-gap:5px;padding:12px!important}.matches-page .szf-history-compact .szf-history-toggle>strong{grid-column:2;grid-row:1;font-size:19px}.matches-page .szf-history-compact .szf-history-toggle>span:last-child{grid-column:1 / -1;text-align:left;font-size:11px;opacity:.75}.matches-page .szf-history-compact.szf-history-open>.match-new-body{padding:12px!important}}
-</style><style id="szfEmreHeadlineStyle">
-.szf-emre-headline{margin:12px 0 18px;padding:19px 18px;border:1px solid #b4d35d;border-radius:16px;background:linear-gradient(125deg,#203c25,#122519 67%,#30461d);text-align:center;box-shadow:0 7px 24px #0002;color:#f5ffe9}
-.szf-emre-kicker{font-size:11px;letter-spacing:1.6px;font-weight:800;color:#c7ed80}
-.szf-emre-main{font-size:clamp(26px,5vw,46px);font-weight:950;letter-spacing:.4px;line-height:1.2;margin:7px 0}
-.szf-emre-main strong{color:#dbff73}
-.szf-emre-sub{font-size:13px;letter-spacing:1.5px;font-weight:800;color:#e1e8d4}
-@media(max-width:640px){.szf-emre-headline{padding:17px 12px;margin:8px 0 14px}.szf-emre-sub{font-size:11px}}
 </style></head>
 <body>
   <div id="toast" role="status" aria-live="polite"></div>
@@ -67,11 +60,6 @@
         <div class="top-right"><span id="badgeMode" class="mode-badge">ÖNİZLEME</span><button type="button" id="topProfileBtn" class="top-profile hidden" title="Profilime git" aria-label="Profilime git"><span class="top-profile-avatar" id="topProfileAvatar">👤</span><span id="topProfileName">Hesabım</span></button><span id="topCreditBalance" class="top-credit hidden" aria-live="polite" title="Bahis Ligi sanal kredi bakiyen">🪙 <strong id="topCreditAmount">—</strong> kredi</span><button class="btn small ghost" id="refreshBtn" title="Verileri yenile">↻ Yenile</button><button class="btn small lime" id="topAuthBtn">Giriş yap</button></div>
       </header>
       <div id="configAlert" class="notice setup-notice hidden"></div>
-      <section id="szfEmreHeadline" class="szf-emre-headline" aria-label="Haftanın manşeti">
-        <div class="szf-emre-kicker">⚽ SZF AIRPORT · HAFTANIN MANŞETİ</div>
-        <div class="szf-emre-main">EMRE'NİN GALİBİYETLE ARASI AÇIK!</div>
-        <div class="szf-emre-sub">3 MAÇTIR GÖRÜŞMÜYORLAR · 3 MAÇ, 0 GALİBİYET 😅</div>
-      </section>
       <div id="content"></div>
       <footer>© SZF Airport Halı Saha <span>·</span> Kendi sahamız, kendi kurallarımız.</footer>
     </main>
@@ -82,18 +70,5 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" async id="supabaseLibrary"></script>
   <script src="app.js?v=232" defer></script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(()=>{}));}</script>
-<script>
-(function(){
-  function syncEmreHeadline(){
-    var banner=document.getElementById('szfEmreHeadline');
-    var home=document.querySelector('#nav [data-view="home"]');
-    if(banner&&home) banner.hidden=!home.classList.contains('active');
-  }
-  document.addEventListener('DOMContentLoaded',function(){
-    var nav=document.getElementById('nav');
-    if(nav){new MutationObserver(syncEmreHeadline).observe(nav,{subtree:true,attributes:true,attributeFilter:['class']});}
-    syncEmreHeadline();
-  });
-})();
-</script></body>
+</body>
 </html>

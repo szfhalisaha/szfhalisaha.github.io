@@ -141,7 +141,7 @@ async function szfLoadGeneratedPhotos(){
  return szfGeneratedPhotoLoading;
 }
 function szfPlayerPhotoUrl(c,originalPath){
- if(originalPath&&/^deniz(?:\\s|$)/iu.test(String(c.display_name||'').trim()))return 'deniz-cutout-preview.svg?v=219';
+ if(originalPath&&/^deniz(?:\s|$)/iu.test(String(c.display_name||'').trim()))return 'deniz-cutout-preview.svg?v=219';
  const original=avatarUrl(originalPath);
  if(!SZF_USE_GENERATED_CARD_PHOTOS||new URLSearchParams(location.search).has('originalPhotos'))return original;
  const match=szfGeneratedPhotoManifest[String(c.id)];

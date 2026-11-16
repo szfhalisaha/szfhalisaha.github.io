@@ -170,7 +170,7 @@ async function szfConvertCardPortraitV222(player){
 async function szfBatchCutoutsV222(onlyPlayerId=null){
  if(szfCutoutBusyV222)return;
  if(!adminInfo||!user)return toast('Yönetici olmalısın',true);
- const list=publicProfiles.filter(p=>p.avatar_path&&(!onlyPlayerId||String(p.id)===String(onlyPlayerId))&&!szfCardPortraitsV222.has(String(p.id)));
+ const list=publicProfiles.filter(p=>p.avatar_path&&(!onlyPlayerId||String(p.id)===String(onlyPlayerId))&&(!!onlyPlayerId||!szfCardPortraitsV222.has(String(p.id))));
  if(!list.length)return toast('İşlenecek yeni fotoğraf bulunamadı');
  if(!confirm(`${list.length} oyuncunun arka planını cihazında silip şeffaf PNG olarak siteye kaydetmek istiyor musun? Orijinaller korunur.`))return;
  szfCutoutBusyV222=true;
@@ -2171,7 +2171,7 @@ async function loadProfileAndCards(){if(!db||!user)return;const [p,c,v,all]=awai
  db.from('player_cards').select('*').order('overall_rating',{ascending:false}),
  db.from('szf_ratings_v70').select('target_id,scores,first_submitted_at').eq('voter_id',user.id),
  db.from('profiles').select('id,display_name,position,approved,jersey_number,avatar_path')
-]);if(p.error)toast('Profil alınamadı: '+formatError(p.error),true);if(c.error)toast('Oyuncular alınamadı: '+formatError(c.error),true);ownVotesReadError=v.error?formatError(v.error):null;if(v.error)toast('Oylar alınamadı: '+formatError(v.error)+' — v165 SQL düzeltmesini çalıştır.',true);profile=p.data?{...p.data,display_name:formatPersonName(p.data.display_name)}:null;cards=(c.data||[]).map(c=>({...c,display_name:formatPersonName(c.display_name), overall_rating:Number(c.overall_rating)||60}));myVotes=v.data||[];publicProfiles=(all.data||[]).map(p=>({...p,display_name:formatPersonName(p.display_name)}));
+]);if(p.error)toast('Profil alınamadı: '+formatError(p.error),true);if(c.error)toast('Oyuncular alınamadı: '+formatError(c.error),true);ownVotesReadError=v.error?formatError(v.error):null;if(v.error)toast('Oylar alınamadı: '+formatError(v.error)+' — v165 SQL düzeltmesini çalıştır.',true);profile=p.data?{...p.data,display_name:formatPersonName(p.data.display_name)}:null;cards=(c.data||[]).map(c=>({...c,display_name:formatPersonName(c.display_name), overall_rating:Number(c.overall_rating)||60}));myVotes=v.data||[];publicProfiles=(all.data||[]).map(p=>({...p,display_name:formatPersonName(p.display_name)}));await szfLoadCardPortraitsV222();
  // A new player may have no old vote-derived player_cards row yet.
  // Show a genuine baseline card from the saved profile, without altering previous scores.
  const existing=new Set(cards.map(x=>x.id));

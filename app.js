@@ -792,7 +792,6 @@ function szfSharePNGNow(file,notice){
 }
 function szfShowPNGLink(link,url,file){
  link.href=url;
- link.download=file.name;
  link.hidden=false;
 }
 
@@ -802,7 +801,7 @@ async function szfOpenNewspaper(id){
  if(!special&&!szfNewspaperData(match))return toast('Gazete, MVP oylaması tamamlanınca yayımlanır.',true);
  document.getElementById('szf-news-overlay')?.remove();
  const layer=document.createElement('div');layer.id='szf-news-overlay';layer.className='szf-share-overlay szf-news-overlay';
- layer.innerHTML='<section class="szf-news-dialog" role="dialog" aria-modal="true" aria-label="SZF Spor gazetesi"><div class="szf-news-toolbar"><strong>📰 SZF SPOR · Gazete Arşivi</strong><button type="button" class="btn ghost" data-news-close>✕ Kapat</button></div><div class="szf-news-scroll"><div class="szf-news-capture">'+(special?szfEmreSpecialMarkup():szfNewspaperMarkup(id))+'</div></div><div class="szf-news-actions" style="flex-wrap:wrap"><button type="button" class="btn lime" data-news-export disabled>Görsel hazırlanıyor...</button><a class="btn ghost" data-news-image hidden target="_blank" rel="noopener">Görseli Aç / İndir</a><span data-news-message style="width:100%;font-size:12px;text-align:center;color:#d0dec9">WhatsApp paylaşımı için PNG hazırlanıyor.</span></div></section>';
+ layer.innerHTML='<section class="szf-news-dialog" role="dialog" aria-modal="true" aria-label="SZF Spor gazetesi"><div class="szf-news-toolbar"><strong>📰 SZF SPOR · Gazete Arşivi</strong><button type="button" class="btn ghost" data-news-close>✕ Kapat</button></div><div class="szf-news-scroll"><div class="szf-news-capture">'+(special?szfEmreSpecialMarkup():szfNewspaperMarkup(id))+'</div></div><div class="szf-news-actions" style="flex-wrap:wrap"><button type="button" class="btn lime" data-news-export disabled>Görsel hazırlanıyor...</button><a class="btn ghost" data-news-image hidden target="_blank" rel="noopener">Görseli Aç</a><a class="btn ghost" data-png-download hidden>PNG İndir</a><span data-news-message style="width:100%;font-size:12px;text-align:center;color:#d0dec9">WhatsApp paylaşımı için PNG hazırlanıyor.</span></div></section>';
  document.body.appendChild(layer);
  let generated=null,closed=false;
  const button=layer.querySelector('[data-news-export]');
@@ -822,6 +821,7 @@ async function szfOpenNewspaper(id){
    if(generated)URL.revokeObjectURL(generated.url);
    generated=result;
    szfShowPNGLink(link,result.url,result.file);
+   const direct=layer.querySelector('[data-png-download]');direct.href=result.url;direct.download=result.file.name;direct.hidden=false;
    button.disabled=false;button.textContent='WhatsApp / Fotoğraflara Kaydet';
    note.textContent='Butona dokunup WhatsApp grubunu veya Görseli Kaydet seçeneğini seç.';
   }catch(err){
@@ -1625,7 +1625,7 @@ async function shareMatchCard(id){
  if(!m||m.red_score==null||m.white_score==null)return toast('Önce maç skorunu kaydet.',true);
  document.getElementById('szf-share-preview')?.remove();
  const layer=document.createElement('div');layer.id='szf-share-preview';layer.className='szf-share-overlay szf-share-v192';
- layer.innerHTML='<section class="szf-share-dialog" role="dialog" aria-modal="true" aria-label="Maç sonucu paylaşım afişi"><div class="szf-share-toolbar"><strong>Maç sonucu · Paylaşım afişi</strong><button type="button" class="szf-share-close" aria-label="Kapat">✕</button></div><div class="szf-share-poster-wrap"><div class="szf-share-poster-capture">'+buildInlineSharePreviewMarkup(id)+'</div></div><div class="szf-share-actions" style="flex-wrap:wrap"><button type="button" class="btn lime" data-share-export disabled>Görsel hazırlanıyor...</button><a class="btn ghost" data-share-image hidden target="_blank" rel="noopener">Görseli Aç / İndir</a><button type="button" class="btn" data-share-dismiss>Kapat</button><span data-share-note style="width:100%;font-size:12px;text-align:center;color:#d0dec9">WhatsApp paylaşımı için afiş hazırlanıyor.</span></div></section>';
+ layer.innerHTML='<section class="szf-share-dialog" role="dialog" aria-modal="true" aria-label="Maç sonucu paylaşım afişi"><div class="szf-share-toolbar"><strong>Maç sonucu · Paylaşım afişi</strong><button type="button" class="szf-share-close" aria-label="Kapat">✕</button></div><div class="szf-share-poster-wrap"><div class="szf-share-poster-capture">'+buildInlineSharePreviewMarkup(id)+'</div></div><div class="szf-share-actions" style="flex-wrap:wrap"><button type="button" class="btn lime" data-share-export disabled>Görsel hazırlanıyor...</button><a class="btn ghost" data-share-image hidden target="_blank" rel="noopener">Görseli Aç</a><a class="btn ghost" data-png-download hidden>PNG İndir</a><button type="button" class="btn" data-share-dismiss>Kapat</button><span data-share-note style="width:100%;font-size:12px;text-align:center;color:#d0dec9">WhatsApp paylaşımı için afiş hazırlanıyor.</span></div></section>';
  document.body.appendChild(layer);
  let generated=null,closed=false;
  const button=layer.querySelector('[data-share-export]');
@@ -1646,6 +1646,7 @@ async function shareMatchCard(id){
    if(generated)URL.revokeObjectURL(generated.url);
    generated=result;
    szfShowPNGLink(link,result.url,result.file);
+   const direct=layer.querySelector('[data-png-download]');direct.href=result.url;direct.download=result.file.name;direct.hidden=false;
    button.disabled=false;button.textContent='WhatsApp / Fotoğraflara Kaydet';
    note.textContent='WhatsApp grubuna gönder veya Görseli Kaydet seçeneğini kullan.';
   }catch(err){

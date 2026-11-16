@@ -134,7 +134,7 @@ let szfGeneratedPhotoManifest={};
 let szfGeneratedPhotoLoading=null;
 async function szfLoadGeneratedPhotos(){
  if(szfGeneratedPhotoLoading)return szfGeneratedPhotoLoading;
- szfGeneratedPhotoLoading=fetch('card-cutouts/manifest.json?v=225',{cache:'no-store'})
+ szfGeneratedPhotoLoading=fetch('card-cutouts/manifest.json?v=227',{cache:'no-store'})
   .then(r=>r.ok?r.json():null)
   .then(data=>{szfGeneratedPhotoManifest=data?.portraits||{};})
   .catch(e=>{console.info('Cutout manifest unavailable, original portraits remain active',e);szfGeneratedPhotoManifest={};});
@@ -146,7 +146,7 @@ function szfPlayerPhotoUrl(c,originalPath){
  if(!SZF_USE_GENERATED_CARD_PHOTOS||new URLSearchParams(location.search).has('originalPhotos')||String(c.id)==='f3bdee37-78d7-4306-a48c-7579f8221417')return original;
  const match=szfGeneratedPhotoManifest[String(c.id)];
  if(!match||match.source!==originalPath)return original;
- return './'+match.path+'?v=225';
+ return './'+match.path+'?v=227';
 }
 function cardHTML(c,showNumber=false){
  const f=getFeatures(c),photo=publicProfiles.find(p=>p.id===c.id)?.avatar_path;

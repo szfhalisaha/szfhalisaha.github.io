@@ -796,10 +796,30 @@ function szfNewspaperPressVoice(match){
  if(Math.abs(ours-theirs)>=4) variety.push(
   ours>theirs?'Rakip tabelaya yetişemedi, biz de sevinmeye!':'Skor biraz ağır oldu, dönüşte tabelaya bakmamaya karar verdim!'
  );
- // Tarihe göre rotasyon, tekrar eden oyuncu ve istatistiklerde bile aynı şaka seçimini azaltır.
+ // Oyuncunun gol atması, mutlaka gol hakkında konuşması anlamına gelmez.
+ // Maç içi takip edilmeyen olayları olmuş gibi anlatmadan, mizahi konu çeşitliliği sağla.
+ const banter=[
+  'Maçtan sonra herkes taktik konuştu, ben çayımı içip çıktım!',
+  'Soyunma odasında herkes haklıydı, bir tek skor tabelası ikna olmadı!',
+  mate+' maçtan önce çok konuştu, maçtan sonra mikrofonu bana bıraktı!',
+  'Beni taktik toplantısına çağırmayın, zaten kimse kimseyi dinlemiyor!',
+  'Bizim takımın en iyi yaptığı şey maçtan sonra konuşmak!',
+  'Herkes kendini teknik direktör sanıyor, ben de basın sözcüsü oldum!',
+  'Haftaya yine gelirim ama soyunma odası toplantısına katılmam!',
+  'Sahada 14 kişiydik, maçtan sonra 14 ayrı maç hikâyesi çıktı!'
+ ];
+ // Konuyu önce maç + oyuncuya göre seç, sonra o konu içindeki cümleyi belirle.
+ // Böylece tek gol atan oyuncu da skor, arkadaşlık veya genel takılma üzerine konuşabilir.
  const chronological=[...leagueMatches].filter(x=>x.status==='completed').sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
  const sequence=Math.max(0,chronological.findIndex(x=>String(x.id)===String(match.id)));
- const quote=variety[(seed+sequence*7)%variety.length]||originalQuote;
+ const goalLines=scored.length?variety.filter(v=>/gol|file|hat-trick/i.test(v)):[];
+ const assistLines=assisted.length?variety.filter(v=>/asist|paslar|hazırlıyorum/i.test(v)):[];
+ const otherLines=variety.filter(v=>!goalLines.includes(v)&&!assistLines.includes(v));
+ const themes=[banter,otherLines.length?otherLines:banter,banter];
+ if(goalLines.length)themes.push(goalLines);
+ if(assistLines.length)themes.push(assistLines);
+ const theme=themes[(seed+sequence*7)%themes.length];
+ const quote=theme[(Math.floor(seed/7)+sequence*3)%theme.length]||originalQuote;
  return {name:player.name,quote};
 }
 /* v258 — Skor altı kısa, esprili ve maç farkına uygun gazete yorumu. */

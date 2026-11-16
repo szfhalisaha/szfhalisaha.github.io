@@ -677,7 +677,7 @@ function szfNewspaperData(match){
 /* Third story is about a real player recorded in this match; no invented statistics. */
 function szfThirdNewspaperStory(match,d){
  const excluded=new Set(d.winners.map(n=>String(n).toLocaleLowerCase('tr-TR')));
- const eligible=n=>n&&!/\\b(emre|talha)\\b/i.test(String(n))&&!excluded.has(String(n).toLocaleLowerCase('tr-TR'));
+ const eligible=n=>n&&!['emre','talha'].some(word=>String(n).toLocaleLowerCase('tr-TR').split(/\s+/).includes(word))&&!excluded.has(String(n).toLocaleLowerCase('tr-TR'));
  const scorer=d.topScorers.find(([name])=>eligible(name));
  if(scorer){
   const [name,goals]=scorer;

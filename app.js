@@ -116,7 +116,7 @@ function cardDisplayName(c,showNumber=false){
    x/y are percentages of portrait box; scale is a multiplier. */
 const szfPortraitOverrides={
   // Deniz reference: Murat's head and upper torso occupy the same card area.
-  'ed6c37d5-da9c-49d6-9be8-c4bb06e8b7a4': {x:0,y:0,scale:1.13},
+  'ed6c37d5-da9c-49d6-9be8-c4bb06e8b7a4': {x:0,y:0,scale:1.00},
 };
 function szfPortraitStyle(c){
  const override=szfPortraitOverrides[String(c.id)]||szfPortraitOverrides[String(c.display_name||'').trim().toLocaleLowerCase('tr')];
@@ -161,7 +161,7 @@ function szfPlayerPhotoUrl(c,originalPath){
    return 'deniz-cutout-preview.svg?v=219';
  const match=szfGeneratedPhotoManifest[String(c.id)];
  if(!match||match.source!==originalPath)return original;
- return './'+match.path+'?v=228';
+ return './'+match.path+'?v=230';
 }
 function cardHTML(c,showNumber=false){
  const f=getFeatures(c),photo=publicProfiles.find(p=>p.id===c.id)?.avatar_path;

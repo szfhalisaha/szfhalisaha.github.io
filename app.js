@@ -115,7 +115,8 @@ function cardDisplayName(c,showNumber=false){
    Each value adjusts the visible card portrait only; stored avatars are unchanged.
    x/y are percentages of portrait box; scale is a multiplier. */
 const szfPortraitOverrides={
-  // 'player-uuid': {x:0,y:0,scale:1},
+  // Deniz reference: Murat's head and upper torso occupy the same card area.
+  'ed6c37d5-da9c-49d6-9be8-c4bb06e8b7a4': {x:0,y:0,scale:1.13},
 };
 function szfPortraitStyle(c){
  const override=szfPortraitOverrides[String(c.id)]||szfPortraitOverrides[String(c.display_name||'').trim().toLocaleLowerCase('tr')];

@@ -37,5 +37,6 @@ jobs:
           git add card-cutouts/
           if ! git diff --cached --quiet; then
             git commit -m "Generate high-quality transparent player portraits (originals preserved)"
-            git push
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi

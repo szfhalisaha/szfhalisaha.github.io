@@ -702,16 +702,29 @@ function szfNewspaperMarkup(id){
  })();
  return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(date)+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ SONU ÖZEL SAYISI</div><h1>'+esc(d.headline)+'</h1><p class="szf-news-deck">'+esc(d.summary)+'</p><div class="szf-news-score"><span>KIRMIZI</span><strong>'+d.red+' <i>–</i> '+d.white+'</strong><span>BEYAZ</span></div><div class="szf-news-caption">'+esc(d.winningTeam==='BERABERLİK'?'Beraberlik: takımlar puanları paylaştı.':d.winningTeam+' sahadan galibiyetle ayrıldı.')+'</div><div class="szf-news-columns"><section><div class="szf-news-kicker">🏆 '+mvpLabel+'</div><h2>'+esc(names)+'</h2><p>'+esc(mvpPraise)+'</p></section><section><div class="szf-news-kicker">⚽ GOL DOSYASI</div><h2>Sahanın rakamları konuşuyor</h2><p>'+scorerText+'</p></section></div><div class="szf-news-bottom"><strong>SON DAKİKA</strong><span>Bir sonraki maçın gündemi şimdiden merak ediliyor.</span></div><footer>SZF SPOR · SAYI: '+esc(String(m.id).slice(0,6).toUpperCase())+' · KAYNAK: RESMÎ MAÇ KAYITLARI</footer></article>';
 }
-/* SZF SPOR özel sayı: mevcut gazete tasarımı korunur. */
+/* Özel manşet sadece gazetenin üst haberini değiştirir; skor, MVP ve gol dosyası aynı kalır. */
+function szfEmreSpecialMatch(){
+ const now=Date.now();
+ return [...leagueMatches].filter(m=>{
+  const start=new Date(m.match_date).getTime(),v=mvpStates[String(m.id)];
+  return v?.finished&&now>=start+90000000&&now<start+176400000&&szfNewspaperData(m);
+ }).sort((a,b)=>new Date(b.match_date)-new Date(a.match_date))[0]||null;
+}
 function szfEmreSpecialActive(){
  const now=Date.now();
- return now>=Date.parse('2026-11-16T00:00:00+03:00')&&now<Date.parse('2026-11-18T00:00:00+03:00');
+ return now>=Date.parse('2026-11-16T00:00:00+03:00')&&now<Date.parse('2026-11-18T00:00:00+03:00')&&!!szfEmreSpecialMatch();
 }
 function szfEmreSpecialMarkup(){
- return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>16 Kasım 2026 · ÖZEL SAYI</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">SPOR SERVİSİ · ÖZEL HABER</div><h1>EMRE GALİBİYETİ ARAMAYA ÇIKTI, HÂLÂ DÖNMEDİ!</h1><p class="szf-news-deck">Üç maçtır sahada, galibiyet hâlâ kayıp! Emre’nin 3’te 0’lık serisi sonrası spor servisimiz soruyor: Bu hasret ne zaman bitecek?</p><div class="szf-news-score"><span>OYNANAN MAÇ</span><strong>3 <i>–</i> 0</strong><span>GALİBİYET</span></div><div class="szf-news-caption">Bu bir maç skoru değil; Emre’nin üç maçlık galibiyet bilançosu.</div><div class="szf-news-columns"><section><div class="szf-news-kicker">⚽ GALİBİYET DOSYASI</div><h2>Üç maç, üç ayrı umut</h2><p>Emre her maç yeni bir sayfa açtı ama galibiyet hanesi henüz dolmadı. Takvim ilerliyor, ilk zafer bekleniyor.</p></section><section><div class="szf-news-kicker">📰 SPOR SERVİSİNDEN</div><h2>Kayıp ilanı verilsin mi?</h2><p>Galibiyeti görenlerin en yakın SZF Spor muhabirine haber vermesi rica olunur. Bu haber tamamen saha içi mizahıdır.</p></section></div><footer>SZF SPOR · 16 KASIM ÖZEL SAYISI · MİZAHİ HABER</footer></article>';
+ const m=szfEmreSpecialMatch();
+ if(!m)return '<p>Gazete, Maçın Adamı oylaması sonuçlandığında yayımlanır.</p>';
+ return szfNewspaperMarkup(m.id)
+  .replace(/<h1>[\\s\\S]*?<\\/h1>/,'<h1>EMRE 3 MAÇTIR GALİBİYETE HASRET!</h1>')
+  .replace(/<p class="szf-news-deck">[\\s\\S]*?<\\/p>/,'<p class="szf-news-deck">Üç maç, sıfır galibiyet! Emre’nin galibiyet hanesinde yaprak kımıldamıyor. SZF Spor soruyor: İlk zafer ne zaman gelecek?</p>');
 }
 function szfEmreSpecialHome(){
- return '<section class="szf-news-home"><div class="szf-news-home-heading"><strong>📰 SZF SPOR</strong><span>16 KASIM · ÖZEL SAYI</span></div><div class="szf-news-home-body"><div class="szf-news-home-mast">SZF <b>SPOR</b></div><div class="szf-news-home-kicker">HAFTANIN MANŞETİ · 16 KASIM 2026</div><h2>EMRE GALİBİYETİ ARAMAYA ÇIKTI, HÂLÂ DÖNMEDİ!</h2><p>Üç maçtır sahada, galibiyet hâlâ kayıp. Emre 3’te 0!</p><button type="button" class="btn lime" data-szf-newspaper="emre-17-kasim-2026">📰 Gazeteyi Oku</button></div></section>';
+ const m=szfEmreSpecialMatch();
+ if(!m)return '';
+ return '<section class="szf-news-home"><div class="szf-news-home-heading"><strong>📰 SZF SPOR</strong><span>SON SAYI · MVP SONRASI</span></div><div class="szf-news-home-body"><div class="szf-news-home-mast">SZF <b>SPOR</b></div><div class="szf-news-home-kicker">HAFTANIN MANŞETİ · '+esc(matchDateText(m.match_date))+'</div><h2>EMRE 3 MAÇTIR GALİBİYETE HASRET!</h2><p>Üç maç, sıfır galibiyet! İlk zafer ne zaman gelecek?</p><button type="button" class="btn lime" data-szf-newspaper="emre-17-kasim-2026">📰 Gazeteyi Oku</button></div></section>';
 }
 
 function szfLatestNewspaperHome(){

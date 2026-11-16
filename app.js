@@ -839,9 +839,13 @@ async function szfOpenNewspaper(id){
  const close=()=>{closed=true;layer.remove();if(generated)setTimeout(()=>URL.revokeObjectURL(generated.url),120000);};
  layer.querySelector('[data-news-close]').onclick=close;
  layer.onclick=e=>{if(e.target===layer)close()};
- button.onclick=()=>{if(generated)szfSharePNGNow(generated.file,note);else prepare();};
+ let preparing=false;
+ button.onclick=()=>{if(generated){szfSharePNGNow(generated.file,note);return;}prepare();};
  const prepare=async()=>{
-  button.disabled=false;button.textContent='Hazırlanıyor… Tekrar Dene';
+  if(preparing)return;
+  preparing=true;
+  button.disabled=true;button.textContent='Görsel hazırlanıyor…';
+  note.textContent='PNG oluşturuluyor. İşlem tamamlanınca paylaşma ve indirme seçenekleri açılacak.';
   try{
    const target=layer.querySelector('.szf-news-paper');
    if(!target)throw new Error('Gazete bulunamadı');
@@ -851,17 +855,19 @@ async function szfOpenNewspaper(id){
    generated=result;
    szfShowPNGLink(link,result.url,result.file);
    const direct=layer.querySelector('[data-png-download]');direct.href=result.url;direct.download=result.file.name;direct.hidden=false;
+   preparing=false;
    button.disabled=false;button.textContent='WhatsApp / Fotoğraflara Kaydet';
    note.textContent='Butona dokunup WhatsApp grubunu veya Görseli Kaydet seçeneğini seç.';
   }catch(err){
    if(closed)return;
    console.error('SZF gazetesi görsel:',err);
    button.disabled=false;button.textContent='Tekrar Dene';
+   preparing=false;
    note.textContent='Görsel hazırlanamadı: '+(err?.message||'Bilinmeyen hata');
    button.onclick=()=>{if(generated)szfSharePNGNow(generated.file,note);else prepare();};
   }
  };
- prepare();
+ note.textContent='Görseli hazırlamak için düğmeye dokun. Hazır olunca PNG İndir veya WhatsApp seçeneğini kullan.';
 }
 
 
@@ -1664,9 +1670,13 @@ async function shareMatchCard(id){
  layer.querySelector('.szf-share-close').onclick=close;
  layer.querySelector('[data-share-dismiss]').onclick=close;
  layer.onclick=e=>{if(e.target===layer)close()};
- button.onclick=()=>{if(generated)szfSharePNGNow(generated.file,note);else prepare();};
+ let preparing=false;
+ button.onclick=()=>{if(generated){szfSharePNGNow(generated.file,note);return;}prepare();};
  const prepare=async()=>{
-  button.disabled=false;button.textContent='Hazırlanıyor… Tekrar Dene';
+  if(preparing)return;
+  preparing=true;
+  button.disabled=true;button.textContent='Görsel hazırlanıyor…';
+  note.textContent='PNG oluşturuluyor. İşlem tamamlanınca paylaşma ve indirme seçenekleri açılacak.';
   try{
    const target=layer.querySelector('.szf-share-poster-capture .szf-v190-poster');
    if(!target)throw new Error('Maç afişi bulunamadı');
@@ -1676,17 +1686,19 @@ async function shareMatchCard(id){
    generated=result;
    szfShowPNGLink(link,result.url,result.file);
    const direct=layer.querySelector('[data-png-download]');direct.href=result.url;direct.download=result.file.name;direct.hidden=false;
+   preparing=false;
    button.disabled=false;button.textContent='WhatsApp / Fotoğraflara Kaydet';
    note.textContent='WhatsApp grubuna gönder veya Görseli Kaydet seçeneğini kullan.';
   }catch(err){
    if(closed)return;
    console.error('SZF maç afişi görsel:',err);
    button.disabled=false;button.textContent='Tekrar Dene';
+   preparing=false;
    note.textContent='Afiş hazırlanamadı: '+(err?.message||'Bilinmeyen hata');
    button.onclick=()=>{if(generated)szfSharePNGNow(generated.file,note);else prepare();};
   }
  };
- prepare();
+ note.textContent='Görseli hazırlamak için düğmeye dokun. Hazır olunca PNG İndir veya WhatsApp seçeneğini kullan.';
 }
 
 

@@ -1,0 +1,30 @@
+name: Refine Ozan card portrait
+on:
+  push:
+    paths:
+      - '.github/workflows/refine-ozan.yml'
+      - 'scripts/refine_ozan_portrait.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'Pillow==11.1.0'
+      - run: python scripts/refine_ozan_portrait.py
+      - name: Publish only Ozan
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add card-cutouts/ede12ef4-f7e6-4f10-a9f5-4a2b88e37350.webp
+          if ! git diff --cached --quiet; then
+            git commit -m "Fix Ozan transparent portrait and scale to Deniz"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

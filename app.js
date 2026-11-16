@@ -136,7 +136,7 @@ function cardHTML(c,showNumber=false){
  return `<button type="button" class="card-face fut-card tier-${rankTier(c)} ${showNumber?'szf-numbered-card':''} ${denizTrial?'szf-deniz-cutout-trial':''}" data-player="${attrs(c.id)}"${szfPortraitStyle(c)} aria-label="${attrs(formatPersonName(c.display_name))} oyuncu kartı">
  <div class="fut-head"><div class="fut-overall">${publicRating(c)}</div><div class="fut-pos">${esc(c.position==='ORT'?'OS':c.position)}</div></div>
  <div class="fut-photo">${photo?`<img src="${attrs(cardPhotoUrl)}" alt="" loading="lazy">`:`<span>${esc(initials)}</span>`}</div>
- <div class="fut-name">${esc(cardDisplayName(c,showNumber))}</div><div class="fut-stats">${values}</div><div class="fut-emblems"><img class="fut-flag-img" src="turkiye-bayragi.svg" alt="Türkiye"></div></button>`;
+ <div class="fut-name ${cardDisplayName(c,showNumber).length>22?'szf-name-very-long':cardDisplayName(c,showNumber).length>15?'szf-name-long':''}">${esc(cardDisplayName(c,showNumber))}</div><div class="fut-stats">${values}</div><div class="fut-emblems"><img class="fut-flag-img" src="turkiye-bayragi.svg" alt="Türkiye"></div></button>`;
 }
 function getAvatarInitials(name){
  const parts=String(name||'').trim().split(/\s+/).filter(Boolean);

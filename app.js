@@ -143,7 +143,7 @@ async function szfLoadGeneratedPhotos(){
 function szfPlayerPhotoUrl(c,originalPath){
  if(originalPath&&/^deniz(?:\s|$)/iu.test(String(c.display_name||'').trim()))return 'deniz-cutout-preview.svg?v=219';
  const original=avatarUrl(originalPath);
- if(!SZF_USE_GENERATED_CARD_PHOTOS||new URLSearchParams(location.search).has('originalPhotos'))return original;
+ if(!SZF_USE_GENERATED_CARD_PHOTOS||new URLSearchParams(location.search).has('originalPhotos')||String(c.id)==='f3bdee37-78d7-4306-a48c-7579f8221417')return original;
  const match=szfGeneratedPhotoManifest[String(c.id)];
  if(!match||match.source!==originalPath)return original;
  return './'+match.path+'?v=225';

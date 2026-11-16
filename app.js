@@ -135,7 +135,7 @@ let szfGeneratedPhotoManifest={};
 let szfGeneratedPhotoLoading=null;
 async function szfLoadGeneratedPhotos(){
  if(szfGeneratedPhotoLoading)return szfGeneratedPhotoLoading;
- szfGeneratedPhotoLoading=fetch('card-cutouts/manifest.json?v=228',{cache:'no-store'})
+ szfGeneratedPhotoLoading=fetch('card-cutouts/manifest.json?v=231',{cache:'no-store'})
   .then(r=>r.ok?r.json():null)
   .then(data=>{szfGeneratedPhotoManifest=data?.portraits||{};})
   .catch(e=>{console.info('Cutout manifest unavailable, original portraits remain active',e);szfGeneratedPhotoManifest={};});
@@ -150,7 +150,8 @@ const SZF_APPROVED_CUTOUT_PLAYER_IDS=new Set([
  '493cd3dd-0c75-4837-879a-8ddd2065cc83', // Üzeyir Bayık
  'c877569d-419d-4df4-a873-77ca889fad88', // Bedirhan Çırakoğlu
  'd49f4c5a-0335-496c-a449-4be8894f9765', // Hasan Limon
- 'ab3b9a8b-0df8-48a9-bbf8-56e7b345daf0'  // Serkan Yücel (profile: Serkanycl)
+ 'ab3b9a8b-0df8-48a9-bbf8-56e7b345daf0', // Serkan Yücel (profile: Serkanycl)
+ 'ede12ef4-f7e6-4f10-a9f5-4a2b88e37350'  // Ozan Aydın
 ]);
 function szfPlayerPhotoUrl(c,originalPath){
  const original=avatarUrl(originalPath);
@@ -161,7 +162,7 @@ function szfPlayerPhotoUrl(c,originalPath){
    return 'deniz-cutout-preview.svg?v=219';
  const match=szfGeneratedPhotoManifest[String(c.id)];
  if(!match||match.source!==originalPath)return original;
- return './'+match.path+'?v=230';
+ return './'+match.path+'?v=231';
 }
 function cardHTML(c,showNumber=false){
  const f=getFeatures(c),photo=publicProfiles.find(p=>p.id===c.id)?.avatar_path;

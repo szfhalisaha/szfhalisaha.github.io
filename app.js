@@ -1595,8 +1595,13 @@ async function shareMatchCard(id){
    const html2canvas=await szfLoadPosterCapture();
    const poster=layer.querySelector('.szf-share-poster-capture .szf-v190-poster');
    if(!poster)throw new Error('Afiş bulunamadı');
-   const canvas=await html2canvas(poster,{scale:2,backgroundColor:'#08150e',useCORS:true,logging:false,scrollX:0,scrollY:-window.scrollY});
-   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   // iOS Safari can stall on large 2x canvas exports. Keep the mobile raster within memory limits.
+   const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+   const scale=isMobile?1:1.5;
+   const capture=()=>html2canvas(poster,{scale,backgroundColor:'#08150e',useCORS:true,logging:false,scrollX:0,scrollY:-window.scrollY,imageTimeout:8000});
+   const timeout=(ms)=>new Promise((_,reject)=>setTimeout(()=>reject(new Error('Afiş oluşturma zaman aşımı')),ms));
+   const canvas=await Promise.race([capture(),timeout(18000)]);
+   const blob=await Promise.race([new Promise(resolve=>canvas.toBlob(resolve,'image/png')),timeout(8000)]);
    if(!blob)throw new Error('PNG oluşturulamadı');
    const filename='SZF-Mac-Sonucu-'+String(id).slice(0,8)+'.png';
    const file=new File([blob],filename,{type:'image/png'});
@@ -1608,7 +1613,7 @@ async function shareMatchCard(id){
    document.body.appendChild(link);link.click();link.remove();
    setTimeout(()=>URL.revokeObjectURL(url),15000);
    toast('Maç afişi PNG olarak kaydedildi.');
-  }catch(err){console.error('Maç afişi kaydı:',err);toast('Afiş indirilemedi. İnternet bağlantını kontrol edip tekrar dene.',true);}
+  }catch(err){console.error('Maç afişi kaydı:',err);toast('Afiş oluşturulamadı. Telefonunda sayfayı yenileyip tekrar dene.',true);}
   finally{btn.disabled=false;btn.textContent=original;}
  };
 }

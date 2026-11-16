@@ -762,65 +762,85 @@ function szfNewspaperPressVoice(match){
    : ours>theirs
     ? 'Maçı aldık ama soyunma odasında herkes kendini teknik direktör ilan etti!'
     : 'Bizim takımda bahane çok, sıra bana gelmeden mikrofonu kapatın!'};
- // Yeni sayılarda aynı istatistik için farklı açıları kullan: gol, asist, skor ve takım içi şakalar.
- const variety=[];
- if(scored.length>=3) variety.push(
-  'Ben sahada gol saydım, '+mate+' soyunma odasında bahane saydı!',
-  'Bu kadar golün üstüne bir de taktik toplantısına çağırıldım. Daha ne yapayım?'
- );
- if(scored.length>=1) variety.push(
-  'Gol attık diye prim istemedik, bir teşekkür yeterdi!',
-  'Fileleri buldum; asıl zor olan maçtan sonra '+mate+' ile aynı fikirde olmak.',
-  'Ben golümü attım, şimdi herkes kendi işine baksın!',
-  'Gol sevincim kısa sürdü; soyunma odasında hemen eleştiri başladı.'
- );
- if(assisted.length>=1) variety.push(
-  'Pasları ben verdim, fotoğrafta yine golcüler öne geçmiş!',
-  'Asistleri dağıttım; maçtan sonra kimse hesabı ödemeye yanaşmadı.',
-  'Ben hazırlıyorum, arkadaşlar bitiriyor. Bu işin mutfağını da görün!'
- );
- if(ours>theirs) variety.push(
-  'Kazandık ama '+mate+' maçtan sonra hâlâ taktik anlatıyordu.',
-  'Skor iyi, soyunma odasının özgüveni biraz fazla iyi!',
-  'Üç puan yok ama hava atacak malzeme çıktı!'
- );
- else if(ours<theirs) variety.push(
-  'Yenilgiyi üstüme yıkacaklardı, ben de erken çıktım!',
-  'Skora bakınca kimse konuşmuyor, soyunma odasına girince herkes uzman!',
-  'Rövanşta konuşuruz dedik, şu an konuşacak yüzümüz yok!'
- );
- else variety.push(
-  'Berabere kaldık; soyunma odasında iki takım da galip gibi konuşuyor!',
-  'Maçın kazananı yok ama bahanelerin şampiyonu şimdiden belli!'
- );
- if(Math.abs(ours-theirs)>=4) variety.push(
-  ours>theirs?'Rakip tabelaya yetişemedi, biz de sevinmeye!':'Skor biraz ağır oldu, dönüşte tabelaya bakmamaya karar verdim!'
- );
- // Oyuncunun gol atması, mutlaka gol hakkında konuşması anlamına gelmez.
- // Maç içi takip edilmeyen olayları olmuş gibi anlatmadan, mizahi konu çeşitliliği sağla.
- const banter=[
-  'Maçtan sonra herkes taktik konuştu, ben çayımı içip çıktım!',
-  'Soyunma odasında herkes haklıydı, bir tek skor tabelası ikna olmadı!',
-  mate+' maçtan önce çok konuştu, maçtan sonra mikrofonu bana bıraktı!',
-  'Beni taktik toplantısına çağırmayın, zaten kimse kimseyi dinlemiyor!',
-  'Bizim takımın en iyi yaptığı şey maçtan sonra konuşmak!',
-  'Herkes kendini teknik direktör sanıyor, ben de basın sözcüsü oldum!',
-  'Haftaya yine gelirim ama soyunma odası toplantısına katılmam!',
-  'Sahada 14 kişiydik, maçtan sonra 14 ayrı maç hikâyesi çıktı!'
- ];
- // Konuyu önce maç + oyuncuya göre seç, sonra o konu içindeki cümleyi belirle.
- // Böylece tek gol atan oyuncu da skor, arkadaşlık veya genel takılma üzerine konuşabilir.
- const chronological=[...leagueMatches].filter(x=>x.status==='completed').sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
+ // v261: Her oyuncu konuşabilir. Gol/asist, kaleci, takım arkadaşı, rakip, övgü ve tatlı atışma.
+ const rivals=candidates.filter(p=>p.key!==player.key&&p.team!==player.team);
+ const rival=rivals.length?rivals[(seed>>>5)%rivals.length].name:'rakip takım';
+ const matesWithNames=mates.filter(p=>p.name);
+ const mateName=matesWithNames.length?matesWithNames[(seed>>>3)%matesWithNames.length].name:'takım arkadaşlarım';
+ const positionFor=p=>{
+  const card=p.playerId?cards.find(c=>String(c.id)===p.playerId):null;
+  const guest=p.guestIds.length?guests.find(g=>String(g.id)===p.guestIds[0]):null;
+  return String(card?.position||guest?.position||'').toUpperCase();
+ };
+ const isKeeper=['KL','GK','KALECI','KALECİ'].includes(positionFor(player));
+ const scoredCount=scored.length, assistedCount=assisted.length;
+ const win=ours>theirs,loss=ours<theirs,draw=ours===theirs;
+ const speakerKey=String(player.playerId||player.key);
+ const thisMatchEvents=extras.events.filter(e=>String(e.match_id)===String(match.id));
+ const goalCount=p=>thisMatchEvents.filter(e=>e.kind==='goal'&&
+  ((p.playerId&&String(e.player_id)===p.playerId)||p.guestIds.includes(String(e.guest_id)))).length;
+ const assistCount=p=>thisMatchEvents.filter(e=>e.kind==='assist'&&
+  ((p.playerId&&String(e.player_id)===p.playerId)||p.guestIds.includes(String(e.guest_id)))).length;
+ // Bilinen verilere dayalı övgü; gol/asist kaydı olmayan birine gol veya asist atfetme.
+ const helpful=matesWithNames.map(p=>({name:p.name,goals:goalCount(p),assists:assistCount(p)}))
+  .sort((a,b)=>(b.goals+b.assists)-(a.goals+a.assists));
+ const star=helpful.find(p=>p.goals+p.assists>0);
+ const themes=[];
+ const add=(name,lines)=>{if(lines.length)themes.push({name,lines})};
+ add('takilma',[
+  'Maçtan sonra '+mateName+' yine konuştu. Ben de mikrofonu ona bırakayım dedim!',
+  mateName+' ile taktik konusunda anlaşamadık. İkimiz de kendimizi haklı bulduk!',
+  rival+' rövanş istiyorsa takvime yazsın, biz buradayız!',
+  'Rakip takımın açıklamalarını bekliyorum. Özellikle '+rival+' ne diyecek merak ettim!',
+  'Soyunma odasında herkes teknik direktör, ben sadece basın toplantısına geldim.',
+  'Sahada 14 kişi, maçtan sonra 14 ayrı hikâye var!'
+ ]);
+ add('ovgu',[
+  mateName+' olmasa maç sonrası bu kadar rahat konuşamazdım. Hakkını verelim!',
+  'Takımdaki herkes konuşuyor ama '+mateName+' bu hafta alkışı hak etti!',
+  'Ben konuşmayı severim ama bugün övgüyü '+mateName+' alsın!'
+ ]);
+ if(star)add('kayitli-katki',[
+  star.name+' için ayrı bir alkış istiyorum; '+star.goals+' gol, '+star.assists+' asist yazdırmış!',
+  'Bu maç '+star.name+' iş yaptı. Gazetede sadece benim adım geçmesin!'
+ ]);
+ if(isKeeper)add('kaleci',[
+  'Kaleciler hep son konuşur derler, bu kez mikrofonu ben aldım!',
+  'Kaleye geçince herkes teknik direktör kesiliyor. '+mateName+' de istisna değil!',
+  win?'Kaleci olarak kazandık diye mutluyum; '+mateName+' yine de taktik anlatıyor!':
+   loss?'Skor tabelasını ben de gördüm. '+mateName+' benden önce açıklama yapmasın!':
+   'Kalede beraberliği izledim, soyunma odasında herkes zafer konuşuyor!'
+ ]);
+ if(scoredCount)add('gol',[
+  'Golümü attım, ama asıl konuşulacak konu '+rival+' ile rövanş!',
+  scoredCount+' gol buldum; '+mateName+' yine de eksik arayacak bir şey bulur!',
+  'Gol tamam. Şimdi '+mateName+' konuşsun da gündem değişsin!'
+ ]);
+ if(assistedCount)add('asist',[
+  assistedCount+' asist yaptım, alkışlar golcülere gitti. Mikrofon bari bende kalsın!',
+  'Pasları ben dağıttım, maç sonu övgüleri '+mateName+' topluyor!'
+ ]);
+ if(win)add('galibiyet',[
+  'Skor güzel, ama '+mateName+' soyunma odasında şimdiden gelecek haftayı anlatıyor!',
+  rival+' kusura bakmasın, bu hafta gazete bizim tarafta!',
+  'Galibiyet geldi, şimdi herkes kendi kahramanlık hikâyesini anlatıyor!'
+ ]);
+ else if(loss)add('maglubiyet',[
+  'Rövanşta '+rival+' ile tekrar görüşeceğiz, o zaman konuşuruz!',
+  'Yenilgiyi konuşmayalım, '+mateName+' ile gelecek maçın planını yapacağız!',
+  'Soyunma odasında bahane çoktu, ben mikrofonu kapatmayı tercih ettim!'
+ ]);
+ else add('beraberlik',[
+  rival+' ile yenişemedik, rövanşa kadar atışmaya devam!',
+  'Berabere kaldık. '+mateName+' hâlâ kendini galip sayıyor!'
+ ]);
+ // Sadece oynanan maçlardan ve tekil ID'lerden deterministik seçim; eski gazeteler sabit.
+ const chronological=[...leagueMatches].filter(x=>x.status==='completed')
+  .sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
  const sequence=Math.max(0,chronological.findIndex(x=>String(x.id)===String(match.id)));
- const goalLines=scored.length?variety.filter(v=>/gol|file|hat-trick/i.test(v)):[];
- const assistLines=assisted.length?variety.filter(v=>/asist|paslar|hazırlıyorum/i.test(v)):[];
- const otherLines=variety.filter(v=>!goalLines.includes(v)&&!assistLines.includes(v));
- const themes=[banter,otherLines.length?otherLines:banter,banter];
- if(goalLines.length)themes.push(goalLines);
- if(assistLines.length)themes.push(assistLines);
- const theme=themes[(seed+sequence*7)%themes.length];
- const quote=theme[(Math.floor(seed/7)+sequence*3)%theme.length]||originalQuote;
- return {name:player.name,quote};
+ const theme=themes[(seed+sequence*11)%themes.length];
+ const quote=theme.lines[(Math.floor(seed/9)+sequence*7)%theme.lines.length];
+ return {name:player.name,quote:quote||originalQuote};
 }
 /* v258 — Skor altı kısa, esprili ve maç farkına uygun gazete yorumu. */
 function szfNewsScoreComment(m,d){

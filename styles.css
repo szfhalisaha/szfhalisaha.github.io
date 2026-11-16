@@ -894,3 +894,10 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
  .fut-card.szf-deniz-cutout-trial .fut-photo{top:12%;bottom:35%;height:auto;left:50%;width:84%}
  .fut-card.szf-deniz-cutout-trial .fut-photo{width:90%}
 }
+
+/* v221 — Optional per-player adjustments, inert until an override is set.
+   Keep the person's feet/torso aligned with the top of the nameplate. */
+.fut-card[style*="--szf-portrait-scale"] .fut-photo img {
+  transform:translate(var(--szf-portrait-x,0%),var(--szf-portrait-y,0%)) scale(var(--szf-portrait-scale,1))!important;
+  transform-origin:center bottom!important;
+}

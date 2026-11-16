@@ -113,7 +113,7 @@ function cardDisplayName(c,showNumber=false){
 function cardHTML(c,showNumber=false){
  const f=getFeatures(c),photo=publicProfiles.find(p=>p.id===c.id)?.avatar_path;
  const denizTrial=!!photo&&/^deniz(?:\s|$)/iu.test(String(c.display_name||'').trim());
- const cardPhotoUrl=denizTrial?'deniz-cutout-preview.svg':avatarUrl(photo);
+ const cardPhotoUrl=denizTrial?'deniz-cutout-preview.svg?v=219':avatarUrl(photo);
  const initials=String(c.display_name||'?').split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toLocaleUpperCase('tr');
  const values=f.map(([k,l])=>`<div class="fut-attr"><span>${l}</span><b>${publicAbility(c,k)}</b></div>`).join('');
  return `<button type="button" class="card-face fut-card tier-${rankTier(c)} ${showNumber?'szf-numbered-card':''} ${denizTrial?'szf-deniz-cutout-trial':''}" data-player="${attrs(c.id)}" aria-label="${attrs(formatPersonName(c.display_name))} oyuncu kartı">

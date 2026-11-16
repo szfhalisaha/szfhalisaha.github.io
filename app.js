@@ -769,7 +769,7 @@ async function szfOpenNewspaper(id){
  if(!special&&!szfNewspaperData(match))return toast('Gazete, MVP oylaması tamamlanınca yayımlanır.',true);
  document.getElementById('szf-news-overlay')?.remove();
  const layer=document.createElement('div');layer.id='szf-news-overlay';layer.className='szf-share-overlay szf-news-overlay';
- layer.innerHTML='<section class="szf-news-dialog" role="dialog" aria-modal="true" aria-label="SZF Spor gazetesi"><div class="szf-news-toolbar"><strong>📰 SZF SPOR · Gazete Arşivi</strong><button type="button" class="btn ghost" data-news-close>✕ Kapat</button></div><div class="szf-news-scroll"><div class="szf-news-capture">'+(special?szfEmreSpecialMarkup():szfNewspaperMarkup(id))+'</div></div><div class="szf-news-actions"><button type="button" class="btn lime" data-news-export>↗ Gazeteyi Kaydet / Paylaş</button></div></section>';
+ layer.innerHTML='<section class="szf-news-dialog" role="dialog" aria-modal="true" aria-label="SZF Spor gazetesi"><div class="szf-news-toolbar"><strong>📰 SZF SPOR · Gazete Arşivi</strong><button type="button" class="btn ghost" data-news-close>✕ Kapat</button></div><div class="szf-news-scroll"><div class="szf-news-capture">'+(special?szfEmreSpecialMarkup():szfNewspaperMarkup(id))+'</div></div><div class="szf-news-actions"><button type="button" class="btn lime" data-news-export>Gazeteyi Kaydet</button></div></section>';
  document.body.appendChild(layer);
  const close=()=>layer.remove();layer.querySelector('[data-news-close]').onclick=close;layer.onclick=e=>{if(e.target===layer)close()};
  layer.querySelector('[data-news-export]').onclick=async()=>{
@@ -797,22 +797,16 @@ async function szfOpenNewspaper(id){
    preview.style.cssText='position:fixed;inset:0;z-index:999999;background:#07120bea;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px;overflow:auto';
    const bar=document.createElement('div');
    bar.style.cssText='display:flex;gap:8px;flex-wrap:wrap;justify-content:center;position:sticky;top:0;z-index:1;background:#07120b;padding:8px;border-radius:12px';
-   const share=document.createElement('button');share.type='button';share.className='btn lime';share.textContent='Paylaş / Fotoğraflara Kaydet';
-   const download=document.createElement('a');download.className='btn ghost';download.textContent='PNG indir';download.download=file.name;
+   const download=document.createElement('a');download.className='btn ghost';download.textContent='Gazeteyi Kaydet';download.download=file.name;
    const closePreview=document.createElement('button');closePreview.type='button';closePreview.className='btn ghost';closePreview.textContent='✕ Kapat';
    const img=document.createElement('img');img.alt='SZF Spor gazete görseli';img.style.cssText='display:block;width:100%;max-width:700px;height:auto;object-fit:contain;touch-action:pan-y';
    const url=URL.createObjectURL(blob);img.src=url;download.href=url;
-   const hint=document.createElement('p');hint.textContent='iPhone: Paylaş butonuna basıp Görseli Kaydet seçeneğini kullan. Olmazsa gazete resmine basılı tutup Fotoğraflara Kaydet seç.';hint.style.cssText='color:white;text-align:center;max-width:600px;font-size:14px';
-   share.onclick=()=>{
-    if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
-     navigator.share({files:[file],title:'SZF SPOR'}).catch(err=>{if(err.name!=='AbortError')toast('Paylaşım açılamadı. Resme basılı tutarak kaydet.',true)});
-    }else{toast('Resme basılı tutarak Fotoğraflara Kaydet seç.',false)}
-   };
+   const hint=document.createElement('p');hint.textContent='iPhone: Gazeteyi Kaydet butonuna dokun. Fotoğraflara eklemek için aşağıdaki gazete görseline basılı tutup Fotoğraflara Kaydet seçeneğini kullan.';hint.style.cssText='color:white;text-align:center;max-width:600px;font-size:14px';
    closePreview.onclick=()=>{preview.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)};
-   bar.append(share,download,closePreview);preview.append(bar,hint,img);document.body.appendChild(preview);
+   bar.append(download,closePreview);preview.append(bar,hint,img);document.body.appendChild(preview);
 
   }catch(e){console.error('SZF SPOR gazete:',e);toast('Gazete kaydedilemedi: '+(e.message||'Bilinmeyen hata'),true)}
-  finally{btn.disabled=false;btn.textContent='↗ Gazeteyi Kaydet / Paylaş'}
+  finally{btn.disabled=false;btn.textContent='Gazeteyi Kaydet'}
  };
 }
 

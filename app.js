@@ -775,15 +775,32 @@ async function szfOpenNewspaper(id){
  layer.querySelector('[data-news-export]').onclick=async()=>{
   const btn=layer.querySelector('[data-news-export]');if(btn.disabled)return;
   btn.disabled=true;btn.textContent='Gazete hazırlanıyor...';
+  const timeout=(ms,message)=>new Promise((_,reject)=>setTimeout(()=>reject(new Error(message)),ms));
   try{
-   const capture=await szfLoadPosterCapture();
-   const canvas=await capture(layer.querySelector('.szf-news-paper'),{scale:2,backgroundColor:'#f2ecdf',useCORS:true,logging:false,scrollX:0,scrollY:-window.scrollY});
-   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('PNG oluşturulamadı');
+   const capture=await Promise.race([szfLoadPosterCapture(),timeout(12000,'Görsel kütüphanesi zaman aşımı')]);
+   const paper=layer.querySelector('.szf-news-paper');
+   if(!paper)throw new Error('Gazete sayfası bulunamadı');
+   const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+   const canvas=await Promise.race([
+    capture(paper,{scale:isMobile?1:1.5,backgroundColor:'#f2ecdf',useCORS:true,logging:false,scrollX:0,scrollY:-window.scrollY,imageTimeout:6000,removeContainer:true}),
+    timeout(18000,'Gazete oluşturma zaman aşımı')
+   ]);
+   btn.textContent='PNG hazırlanıyor...';
+   const blob=await Promise.race([new Promise(resolve=>canvas.toBlob(resolve,'image/png')),timeout(8000,'PNG kaydetme zaman aşımı')]);
+   if(!blob)throw Error('PNG oluşturulamadı');
    const file=new File([blob],'SZF-SPOR-'+String(id).slice(0,8)+'.png',{type:'image/png'});
-   try{if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'SZF SPOR'});return}}catch(e){if(e.name==='AbortError')return}
-   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
-   toast('Gazete PNG olarak kaydedildi.');
-  }catch(e){console.error('SZF SPOR gazete:',e);toast('Gazete görseli oluşturulamadı.',true)}
+   btn.textContent='Paylaşım açılıyor...';
+   try{
+    if(navigator.canShare?.({files:[file]})&&navigator.share){
+     await Promise.race([navigator.share({files:[file],title:'SZF SPOR'}),timeout(15000,'Paylaşım açılmadı')]);
+     return;
+    }
+   }catch(e){if(e.name==='AbortError')return;console.warn('Gazete paylaşımı, indirme denenecek:',e)}
+   const url=URL.createObjectURL(blob),a=document.createElement('a');
+   a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),60000);
+   toast('Gazete PNG dosyası hazır.');
+  }catch(e){console.error('SZF SPOR gazete:',e);toast('Gazete kaydedilemedi: '+(e.message||'Bilinmeyen hata'),true)}
   finally{btn.disabled=false;btn.textContent='↗ Gazeteyi Kaydet / Paylaş'}
  };
 }

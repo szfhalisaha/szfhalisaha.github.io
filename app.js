@@ -674,12 +674,38 @@ function szfNewspaperData(match){
  if(!mentioned)headline=caps(pickedName)+': '+headline;
  return {match,winners,headline,summary,topScorers,red,white,winningTeam,votes:Number(mv.vote_count||0)};
 }
+/* Third story is about a real player recorded in this match; no invented statistics. */
+function szfThirdNewspaperStory(match,d){
+ const excluded=new Set(d.winners.map(n=>String(n).toLocaleLowerCase('tr-TR')));
+ const eligible=n=>n&&!/\\b(emre|talha)\\b/i.test(String(n))&&!excluded.has(String(n).toLocaleLowerCase('tr-TR'));
+ const scorer=d.topScorers.find(([name])=>eligible(name));
+ if(scorer){
+  const [name,goals]=scorer;
+  return {headline:String(name).toLocaleUpperCase('tr-TR')+' RAKİP SAVUNMANIN EV ÖDEVİ OLDU!',
+   body:name+' bu maçta '+goals+' gol kaydetti. Rövanş öncesi rakip savunmanın taktik defterini yeniden açması gerekebilir!'};
+ }
+ const roster=weeklyPlayers.filter(p=>String(p.match_id)===String(match.id)).map(p=>
+  currentCards().find(c=>String(c.id)===String(p.player_id))?.display_name||
+  publicProfiles.find(c=>String(c.id)===String(p.player_id))?.display_name
+ );
+ const guests=extras.guests.filter(g=>String(g.match_id)===String(match.id)).map(g=>g.display_name);
+ const candidates=[...new Set([...roster,...guests].filter(Boolean).map(formatPersonName).filter(eligible))];
+ if(candidates.length){
+  const seed=[...String(match.id)].reduce((a,c)=>a+c.charCodeAt(0),0);
+  const name=candidates[seed%candidates.length];
+  return {headline:name.toLocaleUpperCase('tr-TR')+' İÇİN TAKTİK MASASI KURULDU!',
+   body:name+' sahadaydı. Spor servisinin kritik sorusu: Bir sonraki maçta sürpriz bu isimden mi gelecek? Taktik masası tamamen mizahi bir yakıştırma.'};
+ }
+ return {headline:'RÖVANŞ ÖNCESİ TAKTİK DEFTERİ AÇILDI!',
+  body:'Takımlar için bir sonraki maçın gündemi belli: Savunmada açık bırakmadan hücumda fırsat yakalamak. Spor servisi rövanşı bekliyor.'};
+}
 function szfNewspaperMarkup(id){
  const m=leagueMatches.find(x=>String(x.id)===String(id)),d=szfNewspaperData(m);
  if(!d)return '<p>Gazete, Maçın Adamı oylaması sonuçlandığında yayımlanır.</p>';
  const date=matchDateText(m.match_date);
  const names=d.winners.join(' & ');
  const scorerText=d.topScorers.length?d.topScorers.slice(0,5).map(([name,count])=>esc(name)+' <b>'+count+' gol</b>').join(' · '):'Golcü bilgisi henüz kaydedilmedi.';
+ const third=szfThirdNewspaperStory(m,d);
  const mvpLabel=d.winners.length>1?'ORTAK MVP':'MAÇIN ADAMI';
  const mvpPraise=(()=>{
   const choices=[];
@@ -700,7 +726,7 @@ function szfNewspaperMarkup(id){
   const seed=[...String(m.id)].reduce((n,c)=>n+c.charCodeAt(0),0);
   return choices[seed%choices.length];
  })();
- return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(date)+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ SONU ÖZEL SAYISI</div><h1>'+esc(d.headline)+'</h1><p class="szf-news-deck">'+esc(d.summary)+'</p><div class="szf-news-score"><span>KIRMIZI</span><strong>'+d.red+' <i>–</i> '+d.white+'</strong><span>BEYAZ</span></div><div class="szf-news-caption">'+esc(d.winningTeam==='BERABERLİK'?'Beraberlik: takımlar puanları paylaştı.':d.winningTeam+' sahadan galibiyetle ayrıldı.')+'</div><div class="szf-news-columns"><section><div class="szf-news-kicker">🏆 '+mvpLabel+'</div><h2>'+esc(names)+'</h2><p>'+esc(mvpPraise)+'</p></section><section><div class="szf-news-kicker">⚽ GOL DOSYASI</div><h2>Sahanın rakamları konuşuyor</h2><p>'+scorerText+'</p></section></div><div class="szf-news-bottom"><strong>SON DAKİKA</strong><span>Bir sonraki maçın gündemi şimdiden merak ediliyor.</span></div><footer>SZF SPOR · SAYI: '+esc(String(m.id).slice(0,6).toUpperCase())+' · KAYNAK: RESMÎ MAÇ KAYITLARI</footer></article>';
+ return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(date)+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ SONU ÖZEL SAYISI</div><h1>'+esc(d.headline)+'</h1><p class="szf-news-deck">'+esc(d.summary)+'</p><div class="szf-news-score"><span>KIRMIZI</span><strong>'+d.red+' <i>–</i> '+d.white+'</strong><span>BEYAZ</span></div><div class="szf-news-caption">'+esc(d.winningTeam==='BERABERLİK'?'Beraberlik: takımlar puanları paylaştı.':d.winningTeam+' sahadan galibiyetle ayrıldı.')+'</div><div class="szf-news-columns"><section><div class="szf-news-kicker">🏆 '+mvpLabel+'</div><h2>'+esc(names)+'</h2><p>'+esc(mvpPraise)+'</p></section><section><div class="szf-news-kicker">⚽ GOL DOSYASI</div><h2>Sahanın rakamları konuşuyor</h2><p>'+scorerText+'</p></section></div><section class="szf-news-third"><div class="szf-news-kicker">📰 SAHANIN GÜNDEMİ · ÜÇÜNCÜ HABER</div><h2>'+esc(third.headline)+'</h2><p>'+esc(third.body)+'</p></section><div class="szf-news-bottom"><strong>SON DAKİKA</strong><span>Bir sonraki maçın gündemi şimdiden merak ediliyor.</span></div><footer>SZF SPOR · SAYI: '+esc(String(m.id).slice(0,6).toUpperCase())+' · KAYNAK: RESMÎ MAÇ KAYITLARI</footer></article>';
 }
 /* Özel manşet sadece gazetenin üst haberini değiştirir; skor, MVP ve gol dosyası aynı kalır. */
 function szfEmreSpecialMatch(){
@@ -717,9 +743,10 @@ function szfEmreSpecialActive(){
 function szfEmreSpecialMarkup(){
  const m=szfEmreSpecialMatch();
  if(!m)return '<p>Gazete, Maçın Adamı oylaması sonuçlandığında yayımlanır.</p>';
+ const d=szfNewspaperData(m);
  return szfNewspaperMarkup(m.id)
-  .replace(/<h1>[\\s\\S]*?<\\/h1>/,'<h1>EMRE 3 MAÇTIR GALİBİYETE HASRET!</h1>')
-  .replace(/<p class="szf-news-deck">[\\s\\S]*?<\\/p>/,'<p class="szf-news-deck">Üç maç, sıfır galibiyet! Emre’nin galibiyet hanesinde yaprak kımıldamıyor. SZF Spor soruyor: İlk zafer ne zaman gelecek?</p>');
+  .replace('<h1>'+esc(d.headline)+'</h1>','<h1>EMRE 3 MAÇTIR GALİBİYETE HASRET!</h1>')
+  .replace('<p class="szf-news-deck">'+esc(d.summary)+'</p>','<p class="szf-news-deck">Üç maç, sıfır galibiyet! Emre’nin galibiyet hanesinde yaprak kımıldamıyor. SZF Spor soruyor: İlk zafer ne zaman gelecek?</p>');
 }
 function szfEmreSpecialHome(){
  const m=szfEmreSpecialMatch();

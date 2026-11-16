@@ -110,13 +110,29 @@ function cardDisplayName(c,showNumber=false){
  const number=showNumber&&Number.isInteger(jersey)&&jersey>=1&&jersey<=99?`${jersey} `:'';
  return number+formatPersonName(c.display_name);
 }
+/* v221 — Per-player portrait tuning. Add requested corrections here,
+   indexed by the stable player UUID (preferred) or full display name.
+   Each value adjusts the visible card portrait only; stored avatars are unchanged.
+   x/y are percentages of portrait box; scale is a multiplier. */
+const szfPortraitOverrides={
+  // 'player-uuid': {x:0,y:0,scale:1},
+};
+function szfPortraitStyle(c){
+ const override=szfPortraitOverrides[String(c.id)]||szfPortraitOverrides[String(c.display_name||'').trim().toLocaleLowerCase('tr')];
+ if(!override)return '';
+ const clamp=(n,min,max,def)=>Number.isFinite(Number(n))?Math.max(min,Math.min(max,Number(n))):def;
+ const x=clamp(override.x,-35,35,0);
+ const y=clamp(override.y,-30,30,0);
+ const scale=clamp(override.scale,0.65,1.4,1);
+ return ` style="--szf-portrait-x:${x}%;--szf-portrait-y:${y}%;--szf-portrait-scale:${scale}"`;
+}
 function cardHTML(c,showNumber=false){
  const f=getFeatures(c),photo=publicProfiles.find(p=>p.id===c.id)?.avatar_path;
  const denizTrial=!!photo&&/^deniz(?:\s|$)/iu.test(String(c.display_name||'').trim());
  const cardPhotoUrl=denizTrial?'deniz-cutout-preview.svg?v=219':avatarUrl(photo);
  const initials=String(c.display_name||'?').split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toLocaleUpperCase('tr');
  const values=f.map(([k,l])=>`<div class="fut-attr"><span>${l}</span><b>${publicAbility(c,k)}</b></div>`).join('');
- return `<button type="button" class="card-face fut-card tier-${rankTier(c)} ${showNumber?'szf-numbered-card':''} ${denizTrial?'szf-deniz-cutout-trial':''}" data-player="${attrs(c.id)}" aria-label="${attrs(formatPersonName(c.display_name))} oyuncu kartı">
+ return `<button type="button" class="card-face fut-card tier-${rankTier(c)} ${showNumber?'szf-numbered-card':''} ${denizTrial?'szf-deniz-cutout-trial':''}" data-player="${attrs(c.id)}"${szfPortraitStyle(c)} aria-label="${attrs(formatPersonName(c.display_name))} oyuncu kartı">
  <div class="fut-head"><div class="fut-overall">${publicRating(c)}</div><div class="fut-pos">${esc(c.position==='ORT'?'OS':c.position)}</div></div>
  <div class="fut-photo">${photo?`<img src="${attrs(cardPhotoUrl)}" alt="" loading="lazy">`:`<span>${esc(initials)}</span>`}</div>
  <div class="fut-name">${esc(cardDisplayName(c,showNumber))}</div><div class="fut-stats">${values}</div><div class="fut-emblems"><img class="fut-flag-img" src="turkiye-bayragi.svg" alt="Türkiye"></div></button>`;

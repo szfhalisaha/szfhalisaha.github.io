@@ -842,7 +842,8 @@ function szfDownloadPNG(result){
 }
 
 async function szfOpenNewspaper(id){
- const special=id==='emre-17-kasim-2026'&&szfEmreSpecialActive();
+ const activeSpecial=szfEmreSpecialActive()?szfEmreSpecialMatch():null;
+ const special=!!activeSpecial&&(id==='emre-17-kasim-2026'||String(id)===String(activeSpecial.id));
  const match=leagueMatches.find(m=>String(m.id)===String(id));
  if(!special&&!szfNewspaperData(match))return toast('Gazete, MVP oylaması tamamlanınca yayımlanır.',true);
  document.getElementById('szf-news-overlay')?.remove();
@@ -865,7 +866,7 @@ async function szfOpenNewspaper(id){
   try{
    const target=layer.querySelector('.szf-news-paper');
    if(!target)throw new Error('Gazete bulunamadı');
-   const result=await szfCaptureSharePNG(target,'SZF-SPOR-'+String(id).slice(0,8)+'.png','#f2ecdf');
+   const result=await szfCaptureSharePNG(target,'SZF-SPOR-'+String(special?activeSpecial.id:id).slice(0,8)+'.png','#f2ecdf');
    if(closed){URL.revokeObjectURL(result.url);return;}
    if(generated)URL.revokeObjectURL(generated.url);
    generated=result;
@@ -1643,7 +1644,7 @@ function matchBlock(m){
  ${!completed&&m.status==='open'&&myQueue?`<button class="btn small ghost" data-leave-queue="${attrs(m.id)}">Yedekten çık</button>`:''}${!completed&&!teamsReady&&String(nextTeamMatch()?.id)===String(m.id)?`<button class="btn small lime" data-inline-build="${attrs(m.id)}">⚖ Takımı Kur</button>`:''}${!completed?`<button class="btn small ghost" data-roster="${attrs(m.id)}">⚽ Kadroyu gör</button>`:''}
  ${!completed&&m.status==='open'?`<button class="btn small ghost" data-open-roster-picker="${attrs(m.id)}">＋ Oyuncu Ekle</button>`:''}
 
- ${scoreEntryReady&&completed&&adminInfo&&!agedMatch?`<button class="btn small lime" data-score-editor="${attrs(m.id)}">⚽ Sonuç, Gol ve Asist Düzenle</button>`:''}${completed&&m.red_score!=null&&m.white_score!=null?`<button class="btn small lime" data-share-match="${attrs(m.id)}">↗ Sonucu Paylaş</button>${szfNewspaperData(m)?`<button type="button" class="btn small ghost" data-szf-newspaper="${attrs(m.id)}">📰 Gazeteyi Oku</button>`:''} `:''}
+ ${scoreEntryReady&&completed&&adminInfo&&!agedMatch?`<button class="btn small lime" data-score-editor="${attrs(m.id)}">⚽ Sonuç, Gol ve Asist Düzenle</button>`:''}${completed&&m.red_score!=null&&m.white_score!=null?`<button class="btn small lime" data-share-match="${attrs(m.id)}">↗ Sonucu Paylaş</button>${szfNewspaperData(m)?`<button type="button" class="btn small ghost" data-szf-newspaper="${attrs(szfEmreSpecialActive()&&String(szfEmreSpecialMatch()?.id)===String(m.id)?'emre-17-kasim-2026':m.id)}">📰 Gazeteyi Oku</button>`:''} `:''}
  ${mayEditMatch&&!agedMatch?`<button class="btn small ghost" data-edit-match="${attrs(m.id)}">✎ Düzenle</button>`:''}
  ${canDeleteMatch?`<button class="btn small ghost" data-delete-match="${attrs(m.id)}">Maçı Sil</button>`:''}
  ${completed&&adminInfo&&!agedMatch?`<label class="vest-record">🎽 Yelek giyen takım <select data-vest-match="${attrs(m.id)}"><option value="" ${!m.vest_team?'selected':''}>Henüz girilmedi</option><option value="red" ${m.vest_team==='red'?'selected':''}>🔴 Kırmızı</option><option value="white" ${m.vest_team==='white'?'selected':''}>⚪ Beyaz</option></select></label>`:completed?`<span class="vest-record">🎽 Yelek giyen takım: ${m.vest_team==='red'?'🔴 Kırmızı':m.vest_team==='white'?'⚪ Beyaz':'Henüz girilmedi'}</span>`:''}

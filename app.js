@@ -674,46 +674,12 @@ function szfNewspaperData(match){
  if(!mentioned)headline=caps(pickedName)+': '+headline;
  return {match,winners,headline,summary,topScorers,red,white,winningTeam,votes:Number(mv.vote_count||0)};
 }
-/* Third newspaper column: real match participants and goals, with lighthearted commentary. */
-function szfNewspaperSideStory(match,data){
- const excluded=/\\b(emre|talha)\\b/i;
- const winnerNames=new Set(data.winners.map(n=>n.toLocaleLowerCase('tr-TR')));
- const eligible=name=>name&&!excluded.test(name)&&!winnerNames.has(String(name).toLocaleLowerCase('tr-TR'));
- const goalHero=data.topScorers.find(([name])=>eligible(name));
- if(goalHero){
-  const [name,goals]=goalHero;
-  return {
-   title:name.toLocaleUpperCase('tr-TR')+' İÇİN SAVUNMAYA FAZLA MESAİ!',
-   summary:name+' bu maçta '+goals+' golle tabelaya adını yazdırdı. Rakip savunma bir sonraki maçta onu görünce taktik defterini yeniden açabilir!'
-  };
- }
- const matchPlayers=weeklyPlayers.filter(p=>String(p.match_id)===String(match.id));
- const guestPlayers=extras.guests.filter(g=>String(g.match_id)===String(match.id));
- const cardNames=new Map(currentCards().map(c=>[String(c.id),c.display_name]));
- const participants=[
-  ...matchPlayers.map(p=>cardNames.get(String(p.player_id))||publicProfiles.find(c=>String(c.id)===String(p.player_id))?.display_name),
-  ...guestPlayers.map(g=>g.display_name)
- ].map(n=>formatPersonName(n||'')).filter(eligible);
- const unique=[...new Set(participants)];
- if(unique.length){
-  const pick=unique[[...String(match.id)].reduce((n,c)=>n+c.charCodeAt(0),0)%unique.length];
-  return {
-   title:pick.toLocaleUpperCase('tr-TR')+' İÇİN TAKTİK MASASI KURULDU!',
-   summary:pick+' bu maçta sahadaydı. Spor servisinin sorusu şu: Bir sonraki maçta sürprizi o mu yapacak? Taktik masası yorumu tamamen mizahidir.'
-  };
- }
- return {
-  title:'RÖVANŞ ÖNCESİ TAKTİK DEFTERLERİ AÇILDI!',
-  summary:'Skor belli oldu; spor servisi bir sonraki maçta kimin sürpriz yapacağını şimdiden merak ediyor.'
- };
-}
 function szfNewspaperMarkup(id){
  const m=leagueMatches.find(x=>String(x.id)===String(id)),d=szfNewspaperData(m);
  if(!d)return '<p>Gazete, Maçın Adamı oylaması sonuçlandığında yayımlanır.</p>';
  const date=matchDateText(m.match_date);
  const names=d.winners.join(' & ');
  const scorerText=d.topScorers.length?d.topScorers.slice(0,5).map(([name,count])=>esc(name)+' <b>'+count+' gol</b>').join(' · '):'Golcü bilgisi henüz kaydedilmedi.';
- const sideStory=szfNewspaperSideStory(m,d);
  const mvpLabel=d.winners.length>1?'ORTAK MVP':'MAÇIN ADAMI';
  const mvpPraise=(()=>{
   const choices=[];
@@ -734,7 +700,7 @@ function szfNewspaperMarkup(id){
   const seed=[...String(m.id)].reduce((n,c)=>n+c.charCodeAt(0),0);
   return choices[seed%choices.length];
  })();
- return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(date)+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ SONU ÖZEL SAYISI</div><h1>'+esc(d.headline)+'</h1><p class="szf-news-deck">'+esc(d.summary)+'</p><div class="szf-news-score"><span>KIRMIZI</span><strong>'+d.red+' <i>–</i> '+d.white+'</strong><span>BEYAZ</span></div><div class="szf-news-caption">'+esc(d.winningTeam==='BERABERLİK'?'Beraberlik: takımlar puanları paylaştı.':d.winningTeam+' sahadan galibiyetle ayrıldı.')+'</div><div class="szf-news-columns"><section><div class="szf-news-kicker">🏆 '+mvpLabel+'</div><h2>'+esc(names)+'</h2><p>'+esc(mvpPraise)+'</p></section><section><div class="szf-news-kicker">📰 SAHADAN KULİS</div><h2>'+esc(sideStory.title)+'</h2><p>'+esc(sideStory.summary)+'</p><p class="szf-news-caption">⚽ Gol dosyası: '+scorerText+'</p></section></div><div class="szf-news-bottom"><strong>SON DAKİKA</strong><span>Bir sonraki maçın gündemi şimdiden merak ediliyor.</span></div><footer>SZF SPOR · SAYI: '+esc(String(m.id).slice(0,6).toUpperCase())+' · KAYNAK: RESMÎ MAÇ KAYITLARI</footer></article>';
+ return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(date)+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ SONU ÖZEL SAYISI</div><h1>'+esc(d.headline)+'</h1><p class="szf-news-deck">'+esc(d.summary)+'</p><div class="szf-news-score"><span>KIRMIZI</span><strong>'+d.red+' <i>–</i> '+d.white+'</strong><span>BEYAZ</span></div><div class="szf-news-caption">'+esc(d.winningTeam==='BERABERLİK'?'Beraberlik: takımlar puanları paylaştı.':d.winningTeam+' sahadan galibiyetle ayrıldı.')+'</div><div class="szf-news-columns"><section><div class="szf-news-kicker">🏆 '+mvpLabel+'</div><h2>'+esc(names)+'</h2><p>'+esc(mvpPraise)+'</p></section><section><div class="szf-news-kicker">⚽ GOL DOSYASI</div><h2>Sahanın rakamları konuşuyor</h2><p>'+scorerText+'</p></section></div><div class="szf-news-bottom"><strong>SON DAKİKA</strong><span>Bir sonraki maçın gündemi şimdiden merak ediliyor.</span></div><footer>SZF SPOR · SAYI: '+esc(String(m.id).slice(0,6).toUpperCase())+' · KAYNAK: RESMÎ MAÇ KAYITLARI</footer></article>';
 }
 /* Özel manşet sadece gazetenin üst haberini değiştirir; skor, MVP ve gol dosyası aynı kalır. */
 function szfEmreSpecialMatch(){

@@ -938,3 +938,8 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
  .szf-card-editor .szf-editor-card-host{width:min(80%,270px)}
  .szf-card-editor .szf-editor-actions .btn{flex:1 1 auto}
 }
+
+/* SZF Spor third news story under the original MVP and goal columns */
+.szf-news-third{margin-top:15px;padding:14px 0 3px;border-top:2px solid #222;color:#1d1c18}
+.szf-news-third h2{font:bold clamp(17px,3.7vw,24px)/1.14 Georgia,serif;margin:5px 0 9px;overflow-wrap:anywhere}
+.szf-news-third p{font:15px/1.5 Georgia,serif;margin:0;color:#33312b;overflow-wrap:anywhere}

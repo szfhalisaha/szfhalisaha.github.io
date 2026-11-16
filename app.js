@@ -751,7 +751,55 @@ function szfNewspaperPressVoice(match){
   'Berabere bitti; kimse küsmesin diye böyle planlamıştık.',
   'Ne yenildik ne kazandık. Soyunma odasında herkes kendini başarılı ilan etti.'
  ];
- const quote=choices[(seed>>>1)%choices.length];
+ // Yayımlanmış 15 Kasım sayısını olduğu gibi koru.
+ const originalQuote=choices[(seed>>>1)%choices.length];
+ if(String(match.id)==='126eb952-5660-4378-9c30-8ec8b2f3c46a')
+  return {name:player.name,quote:originalQuote};
+ // 3 Kasım sayısında önceki haftayla tekrarlanan tek-gol / hat-trick esprisini değiştir.
+ if(String(match.id)==='2f58f6a1-0536-4c31-8813-c1fe8cb174c6')
+  return {name:player.name,quote:scored.length===1
+   ? 'Bir golü ben attım, geri kalanını takım arkadaşlarına bıraktım. Her şeyi de benden beklemeyin!'
+   : ours>theirs
+    ? 'Maçı aldık ama soyunma odasında herkes kendini teknik direktör ilan etti!'
+    : 'Bizim takımda bahane çok, sıra bana gelmeden mikrofonu kapatın!'};
+ // Yeni sayılarda aynı istatistik için farklı açıları kullan: gol, asist, skor ve takım içi şakalar.
+ const variety=[];
+ if(scored.length>=3) variety.push(
+  'Ben sahada gol saydım, '+mate+' soyunma odasında bahane saydı!',
+  'Bu kadar golün üstüne bir de taktik toplantısına çağırıldım. Daha ne yapayım?'
+ );
+ if(scored.length>=1) variety.push(
+  'Gol attık diye prim istemedik, bir teşekkür yeterdi!',
+  'Fileleri buldum; asıl zor olan maçtan sonra '+mate+' ile aynı fikirde olmak.',
+  'Ben golümü attım, şimdi herkes kendi işine baksın!',
+  'Gol sevincim kısa sürdü; soyunma odasında hemen eleştiri başladı.'
+ );
+ if(assisted.length>=1) variety.push(
+  'Pasları ben verdim, fotoğrafta yine golcüler öne geçmiş!',
+  'Asistleri dağıttım; maçtan sonra kimse hesabı ödemeye yanaşmadı.',
+  'Ben hazırlıyorum, arkadaşlar bitiriyor. Bu işin mutfağını da görün!'
+ );
+ if(ours>theirs) variety.push(
+  'Kazandık ama '+mate+' maçtan sonra hâlâ taktik anlatıyordu.',
+  'Skor iyi, soyunma odasının özgüveni biraz fazla iyi!',
+  'Üç puan yok ama hava atacak malzeme çıktı!'
+ );
+ else if(ours<theirs) variety.push(
+  'Yenilgiyi üstüme yıkacaklardı, ben de erken çıktım!',
+  'Skora bakınca kimse konuşmuyor, soyunma odasına girince herkes uzman!',
+  'Rövanşta konuşuruz dedik, şu an konuşacak yüzümüz yok!'
+ );
+ else variety.push(
+  'Berabere kaldık; soyunma odasında iki takım da galip gibi konuşuyor!',
+  'Maçın kazananı yok ama bahanelerin şampiyonu şimdiden belli!'
+ );
+ if(Math.abs(ours-theirs)>=4) variety.push(
+  ours>theirs?'Rakip tabelaya yetişemedi, biz de sevinmeye!':'Skor biraz ağır oldu, dönüşte tabelaya bakmamaya karar verdim!'
+ );
+ // Tarihe göre rotasyon, tekrar eden oyuncu ve istatistiklerde bile aynı şaka seçimini azaltır.
+ const chronological=[...leagueMatches].filter(x=>x.status==='completed').sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
+ const sequence=Math.max(0,chronological.findIndex(x=>String(x.id)===String(match.id)));
+ const quote=variety[(seed+sequence*7)%variety.length]||originalQuote;
  return {name:player.name,quote};
 }
 /* v258 — Skor altı kısa, esprili ve maç farkına uygun gazete yorumu. */

@@ -789,21 +789,15 @@ async function szfOpenNewspaper(id){
    const blob=await Promise.race([new Promise(resolve=>canvas.toBlob(resolve,'image/png')),timeout(8000,'PNG kaydetme zaman aşımı')]);
    if(!blob)throw Error('PNG oluşturulamadı');
    const file=new File([blob],'SZF-SPOR-'+String(id).slice(0,8)+'.png',{type:'image/png'});
-   // iOS needs a fresh user gesture for navigator.share; do not call it after awaited capture.
-   // Always show the generated PNG first so users can long-press and save it in Photos.
-   layer.querySelector('.szf-news-preview')?.remove();
-   const preview=document.createElement('div');
-   preview.className='szf-news-preview';
-   preview.style.cssText='position:fixed;inset:0;z-index:999999;background:#07120bea;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px;overflow:auto';
-   const bar=document.createElement('div');
-   bar.style.cssText='display:flex;gap:8px;flex-wrap:wrap;justify-content:center;position:sticky;top:0;z-index:1;background:#07120b;padding:8px;border-radius:12px';
-   const download=document.createElement('a');download.className='btn ghost';download.textContent='Gazeteyi Kaydet';download.download=file.name;
-   const closePreview=document.createElement('button');closePreview.type='button';closePreview.className='btn ghost';closePreview.textContent='✕ Kapat';
-   const img=document.createElement('img');img.alt='SZF Spor gazete görseli';img.style.cssText='display:block;width:100%;max-width:700px;height:auto;object-fit:contain;touch-action:pan-y';
-   const url=URL.createObjectURL(blob);img.src=url;download.href=url;
-   const hint=document.createElement('p');hint.textContent='iPhone: Gazeteyi Kaydet butonuna dokun. Fotoğraflara eklemek için aşağıdaki gazete görseline basılı tutup Fotoğraflara Kaydet seçeneğini kullan.';hint.style.cssText='color:white;text-align:center;max-width:600px;font-size:14px';
-   closePreview.onclick=()=>{preview.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)};
-   bar.append(download,closePreview);preview.append(bar,hint,img);document.body.appendChild(preview);
+   // Download the generated image directly, without an extra preview screen.
+   const url=URL.createObjectURL(blob);
+   const link=document.createElement('a');
+   link.href=url;link.download=file.name;link.style.display='none';
+   document.body.appendChild(link);
+   link.click();
+   link.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),120000);
+   toast('Gazete PNG indirme işlemi başlatıldı. iPhone’da Dosyalar > İndirilenler bölümünü kontrol et.');
 
   }catch(e){console.error('SZF SPOR gazete:',e);toast('Gazete kaydedilemedi: '+(e.message||'Bilinmeyen hata'),true)}
   finally{btn.disabled=false;btn.textContent='Gazeteyi Kaydet'}

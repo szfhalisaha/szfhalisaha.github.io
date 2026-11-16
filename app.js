@@ -787,7 +787,7 @@ async function szfCaptureSharePNG(element,filename,background){
  try{
   const capture=await timeout(szfLoadPosterCapture(),7000,'İlk görsel motoru yüklenemedi');
   const canvas=await timeout(Promise.resolve().then(()=>capture(element,{
-   scale:mobile?1:1.5,backgroundColor:background,useCORS:true,logging:false,
+   scale:mobile?3:2.5,backgroundColor:background,useCORS:true,logging:false,
    scrollX:0,scrollY:0,imageTimeout:3000
   })),12000,'İlk görsel motoru yanıt vermedi');
   blob=await timeout(new Promise(resolve=>canvas.toBlob(resolve,'image/png')),5000,'PNG dönüştürme tamamlanmadı');
@@ -796,7 +796,7 @@ async function szfCaptureSharePNG(element,filename,background){
   try{
    const alt=await timeout(szfLoadAlternateCapture(),7000,'İkinci görsel motoru yüklenemedi');
    blob=await timeout(alt.toBlob(element,{
-    cacheBust:false,backgroundColor:background,pixelRatio:mobile?1:1.5,
+    cacheBust:false,backgroundColor:background,pixelRatio:mobile?3:2.5,
     canvasWidth:element.scrollWidth,canvasHeight:element.scrollHeight
    }),12000,'İkinci görsel motoru yanıt vermedi');
   }catch(err){
@@ -818,6 +818,23 @@ function szfSharePNGNow(file,notice){
  }else{
   notice.textContent='Tarayıcıda paylaşma desteklenmiyor. Görseli Aç seçeneğini kullan.';
  }
+}
+function szfSaveOrSharePNG(result,alt,notice){
+ if(!result?.file)return;
+ // iOS offers "Save Image" in the native share sheet; web pages cannot write
+ // straight to the Photos library without the user's system permission/action.
+ if(typeof navigator.share==='function'&&(!navigator.canShare||navigator.canShare({files:[result.file]}))){
+  try{
+   Promise.resolve(navigator.share({files:[result.file],title:alt||'SZF Airport Halı Saha'}))
+    .catch(err=>{
+     if(err?.name==='AbortError')return;
+     if(notice)notice.textContent='Paylaşım menüsü açılamadı; görsele basılı tutarak Fotoğraflara Kaydet seçeneğini kullan.';
+     szfOpenSaveImage(result.url,alt);
+    });
+   return;
+  }catch(err){console.warn('iOS paylaşım menüsü:',err);}
+ }
+ szfOpenSaveImage(result.url,alt);
 }
 function szfOpenSaveImage(url,alt){
  document.getElementById('szf-save-image-view')?.remove();
@@ -851,7 +868,7 @@ async function szfOpenNewspaper(id){
  layer.querySelector('[data-news-close]').onclick=close;
  layer.onclick=e=>{if(e.target===layer)close()};
  let preparing=false;
- button.onclick=()=>{if(generated){szfOpenSaveImage(generated.url,'SZF Spor gazetesi');return;}prepare();};
+ button.onclick=()=>{if(generated){szfSaveOrSharePNG(generated,'SZF Spor gazetesi',note);return;}prepare();};
  const prepare=async()=>{
   if(preparing)return;
   preparing=true;
@@ -864,7 +881,7 @@ async function szfOpenNewspaper(id){
    if(closed){URL.revokeObjectURL(result.url);return;}
    if(generated)URL.revokeObjectURL(generated.url);
    generated=result;
-   szfOpenSaveImage(result.url,'SZF Spor gazetesi');
+   szfSaveOrSharePNG(result,'SZF Spor gazetesi',note);
    preparing=false;
    button.disabled=false;button.textContent='📸 Fotoğraflara Kaydet';
    note.textContent='Görsele basılı tutup Fotoğraflara Kaydet seçeneğine dokun.';
@@ -874,7 +891,7 @@ async function szfOpenNewspaper(id){
    button.disabled=false;button.textContent='Tekrar Dene';
    preparing=false;
    note.textContent='Görsel hazırlanamadı: '+(err?.message||'Bilinmeyen hata');
-   button.onclick=()=>{if(generated)szfOpenSaveImage(generated.url,'SZF Spor gazetesi');else prepare();};
+   button.onclick=()=>{if(generated)szfSaveOrSharePNG(generated,'SZF Spor gazetesi',note);else prepare();};
   }
  };
  note.textContent='Görsele basılı tutup Fotoğraflara Kaydet seçeneğine dokun.';
@@ -1679,7 +1696,7 @@ async function shareMatchCard(id){
  layer.querySelector('.szf-share-close').onclick=close;
  layer.onclick=e=>{if(e.target===layer)close()};
  let preparing=false;
- button.onclick=()=>{if(generated){szfOpenSaveImage(generated.url,'Maç sonucu afişi');return;}prepare();};
+ button.onclick=()=>{if(generated){szfSaveOrSharePNG(generated,'Maç sonucu afişi',note);return;}prepare();};
  const prepare=async()=>{
   if(preparing)return;
   preparing=true;
@@ -1692,7 +1709,7 @@ async function shareMatchCard(id){
    if(closed){URL.revokeObjectURL(result.url);return;}
    if(generated)URL.revokeObjectURL(generated.url);
    generated=result;
-   szfOpenSaveImage(result.url,'Maç sonucu afişi');
+   szfSaveOrSharePNG(result,'Maç sonucu afişi',note);
    preparing=false;
    button.disabled=false;button.textContent='📸 Fotoğraflara Kaydet';
    note.textContent='Görsele basılı tutup Fotoğraflara Kaydet seçeneğine dokun.';
@@ -1702,7 +1719,7 @@ async function shareMatchCard(id){
    button.disabled=false;button.textContent='Tekrar Dene';
    preparing=false;
    note.textContent='Afiş hazırlanamadı: '+(err?.message||'Bilinmeyen hata');
-   button.onclick=()=>{if(generated)szfOpenSaveImage(generated.url,'Maç sonucu afişi');else prepare();};
+   button.onclick=()=>{if(generated)szfSaveOrSharePNG(generated,'Maç sonucu afişi',note);else prepare();};
   }
  };
  note.textContent='Görsele basılı tutup Fotoğraflara Kaydet seçeneğine dokun.';

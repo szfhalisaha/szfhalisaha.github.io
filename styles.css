@@ -803,3 +803,94 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 @media(max-width:720px){
  .fut-card.szf-deniz-cutout-trial .fut-photo{top:7%;height:57%;width:96%;left:50%}
 }
+
+
+/* v220 — Approved player card standard (Deniz reference).
+   The portrait ends exactly on the top name divider. Percentage geometry
+   scales uniformly on phones; existing player images remain untouched. */
+.fut-card{
+  --szf-name-divider:65%;
+}
+.fut-card .fut-name{
+  position:absolute;
+  grid-row:auto;
+  top:var(--szf-name-divider);
+  left:5%;
+  right:5%;
+  height:8%;
+  min-height:0;
+  margin:0;
+  padding:1.7% 0 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1.05;
+  border-top:1px solid #3d2b1b66;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.fut-card .fut-stats{
+  position:absolute;
+  grid-row:auto;
+  top:73%;
+  left:5%;
+  right:5%;
+  margin:0;
+  padding-top:2%;
+  border-top:1px solid #3d2b1b66;
+}
+.fut-card .fut-emblems{
+  position:absolute;
+  grid-row:auto;
+  top:85%;
+  left:0;
+  right:0;
+  width:100%;
+  height:6%;
+  margin:0;
+}
+.fut-card .fut-photo,
+.detail-sidebar .fut-card .fut-photo,
+.fut-card.szf-deniz-cutout-trial .fut-photo{
+  position:absolute;
+  top:12%;
+  bottom:35%;
+  left:50%;
+  right:auto;
+  width:84%;
+  height:auto;
+  aspect-ratio:auto;
+  margin:0;
+  transform:translateX(-50%);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  overflow:hidden;
+  border-radius:0;
+  -webkit-mask-image:none;
+  mask-image:none;
+}
+.fut-card .fut-photo img,
+.detail-sidebar .fut-card .fut-photo img,
+.fut-card.szf-deniz-cutout-trial .fut-photo img{
+  display:block;
+  width:100%;
+  height:100%;
+  max-width:100%;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  transform:none!important;
+  transform-origin:center bottom!important;
+  filter:none!important;
+  -webkit-mask-image:none;
+  mask-image:none;
+}
+.fut-card.szf-deniz-cutout-trial .fut-photo{width:90%;top:12%;bottom:35%}
+@media(max-width:720px){
+ .fut-card .fut-name{font-size:clamp(11px,3.5vw,17px);min-height:0;margin:0}
+ .fut-card .fut-stats{padding-top:2%}
+ .fut-card .fut-photo,
+ .detail-sidebar .fut-card .fut-photo,
+ .fut-card.szf-deniz-cutout-trial .fut-photo{top:12%;bottom:35%;height:auto;left:50%;width:84%}
+ .fut-card.szf-deniz-cutout-trial .fut-photo{width:90%}
+}

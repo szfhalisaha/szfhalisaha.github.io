@@ -13,6 +13,7 @@ let assessmentFlash=null;
 let ownVotesReadError=null;
 let myMatchRatingChanges=[];
 let v70Ready=false;
+let authBooting = true;
 let publicProfiles = [], db = null, user = null, profile = null, cards = [], myVotes = [], view = 'home', search = '', selectedPlayer = null, signup = false, teamSelections = new Set(), teamData = null, loading = false;
 const demoCards = [
   {id:'d1',display_name:'ÖRNEK FORVET',position:'FOR',overall_rating:68,hiz:76,sut:74,pas:64,dripling:70,defans:57,dayaniklilik:67,voter_count:9},
@@ -1077,6 +1078,7 @@ async function szfOpenNewspaper(id){
 
 
 function renderHome(){
+ if(authBooting)return `<section class="home-landing"><div class="home-next" role="status" aria-live="polite"><small>SZF AIRPORT HALI SAHA</small><h2>Oturum ve maç bilgileri yükleniyor…</h2><p class="soft">Kayıtlı hesabın kontrol ediliyor.</p></div></section>`;
  const playerCount=currentCards().length;
  const future=leagueMatches.filter(m=>m.status==='open'&&new Date(m.match_date).getTime()>Date.now()).sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
  const next=future[0];
@@ -2962,7 +2964,7 @@ async function initialize(){
  });
  $('authForm').addEventListener('submit',submitAuth);
  $('authDialog').addEventListener('click',e=>{if(e.target===$('authDialog'))$('authDialog').close()});
- if(!configured){render();return}
+ if(!configured){authBooting=false;render();return}
  if(!window.supabase?.createClient){
   // External CDN is asynchronous: never block the site's first paint.
   await Promise.race([new Promise(resolve=>{
@@ -2972,7 +2974,7 @@ async function initialize(){
    script.addEventListener('error',resolve,{once:true});
   }),new Promise(resolve=>setTimeout(resolve,5000))]);
  }
- if(!window.supabase?.createClient){$('configAlert').classList.remove('hidden');$('configAlert').textContent='Veri servisi yüklenemedi. Ana sayfa açıldı; giriş için Yenile düğmesini kullanabilirsin.';render();return} 
+ if(!window.supabase?.createClient){authBooting=false;$('configAlert').classList.remove('hidden');$('configAlert').textContent='Veri servisi yüklenemedi. Ana sayfa açıldı; giriş için Yenile düğmesini kullanabilirsin.';render();return} 
  try{
   db=window.supabase.createClient(C.supabaseUrl,C.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   const url=new URL(location.href);
@@ -2990,19 +2992,20 @@ async function initialize(){
    else if(tokenHash)exchange=await db.auth.verifyOtp({token_hash:tokenHash,type:'recovery'});
    if(exchange?.error)callbackError=exchange.error.message;
   }
-  // Mobile networks may stall auth indefinitely. Do not block first paint.
+  // Recover the locally persisted session first, without waiting for a network getUser request.
+  // Protected data is still authorized by Supabase on every database request.
   const authResult=await Promise.race([
-   db.auth.getUser().then(value=>({value})).catch(error=>({error})),
+   db.auth.getSession().then(value=>({value})).catch(error=>({error})),
    new Promise(resolve=>setTimeout(()=>resolve({timedOut:true}),8000))
   ]);
   if(authResult.timedOut){
    user=null;
    $('configAlert').classList.remove('hidden');
-   $('configAlert').textContent='Oturum bağlantısı uzun sürdü. Sayfa açıldı; bağlantı düzelince Yenile düğmesini kullanabilirsin.';
-  }else if(authResult.error){
-   console.warn('Oturum kontrolü başarısız:',authResult.error);
+   $('configAlert').textContent='Oturum bağlantısı uzun sürdü. Yenile ile tekrar deneyebilirsin.';
+  }else if(authResult.error||authResult.value?.error){
+   console.warn('Oturum kontrolü başarısız:',authResult.error||authResult.value?.error);
    user=null;
-  }else{user=authResult.value?.data?.user||null;}
+  }else{user=authResult.value?.data?.session?.user||null;}
 
   if(isRecovery){
    const {data:active}=await db.auth.getSession();
@@ -3017,11 +3020,13 @@ async function initialize(){
     ]);
    }catch(err){console.warn('Profil yüklenemedi:',err);toast('Bağlantı yavaş. Profil verileri yüklenemedi, Yenile ile tekrar deneyebilirsin.',true)}
   }
+  authBooting=false;
   db.auth.onAuthStateChange((_event,session)=>{
    if(_event==='PASSWORD_RECOVERY'&&session&&!$('resetDialog').open)$('resetDialog').showModal();
    if(session?.user?.id!==user?.id){user=session?.user||null;if(user){setTimeout(async()=>{try{await loadProfileAndCards()}catch(err){console.warn(err)}render()},0)}else{profile=null;cards=[];myVotes=[];selectedPlayer=null;render()}}
   });
  }catch(err){toast('Supabase bağlantı hatası: '+formatError(err),true)}
+ authBooting=false;
  render();
 }
 window.addEventListener('DOMContentLoaded',initialize);

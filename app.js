@@ -2493,7 +2493,7 @@ async function saveTeamsToNextMatch({automatic=false}={}){
  }catch(err){await loadLeagueData();render();toast('Bazı takım kayıtları kaydedilemedi: '+formatError(err),true);}
 }
 async function buildTeams(){
- const picked=teamBuilderCandidates().filter(p=>teamSelections.has(p.id)).map(p=>teamRatingOverrides[String(p.id)]!=null?{...p,overall_rating:teamRatingOverrides[String(p.id)]}:p);
+ const picked=teamBuilderCandidates().filter(p=>teamSelections.has(p.id)).map(p=>({...p,overall_rating:teamRatingOverrides[String(p.id)]!=null?Number(teamRatingOverrides[String(p.id)]):(Number(p.v70_count||0)>0&&Number(p.v70_count||0)<10&&Number.isFinite(Number(p.team_builder_rating))?Number(p.team_builder_rating):Number(p.overall_rating)||70)}));
  if(picked.length!==14)return toast('Otomatik takım kurmak için gelecek maçta 14 katılımcı gerekli. Şu an '+picked.length+'/14 oyuncu var.',true);
  let manualIds=null;
  if(teamMode==='manual'){
@@ -2569,7 +2569,7 @@ async function loadProfileAndCards(){if(!db||!user)return;const [p,c,v,all]=awai
  if(v70Ready){
   const summary=ratings.data||[];
   const byId=new Map(summary.map(r=>[String(r.target_id),r]));
-  cards=cards.map(c=>{const r=byId.get(String(c.id));if(!r)return {...c,v70_count:0,overall_rating:70};const n=Number(r.voter_count)||0;const clone={...c,v70_count:n};if(n>=10){getFeatures(c).forEach(([k],i)=>clone[k]=Number(r.scores[i]));clone.overall_rating=Math.round(r.scores.reduce((a,b)=>a+Number(b),0)/6)}else{clone.overall_rating=70}return clone;});
+  cards=cards.map(c=>{const r=byId.get(String(c.id));if(!r)return {...c,v70_count:0,overall_rating:70};const n=Number(r.voter_count)||0;const clone={...c,v70_count:n};const validScores=Array.isArray(r.scores)&&r.scores.length===6&&r.scores.every(v=>Number.isFinite(Number(v))&&Number(v)>=1&&Number(v)<=99);clone.team_builder_rating=n>0&&validScores?Math.round(r.scores.reduce((a,b)=>a+Number(b),0)/6):70;if(n>=10){getFeatures(c).forEach(([k],i)=>clone[k]=Number(r.scores[i]));clone.overall_rating=Math.round(r.scores.reduce((a,b)=>a+Number(b),0)/6)}else{clone.overall_rating=70}return clone;});
  }
 }
 async function refresh(){if(!db){render();return}try{const{data:{user:u},error}=await db.auth.getUser();if(error&&!/session missing/i.test(error.message||''))throw error;user=u||null;if(user)await loadProfileAndCards();else{profile=null;cards=[];myVotes=[]}render();toast(user?'Güncel veriler yüklendi.':'Giriş yaparak başlayabilirsin.')}catch(err){toast(formatError(err),true)}}

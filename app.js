@@ -343,6 +343,8 @@ function refreshHomeCountdown(){
  });
 }
 setInterval(()=>{if(view==='home')refreshHomeCountdown()},1000);
+// Automatically restore the ordinary player list when the match rating window ends.
+setInterval(()=>{if(view!=='assessment'||!user)return;const current=assessmentFocusMatch();const id=current?String(current.id):null;if(id!==assessmentPickerFocusId)render();},30000);
 function guestKey(name){return formatPersonName(name||'').toLocaleLowerCase('tr-TR').replace(/\s+/g,' ').trim()}
 function recurringGuestStats(){
  const groups=new Map();
@@ -1398,9 +1400,9 @@ function assessmentFocusMatch(){
   return weeklyPlayers.some(p=>String(p.match_id)===String(m.id)&&String(p.player_id)===String(user?.id))
    || extras.guests.some(g=>String(g.match_id)===String(m.id)&&String(g.linked_user_id)===String(user?.id));
  }).sort((a,b)=>new Date(b.match_date)-new Date(a.match_date));
- return attended.find(m=>now>=new Date(m.match_date).getTime()+3600000&&now<new Date(m.match_date).getTime()+90000000)
-    || attended[0] || null;
+ return attended.find(m=>now>=new Date(m.match_date).getTime()+3600000&&now<new Date(m.match_date).getTime()+90000000) || null;
 }
+let assessmentPickerFocusId = null;
 function assessmentFocusRoster(){
  const m=assessmentFocusMatch();
  if(!m)return {match:null,ids:new Set()};
@@ -1442,6 +1444,7 @@ function renderAssessment(){
 
  const everyone=orderedAssessmentPlayers();
  const focus=assessmentFocusRoster();
+ assessmentPickerFocusId=focus.match?String(focus.match.id):null;
  if(!everyone.length)return sectionHead('Oyuncu Değerlendir','Değerlendirilecek oyuncu bulunmuyor.');
  weeklyIndex=Math.max(0,Math.min(weeklyIndex,everyone.length-1));
  const c=everyone[weeklyIndex],f=getFeatures(c),vote=myVotes.find(v=>String(v.target_id)===String(c.id));

@@ -1733,11 +1733,14 @@ function pitchFormation(entries){
  }
  return result.length===7?result:entries.map((p,i)=>({...p,assigned_role:slots[i]||p.position}));
 }
-// Takim ortalamasi: gorunur kart ratingi, henuz 10 oy almayanlarda 70.
+// Saha dizilisi ve otomatik dengeleme ayni guncel puani kullanir.
+// 10 oy altinda kart gizli kalir; yalnizca takim ortalamasinda ara puan kullanilir.
 function szfTeamPlayerRating(card){
  const count=Number(card?.v70_count??card?.voter_count??0);
- const val=Number(card?.overall_rating);
- return count>=10 && Number.isFinite(val) && val>=1 && val<=99 ? val : 70;
+ const interim=Number(card?.team_builder_rating);
+ const published=Number(card?.overall_rating);
+ if(count>0 && count<10 && Number.isFinite(interim) && interim>=1 && interim<=99)return interim;
+ return Number.isFinite(published) && published>=1 && published<=99 ? published : 70;
 }
 function szfMatchTeamRating(people,guests,color){
  const vals=[];

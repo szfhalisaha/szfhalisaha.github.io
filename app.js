@@ -2565,11 +2565,15 @@ async function loadProfileAndCards(){if(!db||!user)return;const [p,c,v,all]=awai
  }
  cards.sort((a,b)=>Number(b.overall_rating||60)-Number(a.overall_rating||60));if(all.error)toast('Forma listesi yüklenemedi: '+formatError(all.error),true);await loadLeagueData();
  const ratings=await db.rpc('szf_rating_summary_v70');
+ const teamRatings=await db.rpc('szf_team_rating_averages_v262');
  v70Ready=!ratings.error;
  if(v70Ready){
   const summary=ratings.data||[];
   const byId=new Map(summary.map(r=>[String(r.target_id),r]));
   cards=cards.map(c=>{const r=byId.get(String(c.id));if(!r)return {...c,v70_count:0,overall_rating:70};const n=Number(r.voter_count)||0;const clone={...c,v70_count:n};const validScores=Array.isArray(r.scores)&&r.scores.length===6&&r.scores.every(v=>Number.isFinite(Number(v))&&Number(v)>=1&&Number(v)<=99);clone.team_builder_rating=n>0&&validScores?Math.round(r.scores.reduce((a,b)=>a+Number(b),0)/6):70;if(n>=10){getFeatures(c).forEach(([k],i)=>clone[k]=Number(r.scores[i]));clone.overall_rating=Math.round(r.scores.reduce((a,b)=>a+Number(b),0)/6)}else{clone.overall_rating=70}return clone;});
+  const teamById=new Map((teamRatings.data||[]).map(r=>[String(r.target_id),r]));
+  cards=cards.map(c=>{const tr=teamById.get(String(c.id));return tr?{...c,team_builder_rating:Number(tr.team_rating),v70_count:Number(tr.voter_count)}:c;});
+
  }
 }
 async function refresh(){if(!db){render();return}try{const{data:{user:u},error}=await db.auth.getUser();if(error&&!/session missing/i.test(error.message||''))throw error;user=u||null;if(user)await loadProfileAndCards();else{profile=null;cards=[];myVotes=[]}render();toast(user?'Güncel veriler yüklendi.':'Giriş yaparak başlayabilirsin.')}catch(err){toast(formatError(err),true)}}

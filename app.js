@@ -2557,7 +2557,12 @@ async function loadProfileAndCards(){if(!db||!user)return;const [p,c,v,all]=awai
 ]);if(p.error)toast('Profil alınamadı: '+formatError(p.error),true);if(c.error)toast('Oyuncular alınamadı: '+formatError(c.error),true);ownVotesReadError=v.error?formatError(v.error):null;if(v.error)toast('Oylar alınamadı: '+formatError(v.error)+' — v165 SQL düzeltmesini çalıştır.',true);profile=p.data?{...p.data,display_name:formatPersonName(p.data.display_name)}:null;cards=(c.data||[]).map(c=>({...c,display_name:formatPersonName(c.display_name), overall_rating:Number(c.overall_rating)||60}));myVotes=v.data||[];
  szfHasanEmreRevisionAvailable233=false;
  if(String(user.id)===szfHasan233){const special=await db.rpc('szf_hasan_emre_revision_available_v233');if(!special.error)szfHasanEmreRevisionAvailable233=Boolean(special.data);}
- publicProfiles=(all.data||[]).map(p=>({...p,display_name:formatPersonName(p.display_name)}));await Promise.all([szfLoadGeneratedPhotos(),szfLoadCardPhotoSettings()]);
+ publicProfiles=(all.data||[]).map(p=>({...p,display_name:formatPersonName(p.display_name)}));
+ // Start independent requests without serial waits; keep player card calculations below unchanged.
+ const photoDataPromise=Promise.all([szfLoadGeneratedPhotos(),szfLoadCardPhotoSettings()]);
+ const leagueDataPromise=loadLeagueData();
+ const ratingsPromise=db.rpc('szf_rating_summary_v70');
+ const teamRatingsPromise=db.rpc('szf_team_rating_averages_v262');
  // A new player may have no old vote-derived player_cards row yet.
  // Show a genuine baseline card from the saved profile, without altering previous scores.
  const existing=new Set(cards.map(x=>x.id));
@@ -2569,9 +2574,8 @@ async function loadProfileAndCards(){if(!db||!user)return;const [p,c,v,all]=awai
    cards.push(baseline);existing.add(person.id);
   }
  }
- cards.sort((a,b)=>Number(b.overall_rating||60)-Number(a.overall_rating||60));if(all.error)toast('Forma listesi yüklenemedi: '+formatError(all.error),true);await loadLeagueData();
- const ratings=await db.rpc('szf_rating_summary_v70');
- const teamRatings=await db.rpc('szf_team_rating_averages_v262');
+ cards.sort((a,b)=>Number(b.overall_rating||60)-Number(a.overall_rating||60));if(all.error)toast('Forma listesi yüklenemedi: '+formatError(all.error),true);
+ const [ratings,teamRatings]=await Promise.all([ratingsPromise,teamRatingsPromise,leagueDataPromise,photoDataPromise]).then(results=>results.slice(0,2));
  v70Ready=!ratings.error;
  if(v70Ready){
   const summary=ratings.data||[];
@@ -2708,11 +2712,15 @@ async function loadLeagueData(){
  if(!db||!user)return;
  const calls=await Promise.all([db.from('szf_admins').select('user_id').eq('user_id',user.id).maybeSingle(),db.from('szf_matches').select('*').order('match_date',{ascending:false}),db.from('szf_participants').select('*'),db.from('szf_match_declines').select('*'),db.from('szf_assessments').select('*'),db.rpc('szf_claim_weekly_credits'),db.from('szf_wallets').select('balance').eq('user_id',user.id).maybeSingle(),db.from('szf_leaderboard').select('*').order('balance',{ascending:false}),db.from('szf_match_deleters').select('user_id').eq('user_id',user.id).maybeSingle()]);
  adminInfo=!!calls[0].data;canDeleteMatch=!!calls[8]?.data;leagueMatches=calls[1].data||[];weeklyPlayers=calls[2].data||[];matchDeclines=calls[3].data||[];assessments=calls[4].data||[];leagueWallet=calls[6].data||null;leagueStandings=calls[7].data||[];
- const betLoad=await db.from('szf_bets').select('match_id,pick,stake').eq('user_id',user.id);leagueBets=betLoad.data||[];if(betLoad.error)console.warn('Bahisler yüklenemedi:',betLoad.error.message);
- const extraCalls=await Promise.all(['szf_guest_players_v53','szf_waitlist_v53','szf_match_events_v53'].map(t=>db.from(t).select('*')));
+ const betRequest=db.from('szf_bets').select('match_id,pick,stake').eq('user_id',user.id);
+ const extrasRequest=Promise.all(['szf_guest_players_v53','szf_waitlist_v53','szf_match_events_v53'].map(t=>db.from(t).select('*')));
+ const guestScoresRequest=db.from('szf_guest_overall_v125').select('guest_key,overall');
+ const ratingChangesRequest=db.rpc('szf_my_match_rating_changes_v177');
+ const [betLoad,extraCalls,guestScoresResult,ratingChanges]=await Promise.all([betRequest,extrasRequest,guestScoresRequest,ratingChangesRequest]);
+ leagueBets=betLoad.data||[];if(betLoad.error)console.warn('Bahisler yüklenemedi:',betLoad.error.message);
  extraReady=extraCalls.every(r=>!r.error);
  extras={guests:extraCalls[0].data||[],waitlist:extraCalls[1].data||[],events:extraCalls[2].data||[],mvp:[]};
- const guestScoresResult=await db.from('szf_guest_overall_v125').select('guest_key,overall');
+
  guestOverallRatings={};if(!guestScoresResult.error)for(const item of guestScoresResult.data||[])guestOverallRatings[item.guest_key]=Number(item.overall);
  else console.warn('Misafir puan tablosu henüz kurulmamış:',guestScoresResult.error.message);
  const completedMatches=leagueMatches.filter(m=>m.status==='completed');
@@ -2728,7 +2736,7 @@ async function loadLeagueData(){
  szfRebuildMvpBonuses();
 
  if(!extraReady)console.warn('Bazı v53 ek özellikleri okunamadı (katılım yine denenebilir):',extraCalls.filter(r=>r.error).map(r=>r.error));
- const ratingChanges=await db.rpc('szf_my_match_rating_changes_v177');
+
  myMatchRatingChanges=ratingChanges.error?[]:(ratingChanges.data||[]);
  if(ratingChanges.error)console.warn('v177 oy geçmişi sorgusu kurulmalı:',ratingChanges.error.message);
  if(calls[5].error)console.warn('Kredi tanımlama:',calls[4].error.message);

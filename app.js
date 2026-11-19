@@ -891,7 +891,8 @@ function szfNewsScoreComment(m,d){
 }
 function szfNewspaperMarkup(id){
  const m=leagueMatches.find(x=>String(x.id)===String(id)),d=szfNewspaperData(m);
- const emreEdition=!!m&&szfEmreSpecialActive()&&String(szfEmreSpecialMatch()?.id)===String(m.id);
+ // 15 Kasım 2026 tarihli yayımlanmış Emre manşeti arşivde kalıcıdır.
+ const emreEdition=!!m&&String(m.id)==='126eb952-5660-4378-9c30-8ec8b2f3c46a';
  if(!d)return '<p>Gazete, Maçın Adamı oylaması sonuçlandığında yayımlanır.</p>';
  const date=matchDateText(m.match_date);
  const names=d.winners.join(' & ');

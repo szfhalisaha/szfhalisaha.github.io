@@ -987,3 +987,28 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
     font-size:12px;
   }
 }
+
+/* v238 — Legible mobile player-card names without shrinking the font face.
+   Compress width gently for longer names instead of making glyphs tiny. */
+@media (max-width:720px){
+  .players-grid .fut-card .fut-name{
+    font-size:clamp(15px,4.1vw,18px)!important;
+    letter-spacing:-.035em;
+    white-space:nowrap;
+    text-overflow:clip;
+  }
+  .players-grid .fut-card .fut-name.szf-name-long{
+    left:-9%;
+    right:-9%;
+    transform:scaleX(.82);
+    font-size:clamp(15px,4.1vw,18px)!important;
+    letter-spacing:-.045em;
+  }
+  .players-grid .fut-card .fut-name.szf-name-very-long{
+    left:-25%;
+    right:-25%;
+    transform:scaleX(.66);
+    font-size:clamp(14px,3.9vw,17px)!important;
+    letter-spacing:-.055em;
+  }
+}

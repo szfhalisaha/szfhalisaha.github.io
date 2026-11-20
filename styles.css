@@ -1278,3 +1278,18 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .detail-sidebar .szf-jersey-reverse .szf-kit-card .szf-kit-shirt{
  left:5%!important;top:7%!important;width:90%!important;height:83%!important;
 }
+
+/* v291: jersey-only GOLD reverse, centered in the full shield */
+.detail-sidebar .szf-jersey-reverse .szf-kit-card{
+ display:grid!important;place-items:center!important;
+}
+.detail-sidebar .szf-jersey-reverse .szf-kit-card .szf-kit-shirt{
+ position:relative!important;inset:auto!important;left:auto!important;top:auto!important;
+ width:92%!important;height:86%!important;margin:0 auto!important;
+}
+.detail-sidebar .szf-jersey-reverse .szf-kit-card .szf-kit-rating,
+.detail-sidebar .szf-jersey-reverse .szf-kit-card .szf-kit-footer,
+.detail-sidebar .szf-jersey-reverse .szf-kit-card .szf-kit-stats,
+.detail-sidebar .szf-jersey-reverse .szf-kit-card .szf-kit-flag{
+ display:none!important;
+}

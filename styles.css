@@ -1106,3 +1106,20 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 /* v276: prevent generic avatar opacity rule from fading jersey print */
 .detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > span.szf-jersey-print-name,
 .detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > span.szf-jersey-print-number{opacity:1!important;color:#fffdf8!important;-webkit-text-fill-color:#fffdf8!important;mix-blend-mode:normal!important}
+
+/* v277: one consistent reverse jersey geometry, independent of player portrait adjustments */
+.detail-sidebar .szf-jersey-reverse .fut-card .fut-photo.szf-jersey-photo{
+  top:6%!important;left:50%!important;right:auto!important;bottom:auto!important;
+  width:92%!important;height:65%!important;transform:translateX(-50%)!important;
+  margin:0!important;overflow:visible!important;
+  -webkit-mask-image:none!important;mask-image:none!important;
+}
+.detail-sidebar .szf-jersey-reverse .fut-card .fut-photo.szf-jersey-photo img.szf-jersey-base{
+  position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+  object-fit:contain!important;object-position:center center!important;
+  transform:none!important;transform-origin:center center!important;
+  max-width:none!important;filter:none!important;
+}
+.detail-sidebar .szf-jersey-reverse .fut-card .szf-jersey-real{
+  position:relative!important;width:100%!important;height:100%!important;
+}

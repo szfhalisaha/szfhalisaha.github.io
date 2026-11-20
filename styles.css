@@ -1223,3 +1223,48 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
  object-fit:contain!important;position:static!important;transform:none!important;
  opacity:1!important;filter:none!important;
 }
+
+/* v285 — independent high-resolution scalable card reverse; no inherited portrait layout */
+.detail-sidebar .szf-jersey-reverse .szf-kit-card{
+ position:relative!important;display:block!important;width:100%!important;max-width:290px!important;
+ aspect-ratio:1086/1448!important;height:auto!important;min-height:0!important;
+ margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
+ overflow:hidden!important;isolation:isolate!important;cursor:pointer!important;
+ clip-path:polygon(7.3% 0,92.7% 0,100% 7%,100% 88%,50% 100%,0 88%,0 7%)!important;
+ background:radial-gradient(ellipse at 25% 10%,#fff1a9 0%,#f4d36c 48%,#d9ad48 100%)!important;
+ box-shadow:0 6px 20px #0004!important;color:#131b17!important;
+ font-family:Impact,'Arial Narrow',sans-serif!important;
+}
+.detail-sidebar .szf-jersey-reverse .szf-kit-card.szf-kit-approved{
+ background:transparent!important;clip-path:none!important;box-shadow:none!important;
+}
+.detail-sidebar .szf-jersey-reverse .szf-kit-approved>img{
+ display:block!important;width:100%!important;height:100%!important;object-fit:fill!important;
+ position:absolute!important;inset:0!important;opacity:1!important;transform:none!important;
+}
+.szf-kit-card .szf-kit-rating{position:absolute;z-index:3;top:4%;left:7%;display:flex;flex-direction:column;align-items:center;line-height:.95}
+.szf-kit-card .szf-kit-rating strong{font-size:clamp(42px,11vw,59px);font-weight:900;letter-spacing:-2px}
+.szf-kit-card .szf-kit-rating small{font-size:14px;font-weight:900;margin-top:5px}
+.szf-kit-card .szf-kit-shirt{position:absolute;display:block;left:14%;top:5%;width:79%;height:67%;z-index:2;filter:drop-shadow(0 4px 5px #63331440)}
+.szf-kit-card .szf-kit-shirt>img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:1;transform:none}
+.szf-kit-card .szf-kit-shirt>svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.szf-kit-card .szf-kit-player-name{
+ font-family:'Anton',Impact,'Arial Narrow',sans-serif;fill:#fffefa;font-size:44px;font-weight:400;
+ stroke:#8b1520;stroke-width:.4px;paint-order:stroke fill;
+}
+.szf-kit-card .szf-kit-player-number{
+ font-family:'Anton',Impact,'Arial Narrow',sans-serif;fill:#fffefa;font-size:195px;font-weight:400;
+ stroke:#8c1722;stroke-width:1.4px;paint-order:stroke fill;letter-spacing:-5px;
+}
+.szf-kit-card .szf-kit-footer{position:absolute;left:7%;right:7%;bottom:5%;height:25%;display:flex;flex-direction:column;align-items:center;z-index:3}
+.szf-kit-card .szf-kit-fullname{
+ display:flex;align-items:center;justify-content:center;width:100%;height:30%;
+ border-top:1px solid #8b6d33;border-bottom:1px solid #8b6d33;
+ font-family:Impact,'Arial Narrow',sans-serif;font-size:clamp(15px,4.1vw,22px);
+ font-weight:900;white-space:nowrap;letter-spacing:-.35px;
+}
+.szf-kit-card .szf-kit-stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));width:100%;height:46%;align-items:center;gap:0}
+.szf-kit-card .szf-kit-stat{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;line-height:1.12}
+.szf-kit-card .szf-kit-stat small{font-size:clamp(9px,2.4vw,12px);font-weight:900}
+.szf-kit-card .szf-kit-stat strong{font-size:clamp(16px,4.5vw,23px);font-weight:900}
+.szf-kit-card .szf-kit-flag{display:block;width:24px;height:17px;object-fit:cover;align-self:center;margin-top:auto}

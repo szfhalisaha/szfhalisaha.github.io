@@ -1318,7 +1318,7 @@ function szfJerseyBack(c){
     <text class="szf-kit-player-number" x="200" y="336" text-anchor="middle">${esc(displayNumber)}</text>
    </svg>
   </span>
- </button>;
+ </button>`;
 }
 
 function detail(c){

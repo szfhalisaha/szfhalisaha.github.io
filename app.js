@@ -348,7 +348,14 @@ setInterval(()=>{if(view==='home')refreshHomeCountdown()},1000);
 // Automatically restore the ordinary player list when the match rating window ends.
 setInterval(()=>{if(view!=='assessment'||!user)return;const current=assessmentFocusMatch();const id=current?String(current.id):null;if(id!==assessmentPickerFocusId)render();},30000);
 function guestKey(name){return formatPersonName(name||'').toLocaleLowerCase('tr-TR').replace(/\s+/g,' ').trim()}
-function guestTeamRating(g){return Number(guestMatchRatings[String(g.id)]??guestOverallRatings[guestKey(g.display_name)]??70)}
+function guestTeamRating(g){
+ // A guest's score is attached to this specific appearance, not to their name.
+ // A later week's score must never override an earlier match's saved score.
+ const matchScore=guestMatchRatings[String(g.id)];
+ if(matchScore!==undefined&&matchScore!==null&&Number.isFinite(Number(matchScore)))return Number(matchScore);
+ const defaultScore=guestOverallRatings[guestKey(g.display_name)];
+ return defaultScore!==undefined&&defaultScore!==null&&Number.isFinite(Number(defaultScore))?Number(defaultScore):70;
+}
 function recurringGuestStats(){
  const groups=new Map();
  extras.guests.filter(g=>!linkedPlayerId(g)).forEach(g=>{

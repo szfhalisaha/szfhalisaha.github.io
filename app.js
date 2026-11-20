@@ -1303,31 +1303,33 @@ function achievementData(c){
 const szfJerseyNames = {"Ahmet Hakan İnan":"ZAZA","Alper Sezer":"SEZER","Batuhan Tayfur":"TAYFUR","Bedirhan Çırakoğlu":"ÇIRAKOĞLU","Bekir Baran Kara":"KARA","Deniz":"YILMAZ","Efe Tatar":"TATAR","Emre Can Kasar":"KASAR","Engin Ç.":"ÇELEN","Erol Sin":"SİN","Hamza Bilal Kaya":"KAYA","Hasan Limon":"LİMON","İsmail Göçmel":"GÖÇMEL","İsmail Karadağ":"KARADAĞ","Kerim Taflan":"TAFLAN","Mehmet Çalman":"ÇALMAN","Murat Alptekin":"ALPTEKİN","Mustafa Eren":"EREN","Necati K.":"KORKMAZ","Ömer F. Karadağ":"KARADAĞ","Ozan Aydın":"AYDIN","Salih Akcan":"AKCAN","Samed Akyol":"AKYOL","Serkanycl":"YÜCEL","Talha":"GÜÇLÜ","Üzeyir Bayık":"BAYIK","Vedat Senses":"ŞENSES","Ysf A.":"YSF A.","Yunus Ayaydın":"AYAYDIN","Zafer Akgül":"AKGÜL"};
 function szfJerseyBack(c){
  const fullName=String(c.display_name||'').trim();
- const reverseName=szfJerseyNames[fullName]||fullName.split(/\s+/).pop().toLocaleUpperCase('tr');
+ const reverseName=szfJerseyNames[fullName]||fullName.split(/\\s+/).pop().toLocaleUpperCase('tr');
  const person=publicProfiles.find(p=>String(p.id)===String(c.id));
  const number=Number(person?.jersey_number??c.jersey_number);
  const displayNumber=Number.isInteger(number)&&number>=1&&number<=99?String(number):'—';
  const visibleName=reverseName.toLocaleUpperCase('tr');
- const printWidth=Math.min(216,Math.max(105,visibleName.length*23));
- const jerseyMarkup=`<div class="szf-jersey-real">
-  <img class="szf-jersey-base" src="szf-jersey-realistic.webp?v=283" alt="" decoding="async">
-  <svg class="szf-jersey-print-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 448" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-   <g class="szf-jersey-print-layer">
-    <text class="szf-kit-name" x="200" y="149" dominant-baseline="middle" text-anchor="middle" textLength="${printWidth}" lengthAdjust="spacingAndGlyphs">${esc(visibleName)}</text>
-    <text class="szf-kit-number szf-kit-number-edge" x="200" y="288" dominant-baseline="middle" text-anchor="middle" >${esc(displayNumber)}</text>
-    <text class="szf-kit-number" x="200" y="285" dominant-baseline="middle" text-anchor="middle" >${esc(displayNumber)}</text>
-   </g>
-  </svg>
- </div>`;
- if(/^deniz(?:\s|$)/iu.test(fullName) && displayNumber==='23'){
-  return `<button type="button" class="card-face fut-card szf-approved-deniz-card" data-jersey-toggle="1" aria-label="Deniz forma kartı"><img src="szf-deniz-approved-card.jpg?v=284" alt="Deniz Yılmaz 23 onaylanan forma kartı" decoding="async"></button>`;
+ // The approved Deniz artwork is shown unaltered; other players use the same fixed card proportions.
+ if(/^deniz(?:\\s|$)/iu.test(fullName) && displayNumber==='23'){
+  return `<button type="button" class="szf-kit-card szf-kit-approved" data-jersey-toggle="1" aria-label="Deniz forma kartı"><img src="szf-deniz-approved-card.jpg?v=285" alt="Deniz Yılmaz 23 onaylanan forma kartı" decoding="async"></button>`;
  }
- return cardHTML(c,true)
-  .replace(/<div class="fut-photo">[\s\S]*?<\/div>/,`<div class="fut-photo szf-jersey-photo">${jerseyMarkup}</div>`)
-  .replace(' szf-deniz-cutout-trial','')
-  .replace(/\sstyle="--szf-portrait-x:[^"]*"/,'')
-  .replace('data-player="','data-jersey-toggle="');
-
+ const stats=getFeatures(c).map(([k,l])=>`<span class="szf-kit-stat"><small>${esc(l)}</small><strong>${publicAbility(c,k)}</strong></span>`).join('');
+ const label=cardDisplayName(c,true);
+ const nameWidth=Math.min(250,Math.max(100,visibleName.length*26));
+ return `<button type="button" class="szf-kit-card" data-jersey-toggle="1" aria-label="${attrs(fullName)} forma kartı">
+  <span class="szf-kit-rating"><strong>${publicRating(c)}</strong><small>${esc(c.position==='ORT'?'OS':c.position)}</small></span>
+  <span class="szf-kit-shirt">
+   <img src="szf-jersey-realistic.webp?v=285" alt="" decoding="async">
+   <svg viewBox="0 0 400 448" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <text class="szf-kit-player-name" x="200" y="142" text-anchor="middle" textLength="${nameWidth}" lengthAdjust="spacingAndGlyphs">${esc(visibleName)}</text>
+    <text class="szf-kit-player-number" x="200" y="336" text-anchor="middle">${esc(displayNumber)}</text>
+   </svg>
+  </span>
+  <span class="szf-kit-footer">
+   <span class="szf-kit-fullname">${esc(label)}</span>
+   <span class="szf-kit-stats">${stats}</span>
+   <img class="szf-kit-flag" src="turkiye-bayragi.svg" alt="Türkiye">
+  </span>
+ </button>`;
 }
 
 function detail(c){

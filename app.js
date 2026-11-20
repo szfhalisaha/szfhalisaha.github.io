@@ -1309,24 +1309,16 @@ function szfJerseyBack(c){
  const displayNumber=Number.isInteger(number)&&number>=1&&number<=99?String(number):'—';
  const visibleName=reverseName.toLocaleUpperCase('tr');
  // All players, including Deniz, use vector text rather than the low-resolution raster card.
- const stats=getFeatures(c).map(([k,l])=>`<span class="szf-kit-stat"><small>${esc(l)}</small><strong>${publicAbility(c,k)}</strong></span>`).join('');
- const label=cardDisplayName(c,true);
  const nameWidth=Math.min(250,Math.max(100,visibleName.length*26));
  return `<button type="button" class="szf-kit-card" data-jersey-toggle="1" aria-label="${attrs(fullName)} forma kartı">
-  <span class="szf-kit-rating"><strong>${publicRating(c)}</strong><small>${esc(c.position==='ORT'?'OS':c.position)}</small></span>
   <span class="szf-kit-shirt">
-   <img src="szf-jersey-realistic.webp?v=289" alt="" decoding="async">
+   <img src="szf-jersey-realistic.webp?v=290" alt="" decoding="async">
    <svg viewBox="0 0 400 448" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
     <text class="szf-kit-player-name" x="200" y="142" text-anchor="middle" textLength="${nameWidth}" lengthAdjust="spacingAndGlyphs">${esc(visibleName)}</text>
     <text class="szf-kit-player-number" x="200" y="336" text-anchor="middle">${esc(displayNumber)}</text>
    </svg>
   </span>
-  <span class="szf-kit-footer">
-   <span class="szf-kit-fullname">${esc(label)}</span>
-   <span class="szf-kit-stats">${stats}</span>
-   <img class="szf-kit-flag" src="turkiye-bayragi.svg" alt="Türkiye">
-  </span>
- </button>`;
+ </button>;
 }
 
 function detail(c){

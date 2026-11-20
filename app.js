@@ -1308,10 +1308,13 @@ function szfJerseyBack(c){
  const number=Number(person?.jersey_number??c.jersey_number);
  const displayNumber=Number.isInteger(number)&&number>=1&&number<=99?String(number):'—';
  const visibleName=reverseName.toLocaleUpperCase('tr');
+ const printWidth=Math.max(140,Math.min(238,visibleName.length*29));
  const jerseyMarkup=`<div class="szf-jersey-real">
-  <img class="szf-jersey-base" src="szf-jersey-realistic.webp?v=277" alt="" decoding="async">
-  <span class="szf-jersey-print-name" style="--szf-back-name-size:${Math.max(12,Math.min(22,24-Math.max(0,visibleName.length-6)*1.15))}px">${esc(visibleName)}</span>
-  <span class="szf-jersey-print-number">${esc(displayNumber)}</span>
+  <img class="szf-jersey-base" src="szf-jersey-realistic.webp?v=279" alt="" decoding="async">
+  <svg class="szf-jersey-print-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 448" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+   <text x="200" y="148" text-anchor="middle" textLength="${printWidth}" lengthAdjust="spacingAndGlyphs" fill="#fffaf4" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="43">${esc(visibleName)}</text>
+   <text x="200" y="363" text-anchor="middle" fill="#fffaf4" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="${displayNumber.length===1?'222':'213'}" letter-spacing="-8">${esc(displayNumber)}</text>
+  </svg>
  </div>`;
  return cardHTML(c,true)
   .replace(/<div class="fut-photo">[\s\S]*?<\/div>/,`<div class="fut-photo szf-jersey-photo">${jerseyMarkup}</div>`)

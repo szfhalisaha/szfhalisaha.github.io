@@ -1102,3 +1102,7 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 @media(max-width:380px){
  .detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > .szf-jersey-print-number{font-size:clamp(66px,29vw,105px)!important}
 }
+
+/* v276: prevent generic avatar opacity rule from fading jersey print */
+.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > span.szf-jersey-print-name,
+.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > span.szf-jersey-print-number{opacity:1!important;color:#fffdf8!important;-webkit-text-fill-color:#fffdf8!important;mix-blend-mode:normal!important}

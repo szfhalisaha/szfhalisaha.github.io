@@ -1309,12 +1309,14 @@ function szfJerseyBack(c){
  const displayNumber=Number.isInteger(number)&&number>=1&&number<=99?String(number):'—';
  const visibleName=reverseName.toLocaleUpperCase('tr');
  const jerseyMarkup=`<div class="szf-jersey-real">
-  <img class="szf-jersey-base" src="szf-jersey-realistic.webp?v=275" alt="" decoding="async">
+  <img class="szf-jersey-base" src="szf-jersey-realistic.webp?v=277" alt="" decoding="async">
   <span class="szf-jersey-print-name" style="--szf-back-name-size:${Math.max(12,Math.min(22,24-Math.max(0,visibleName.length-6)*1.15))}px">${esc(visibleName)}</span>
   <span class="szf-jersey-print-number">${esc(displayNumber)}</span>
  </div>`;
  return cardHTML(c,true)
   .replace(/<div class="fut-photo">[\s\S]*?<\/div>/,`<div class="fut-photo szf-jersey-photo">${jerseyMarkup}</div>`)
+  .replace(' szf-deniz-cutout-trial','')
+  .replace(/\sstyle="--szf-portrait-x:[^"]*"/,'')
   .replace('data-player="','data-jersey-toggle="');
 
 }

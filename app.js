@@ -351,6 +351,9 @@ function guestKey(name){return formatPersonName(name||'').toLocaleLowerCase('tr-
 function guestTeamRating(g){
  // A guest's score is attached to this specific appearance, not to their name.
  // A later week's score must never override an earlier match's saved score.
+ const embedded=g?.szf_guest_match_ratings;
+ const saved=Array.isArray(embedded)?embedded[0]?.overall:embedded?.overall;
+ if(saved!==undefined&&saved!==null&&Number.isFinite(Number(saved)))return Number(saved);
  const matchScore=guestMatchRatings[String(g.id)];
  if(matchScore!==undefined&&matchScore!==null&&Number.isFinite(Number(matchScore)))return Number(matchScore);
  const defaultScore=guestOverallRatings[guestKey(g.display_name)];
@@ -2725,7 +2728,12 @@ async function loadLeagueData(){
  const calls=await Promise.all([db.from('szf_admins').select('user_id').eq('user_id',user.id).maybeSingle(),db.from('szf_matches').select('*').order('match_date',{ascending:false}),db.from('szf_participants').select('*'),db.from('szf_match_declines').select('*'),db.from('szf_assessments').select('*'),db.rpc('szf_claim_weekly_credits'),db.from('szf_wallets').select('balance').eq('user_id',user.id).maybeSingle(),db.from('szf_leaderboard').select('*').order('balance',{ascending:false}),db.from('szf_match_deleters').select('user_id').eq('user_id',user.id).maybeSingle()]);
  adminInfo=!!calls[0].data;canDeleteMatch=!!calls[8]?.data;leagueMatches=calls[1].data||[];weeklyPlayers=calls[2].data||[];matchDeclines=calls[3].data||[];assessments=calls[4].data||[];leagueWallet=calls[6].data||null;leagueStandings=calls[7].data||[];
  const betRequest=db.from('szf_bets').select('match_id,pick,stake').eq('user_id',user.id);
- const extrasRequest=Promise.all(['szf_guest_players_v53','szf_waitlist_v53','szf_match_events_v53','szf_guest_match_ratings'].map(t=>db.from(t).select('*')));
+ // Fetch each appearance together with its own saved rating.
+ // This prevents a later name-based default from overriding an earlier game's score.
+ const extrasRequest=Promise.all([
+  db.from('szf_guest_players_v53').select('*,szf_guest_match_ratings(overall)'),
+  ...['szf_waitlist_v53','szf_match_events_v53','szf_guest_match_ratings'].map(t=>db.from(t).select('*'))
+ ]);
  const guestScoresRequest=db.from('szf_guest_overall_v125').select('guest_key,overall');
  const ratingChangesRequest=db.rpc('szf_my_match_rating_changes_v177');
  const [betLoad,extraCalls,guestScoresResult,ratingChanges]=await Promise.all([betRequest,extrasRequest,guestScoresRequest,ratingChangesRequest]);

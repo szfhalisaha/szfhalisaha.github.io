@@ -1298,12 +1298,44 @@ function achievementData(c){
   ...(c.position==='KL'?[{emoji:'🐆',name:'Panter',value:pantherMatches,target:5,unit:'maç',description:'Kaleci olarak oynadığın 5 ayrı tamamlanmış maçın her birinde 5’ten az (en fazla 4) gol ye. Skoru kayıtlı olmayan maçlar sayılmaz.'}]:[])
  ];
 }
+
+// v239 — Approved national-team jersey backs, visible only in player detail.
+const szfJerseyNames = {"Ahmet Hakan İnan":"ZAZA","Alper Sezer":"SEZER","Batuhan Tayfur":"TAYFUR","Bedirhan Çırakoğlu":"ÇIRAKOĞLU","Bekir Baran Kara":"KARA","Deniz":"YILMAZ","Efe Tatar":"TATAR","Emre Can Kasar":"KASAR","Engin Ç.":"ÇELEN","Erol Sin":"SİN","Hamza Bilal Kaya":"KAYA","Hasan Limon":"LİMON","İsmail Göçmel":"GÖÇMEL","İsmail Karadağ":"KARADAĞ","Kerim Taflan":"TAFLAN","Mehmet Çalman":"ÇALMAN","Murat Alptekin":"ALPTEKİN","Mustafa Eren":"EREN","Necati K.":"KORKMAZ","Ömer F. Karadağ":"KARADAĞ","Ozan Aydın":"AYDIN","Salih Akcan":"AKCAN","Samed Akyol":"AKYOL","Serkanycl":"YÜCEL","Talha":"GÜÇLÜ","Üzeyir Bayık":"BAYIK","Vedat Senses":"ŞENSES","Ysf A.":"YSF A.","Yunus Ayaydın":"AYAYDIN","Zafer Akgül":"AKGÜL"};
+function szfJerseyBack(c){
+ const fullName=String(c.display_name||'').trim();
+ const reverseName=szfJerseyNames[fullName]||fullName.split(/\s+/).pop().toLocaleUpperCase('tr');
+ const person=publicProfiles.find(p=>String(p.id)===String(c.id));
+ const number=Number(person?.jersey_number??c.jersey_number);
+ const displayNumber=Number.isInteger(number)&&number>=1&&number<=99?String(number):'—';
+ const jerseySvg=`<svg class="szf-jersey-art" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 355" role="img" aria-label="${attrs(reverseName+' '+displayNumber+' kırmızı Türkiye forması')}" preserveAspectRatio="xMidYMid meet">
+ <defs>
+ <linearGradient id="szf-shirt-base" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff3137"/><stop offset=".3" stop-color="#d70d19"/><stop offset=".72" stop-color="#b80012"/><stop offset="1" stop-color="#8d0711"/></linearGradient>
+ <linearGradient id="szf-shirt-gloss" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#fff" stop-opacity=".19"/><stop offset=".25" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity=".04"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>
+ <pattern id="szf-shirt-lines" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(-32)"><path d="M0 0V14" stroke="#fff" stroke-opacity=".07" stroke-width="1.5"/></pattern>
+ <filter id="szf-shirt-shadow"><feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#111" flood-opacity=".31"/></filter>
+ </defs>
+ <g filter="url(#szf-shirt-shadow)">
+ <path d="M111 22 L133 12 Q160 23 187 12 L209 22 251 39 315 113 276 158 244 126 243 336 Q161 351 77 336 L76 126 44 158 5 113 69 39 Z" fill="url(#szf-shirt-base)" stroke="#b40b16" stroke-width="1.5"/>
+ <path d="M111 22 L133 12 Q160 23 187 12 L209 22 251 39 315 113 276 158 244 126 243 336 Q161 351 77 336 L76 126 44 158 5 113 69 39 Z" fill="url(#szf-shirt-gloss)"/>
+ <path d="M111 22 L133 12 Q160 23 187 12 L209 22 251 39 315 113 276 158 244 126 243 336 Q161 351 77 336 L76 126 44 158 5 113 69 39 Z" fill="url(#szf-shirt-lines)"/>
+ <path d="M69 39 44 158 5 113Z M251 39 315 113 276 158Z" fill="#ed1b28" opacity=".6"/>
+ <path d="M5 113 44 158 51 148 13 105Z M315 113 276 158 269 148 307 105Z" fill="#f4f4f4"/>
+ <path d="M133 12 Q160 23 187 12 L190 23 Q160 40 130 23Z" fill="#f6f6f6"/>
+ <path d="M77 126 Q90 190 80 335 M243 126 Q228 189 240 335" fill="none" stroke="#60000c" stroke-opacity=".22" stroke-width="4"/>
+ <path d="M107 65 Q100 175 113 318 M208 58 Q219 176 204 320" fill="none" stroke="#fff" stroke-opacity=".075" stroke-width="12"/>
+ <text x="160" y="47" text-anchor="middle" fill="#fff" font-size="24" font-weight="bold">☾★</text>
+ <text x="160" y="110" text-anchor="middle" textLength="186" lengthAdjust="spacingAndGlyphs" font-size="33" font-family="Impact,Arial Narrow,Arial,sans-serif" font-weight="900" fill="#fff" stroke="#900c19" stroke-width=".6" paint-order="stroke">${esc(reverseName.toLocaleUpperCase('tr'))}</text>
+ <text x="160" y="280" text-anchor="middle" textLength="${displayNumber.length===1?'90':'175'}" lengthAdjust="spacingAndGlyphs" font-size="178" font-family="Impact,Arial Narrow,Arial,sans-serif" font-weight="900" fill="#fff" stroke="#9b0b16" stroke-width="2" paint-order="stroke">${esc(displayNumber)}</text>
+ </g></svg>`;
+ return cardHTML(c,true).replace(/<div class="fut-photo">[\s\S]*?<\/div>/,`<div class="fut-photo szf-jersey-photo">${jerseySvg}</div>`).replace('data-player="','data-jersey-toggle="');
+}
+
 function detail(c){
  if(!c)return renderPlayers();
  const badges=achievementData(c),streak=playerStreakData(c.id);
  const last=streak.results.slice(-5);
  const history=last.length?last.map(r=>`<button type="button" data-match-scoreboard="${attrs(r.match_id)}" class="szf-result-pill ${r.outcome==='G'?'win':r.outcome==='M'?'loss':'draw'}" title="${attrs(matchDateText(r.date))} · Skor tabelasını aç">${r.outcome}</button>`).join(''):'<span class="soft">Henüz sonuçlanmış maç bulunmuyor.</span>';
- return `<div class="section-head"><button class="btn small ghost" data-back="1">← Oyunculara dön</button></div><div class="detail-layout"><div class="detail-sidebar">${cardHTML(c,true)}</div><div class="szf-achievements"><h2>${esc(formatPersonName(c.display_name))}</h2><p class="soft">${esc(posName[c.position]||c.position)} · ${rankTier(c).toLocaleUpperCase('tr')} kart</p>
+ return `<div class="section-head"><button class="btn small ghost" data-back="1">← Oyunculara dön</button></div><div class="detail-layout"><div class="detail-sidebar"><div class="szf-jersey-switch" data-jersey-switch><div class="szf-jersey-front">${cardHTML(c,true)}</div><div class="szf-jersey-reverse">${szfJerseyBack(c)}</div></div><p class="szf-jersey-hint">Karta dokun · Formayı gör / karta dön</p></div><div class="szf-achievements"><h2>${esc(formatPersonName(c.display_name))}</h2><p class="soft">${esc(posName[c.position]||c.position)} · ${rankTier(c).toLocaleUpperCase('tr')} kart</p>
  <section class="szf-streaks"><h3>🔥 Galibiyet Serileri</h3><div class="szf-streak-grid"><div><small>Mevcut seri</small><strong>${streak.current} galibiyet</strong></div><div><small>En uzun seri</small><strong>${streak.best} galibiyet</strong></div></div><p class="soft">Son 5 maç (eskiden yeniye)</p><div class="szf-results">${history}</div><p class="micro">G: Galibiyet · B: Beraberlik · M: Mağlubiyet. Oynamadığın maçlar seriyi etkilemez.</p></section>
  <div class="szf-achievements-heading"><h3>🏅 Başarı Rozetleri</h3><span>${badges.filter(b=>b.value>=b.target).length} / ${badges.length} rozet</span></div><div class="szf-achievements-grid">${badges.map(b=>{const unlocked=b.value>=b.target;return `<div class="szf-achievement ${unlocked?'unlocked':'locked'}" title="${attrs(b.name+': '+b.description)}" aria-label="${attrs(b.name+': '+b.description)}" tabindex="0"><div class="szf-achievement-icon">${unlocked?b.emoji:'🔒'}</div><div class="szf-achievement-name">${esc(b.name)}</div><div class="szf-achievement-progress">${Math.min(b.value,b.target)} / ${b.target} ${esc(b.unit)}</div></div>`}).join('')}</div><p class="micro">Rozetler maç, gol, asist, galibiyet serileri ve sonuçlandırılmış Maçın Adamı verilerinden otomatik hesaplanır.</p></div></div>`;
 }
@@ -2154,7 +2186,14 @@ function bindContent(){
  document.querySelectorAll('[data-stats-sort-head]').forEach(btn=>btn.addEventListener('click',()=>{statsSortMode[btn.dataset.statsSortFor]=btn.dataset.statsSortHead;render()}));
  refreshHomeCountdown();
  document.querySelectorAll('[data-home-nav]').forEach(el=>el.addEventListener('click',()=>{view=el.dataset.homeNav;selectedPlayer=null;render();window.scrollTo({top:0,behavior:'smooth'});}));
- document.querySelectorAll('[data-player]').forEach(el=>el.addEventListener('click',()=>{selectedPlayer=el.dataset.player;render();document.querySelector('#content').scrollIntoView({behavior:'smooth',block:'start'});}));
+ document.querySelectorAll('[data-player]').forEach(el=>el.addEventListener('click',()=>{
+  const switcher=el.closest('[data-jersey-switch]');
+  if(switcher){switcher.classList.add('szf-jersey-flipped');return;}
+  selectedPlayer=el.dataset.player;render();document.querySelector('#content').scrollIntoView({behavior:'smooth',block:'start'});
+ }));
+ document.querySelectorAll('[data-jersey-toggle]').forEach(el=>el.addEventListener('click',()=>{
+  el.closest('[data-jersey-switch]')?.classList.remove('szf-jersey-flipped');
+ }));;
  document.querySelectorAll('[data-back]').forEach(el=>el.addEventListener('click',()=>{selectedPlayer=null;render()}));
  document.querySelectorAll('[data-login]').forEach(el=>el.addEventListener('click',()=>openAuth()));
  // v186: Save handler is attached once at document level, even if bindContent fails.

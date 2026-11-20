@@ -1307,27 +1307,16 @@ function szfJerseyBack(c){
  const person=publicProfiles.find(p=>String(p.id)===String(c.id));
  const number=Number(person?.jersey_number??c.jersey_number);
  const displayNumber=Number.isInteger(number)&&number>=1&&number<=99?String(number):'—';
- const jerseySvg=`<svg class="szf-jersey-art" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 290" role="img" aria-label="${attrs(reverseName+' '+displayNumber+' Türkiye forması')}" preserveAspectRatio="xMidYMid meet">
- <defs>
- <linearGradient id="szf-shirt-base" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c42332"/><stop offset=".48" stop-color="#ad1726"/><stop offset="1" stop-color="#841321"/></linearGradient>
- <linearGradient id="szf-shirt-shade" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#000" stop-opacity=".12"/><stop offset=".27" stop-color="#fff" stop-opacity=".065"/><stop offset=".68" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></linearGradient>
- <pattern id="szf-shirt-fabric" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 0H8" stroke="#fff" stroke-opacity=".025" stroke-width=".6"/></pattern>
- <mask id="szf-crescent-cut"><rect width="320" height="290" fill="white"/><circle cx="161" cy="41" r="7" fill="black"/></mask>
- </defs>
- <path d="M113 20 L136 12 Q160 21 184 12 L207 20 247 38 312 101 277 143 244 116 242 274 Q161 284 78 274 L76 116 43 143 8 101 73 38 Z" fill="url(#szf-shirt-base)" stroke="#7e1723" stroke-width="1.3"/>
- <path d="M113 20 L136 12 Q160 21 184 12 L207 20 247 38 312 101 277 143 244 116 242 274 Q161 284 78 274 L76 116 43 143 8 101 73 38 Z" fill="url(#szf-shirt-shade)"/>
- <path d="M113 20 L136 12 Q160 21 184 12 L207 20 247 38 312 101 277 143 244 116 242 274 Q161 284 78 274 L76 116 43 143 8 101 73 38 Z" fill="url(#szf-shirt-fabric)"/>
- <path d="M8 101 43 143 51 135 16 93Z M312 101 277 143 269 135 304 93Z" fill="#f0ede8"/>
- <path d="M135 12 Q160 22 185 12 L188 23 Q160 35 132 23Z" fill="#f2eee9"/>
- <path d="M78 119 Q88 192 83 272 M242 119 Q232 192 237 272" stroke="#520f1a" stroke-opacity=".25" stroke-width="2" fill="none"/>
- <g fill="#f8f4ee">
-  <circle cx="156" cy="36" r="11" mask="url(#szf-crescent-cut)"/>
-  <polygon points="178,27 180.8,33.8 188,34.2 182.5,38.8 184.4,45.7 178,41.7 171.6,45.7 173.5,38.8 168,34.2 175.2,33.8"/>
- </g>
- <text x="160" y="98" text-anchor="middle" textLength="${Math.min(200,Math.max(100,reverseName.length*19))}" lengthAdjust="spacingAndGlyphs" font-size="27" font-family="Arial,Helvetica,sans-serif" font-weight="800" letter-spacing="1" fill="#f9f6ef">${esc(reverseName.toLocaleUpperCase('tr'))}</text>
- <text x="160" y="237" text-anchor="middle" font-size="${displayNumber.length===1?'150':'142'}" font-family="Arial,Helvetica,sans-serif" font-stretch="condensed" font-weight="900" letter-spacing="-7" fill="#f9f6ef">${esc(displayNumber)}</text>
- </svg>`;
- return cardHTML(c,true).replace(/<div class="fut-photo">[\s\S]*?<\/div>/,`<div class="fut-photo szf-jersey-photo">${jerseySvg}</div>`).replace('data-player="','data-jersey-toggle="');
+ const visibleName=reverseName.toLocaleUpperCase('tr');
+ const jerseyMarkup=`<div class="szf-jersey-real">
+  <img class="szf-jersey-base" src="szf-jersey-realistic.webp?v=274" alt="" decoding="async">
+  <span class="szf-jersey-print-name" style="--szf-back-name-size:${Math.max(12,Math.min(22,24-Math.max(0,visibleName.length-6)*1.15))}px">${esc(visibleName)}</span>
+  <span class="szf-jersey-print-number">${esc(displayNumber)}</span>
+ </div>`;
+ return cardHTML(c,true)
+  .replace(/<div class="fut-photo">[\s\S]*?<\/div>/,`<div class="fut-photo szf-jersey-photo">${jerseyMarkup}</div>`)
+  .replace('data-player="','data-jersey-toggle="');
+
 }
 
 function detail(c){

@@ -1032,3 +1032,47 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .detail-sidebar .szf-jersey-reverse .szf-jersey-art{width:100%;height:100%;display:block;filter:drop-shadow(0 3px 5px #0002)}
 .detail-sidebar .szf-jersey-reverse .fut-name{top:65%;z-index:7}
 .detail-sidebar .szf-jersey-reverse .fut-stats{top:73%;z-index:7}
+
+/* v274 — Approved realistic red jersey back, names/numbers are live HTML overlays.
+   Front cards and existing ability values are untouched. */
+.detail-sidebar .szf-jersey-reverse .fut-card{
+  aspect-ratio:.94!important;
+  background:linear-gradient(135deg,#ffe99e 0%,#e0b84f 54%,#ffeb9a 100%)!important;
+  --szf-name-divider:72%;
+}
+.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo{
+  position:absolute!important;top:6%!important;bottom:auto!important;
+  left:50%!important;right:auto!important;width:92%!important;height:65%!important;
+  transform:translateX(-50%)!important;display:block!important;overflow:visible!important;
+  z-index:4!important;pointer-events:none!important;-webkit-mask-image:none!important;mask-image:none!important;
+}
+.szf-jersey-real{position:relative;width:100%;height:100%;filter:drop-shadow(0 4px 5px #64331e4d);}
+.szf-jersey-base{position:absolute;inset:0;width:100%!important;height:100%!important;
+  object-fit:contain!important;object-position:center!important;max-width:none!important;
+  transform:none!important;border:0!important;filter:none!important;}
+.szf-jersey-print-name,.szf-jersey-print-number{
+  position:absolute;left:16%;width:68%;display:flex;align-items:center;justify-content:center;
+  color:#fffdf5;font-family:Impact,'Arial Narrow',Arial,sans-serif;
+  font-weight:900;white-space:nowrap;line-height:1;letter-spacing:.01em;
+  text-shadow:0 1px 1px #641b26a8;z-index:2;
+}
+.szf-jersey-print-name{top:20%;height:16%;font-size:var(--szf-back-name-size,20px);}
+.szf-jersey-print-number{top:36%;height:48%;font-size:clamp(70px,24vw,105px);letter-spacing:-.055em;}
+.detail-sidebar .szf-jersey-reverse .fut-head{top:7%!important;left:4%!important;width:22%!important;z-index:8!important;}
+.detail-sidebar .szf-jersey-reverse .fut-overall{font-size:clamp(34px,11vw,49px)!important;}
+.detail-sidebar .szf-jersey-reverse .fut-pos{font-size:13px!important;}
+.detail-sidebar .szf-jersey-reverse .fut-name{
+  top:72%!important;height:8%!important;left:6%!important;right:6%!important;
+  padding:1% 0 0!important;border-top:1px solid #6b552d8a!important;
+  font-size:clamp(15px,5vw,20px)!important;min-height:0!important;
+  font-weight:900!important;
+}
+.detail-sidebar .szf-jersey-reverse .fut-stats{
+  top:81%!important;left:6%!important;right:6%!important;
+  border-top:1px solid #6b552d8a!important;padding-top:1.5%!important;
+}
+.detail-sidebar .szf-jersey-reverse .fut-emblems{top:92%!important;height:5%!important;}
+@media(max-width:720px){
+  .detail-sidebar .szf-jersey-reverse .fut-card{aspect-ratio:.94!important}
+  .szf-jersey-print-number{font-size:clamp(75px,25vw,105px)}
+}

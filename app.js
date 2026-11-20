@@ -1315,19 +1315,10 @@ function szfJerseyBack(c){
  return `<button type="button" class="szf-kit-card" data-jersey-toggle="1" aria-label="${attrs(fullName)} forma kartı">
   <span class="szf-kit-rating"><strong>${publicRating(c)}</strong><small>${esc(c.position==='ORT'?'OS':c.position)}</small></span>
   <span class="szf-kit-shirt">
-   <img src="szf-jersey-realistic.webp?v=286" alt="" decoding="async">
+   <img src="szf-jersey-realistic.webp?v=289" alt="" decoding="async">
    <svg viewBox="0 0 400 448" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
     <text class="szf-kit-player-name" x="200" y="142" text-anchor="middle" textLength="${nameWidth}" lengthAdjust="spacingAndGlyphs">${esc(visibleName)}</text>
     <text class="szf-kit-player-number" x="200" y="336" text-anchor="middle">${esc(displayNumber)}</text>
-    ${displayNumber==='—'?'':displayNumber.split('').map((digit,i,all)=>{
-      if(digit==='1'||digit==='7')return '';
-      const x=all.length===1?200:(i===0?151:249);
-      return `<g class="szf-kit-number-insignia" transform="translate(${x} 315)">
-        <path fill="#c7192d" fill-rule="evenodd" d="M 0,-10 A 10,10 0 1 0 0,10 A 10,10 0 1 0 0,-10 Z M 4,-8 A 7,7 0 1 1 4,8 A 7,7 0 1 1 4,-8 Z" />
-        <path fill="#c7192d" d="M 10,-8 L 11.8,-2.8 L 17.3,-2.8 L 12.8,.5 L 14.6,5.8 L 10,2.6 L 5.4,5.8 L 7.2,.5 L 2.7,-2.8 L 8.2,-2.8 Z"/>
-       </g>`;
-    }).join('')}
-
    </svg>
   </span>
   <span class="szf-kit-footer">

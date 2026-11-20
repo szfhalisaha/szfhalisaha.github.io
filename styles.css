@@ -1076,3 +1076,29 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
   .detail-sidebar .szf-jersey-reverse .fut-card{aspect-ratio:.94!important}
   .szf-jersey-print-number{font-size:clamp(75px,25vw,105px)}
 }
+
+/* v275 — override the generic .fut-photo span avatar rules on jersey lettering.
+   The earlier rule made both overlays 100% tall and 95px, spilling across card. */
+.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > .szf-jersey-print-name,
+.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > .szf-jersey-print-number{
+  position:absolute!important;display:flex!important;place-items:normal!important;
+  align-items:center!important;justify-content:center!important;
+  left:20%!important;width:60%!important;margin:0!important;padding:0!important;
+  color:#fffaf2!important;white-space:nowrap!important;
+  font-family:Impact,'Arial Narrow',Arial,sans-serif!important;font-weight:900!important;
+  text-align:center!important;line-height:1!important;letter-spacing:.01em!important;
+  text-shadow:0 1px 1px #5512199e!important;
+  background:transparent!important;border:0!important;
+  transform:none!important;
+}
+.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > .szf-jersey-print-name{
+  top:36%!important;height:12%!important;
+  font-size:var(--szf-back-name-size,20px)!important;
+}
+.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > .szf-jersey-print-number{
+  top:46%!important;height:43%!important;font-size:105px!important;
+  letter-spacing:-.045em!important;font-variant-numeric:tabular-nums!important;
+}
+@media(max-width:380px){
+ .detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > .szf-jersey-print-number{font-size:clamp(66px,29vw,105px)!important}
+}

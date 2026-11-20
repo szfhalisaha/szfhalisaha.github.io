@@ -1319,7 +1319,7 @@ function szfJerseyBack(c){
    </g>
   </svg>
  </div>`;
- if(/^deniz(?:\\s|$)/iu.test(fullName) && displayNumber==='23'){
+ if(/^deniz(?:\s|$)/iu.test(fullName) && displayNumber==='23'){
   return `<button type="button" class="card-face fut-card szf-approved-deniz-card" data-jersey-toggle="1" aria-label="Deniz forma kartı"><img src="szf-deniz-approved-card.jpg?v=284" alt="Deniz Yılmaz 23 onaylanan forma kartı" decoding="async"></button>`;
  }
  return cardHTML(c,true)

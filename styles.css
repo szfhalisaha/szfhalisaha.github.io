@@ -1268,3 +1268,8 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-kit-card .szf-kit-stat small{font-size:clamp(9px,2.4vw,12px);font-weight:900}
 .szf-kit-card .szf-kit-stat strong{font-size:clamp(16px,4.5vw,23px);font-weight:900}
 .szf-kit-card .szf-kit-flag{display:block;width:24px;height:17px;object-fit:cover;align-self:center;margin-top:auto}
+
+/* v286 — crisp jersey artwork on every player, including Deniz */
+.szf-kit-card .szf-kit-digit-emblem{pointer-events:none;filter:drop-shadow(0 .4px .2px #fff8)}
+.szf-kit-card .szf-kit-shirt>svg{text-rendering:geometricPrecision;shape-rendering:geometricPrecision}
+.szf-kit-card .szf-kit-shirt>img{image-rendering:auto}

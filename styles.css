@@ -1171,3 +1171,16 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-jersey-reverse .szf-jersey-print-layer .szf-kit-number-edge {
  fill:#bb9a46!important;stroke:#bb9a46!important;stroke-width:3px;
 }
+
+/* v281 — wide, angular athletic numbers instead of narrow Teko digits */
+.szf-jersey-reverse .szf-jersey-print-layer .szf-kit-number{
+ font-family:'Russo One','Arial Black',Impact,sans-serif!important;
+ font-size:180px!important;font-weight:900!important;
+ letter-spacing:0!important;fill:#fffdf8!important;
+ stroke:#fffdf8!important;stroke-width:1.2px!important;
+ paint-order:stroke fill!important;
+}
+.szf-jersey-reverse .szf-jersey-print-layer .szf-kit-number-edge{
+ fill:#ae8c3d!important;stroke:#ae8c3d!important;
+ stroke-width:4px!important;
+}

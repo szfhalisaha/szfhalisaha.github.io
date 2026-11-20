@@ -1196,3 +1196,15 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
  fill:#ae8c3d!important;stroke:#ae8c3d!important;
  stroke-width:3px!important;
 }
+
+/* v283 — reference-inspired football shirt numerals: thick stencil cuts and dark-red rim */
+.szf-jersey-reverse .szf-jersey-print-layer .szf-kit-number {
+ font-family:'Black Ops One',Impact,sans-serif!important;
+ font-size:174px!important;font-weight:400!important;
+ letter-spacing:-4px!important;
+ fill:#f9f8f3!important;stroke:#f9f8f3!important;stroke-width:.7px!important;
+ paint-order:stroke fill!important;
+}
+.szf-jersey-reverse .szf-jersey-print-layer .szf-kit-number-edge {
+ fill:#a51c27!important;stroke:#a51c27!important;stroke-width:5px!important;
+}

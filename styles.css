@@ -902,24 +902,25 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
   transform-origin:center bottom!important;
 }
 
-/* v223 — Keep long jersey+name labels inside the two divider lines. */
+/* v234 — Preserve the existing card font; keep longer player names legible.
+   The previous v223 rules shrank names too aggressively on phones. */
 .fut-card .fut-name.szf-name-long{
- font-size:clamp(10px,1.25vw,13px)!important;
+ font-size:clamp(14px,1.65vw,18px)!important;
  letter-spacing:-.045em;
  white-space:nowrap;
  overflow:hidden;
  text-overflow:clip;
 }
 .fut-card .fut-name.szf-name-very-long{
- font-size:clamp(9px,1.05vw,11px)!important;
- letter-spacing:-.05em;
+ font-size:clamp(12px,1.4vw,16px)!important;
+ letter-spacing:-.055em;
  white-space:nowrap;
  overflow:hidden;
  text-overflow:clip;
 }
 @media(max-width:720px){
- .fut-card .fut-name.szf-name-long{font-size:clamp(9px,2.8vw,12px)!important}
- .fut-card .fut-name.szf-name-very-long{font-size:clamp(8px,2.45vw,10px)!important}
+ .fut-card .fut-name.szf-name-long{font-size:clamp(12px,3.8vw,16px)!important}
+ .fut-card .fut-name.szf-name-very-long{font-size:clamp(11px,3.35vw,14px)!important}
 }
 
 /* v232 — Admin-only portrait adjustment panel embedded in Hesabım */

@@ -1135,3 +1135,13 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 @media(max-width:380px) {
  .detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > span.szf-jersey-print-number {font-size:clamp(68px,27vw,98px)!important;}
 }
+
+/* v279 — Print is a single jersey-coordinate SVG: no player-photo span rules or responsive drift. */
+.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > svg.szf-jersey-print-svg{
+  position:absolute!important;inset:0!important;
+  width:100%!important;height:100%!important;
+  display:block!important;overflow:visible!important;
+  opacity:1!important;transform:none!important;
+  filter:drop-shadow(0 1px 1px #5e111c88);
+  pointer-events:none!important;
+}

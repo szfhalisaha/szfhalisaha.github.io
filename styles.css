@@ -1273,3 +1273,8 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-kit-card .szf-kit-digit-emblem{pointer-events:none;filter:drop-shadow(0 .4px .2px #fff8)}
 .szf-kit-card .szf-kit-shirt>svg{text-rendering:geometricPrecision;shape-rendering:geometricPrecision}
 .szf-kit-card .szf-kit-shirt>img{image-rendering:auto}
+
+/* v290: gold reverse card displays the jersey alone, centered and larger */
+.detail-sidebar .szf-jersey-reverse .szf-kit-card .szf-kit-shirt{
+ left:5%!important;top:7%!important;width:90%!important;height:83%!important;
+}

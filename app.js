@@ -1319,10 +1319,7 @@ function szfJerseyBack(c){
    <svg viewBox="0 0 400 448" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
     <text class="szf-kit-player-name" x="200" y="142" text-anchor="middle" textLength="${nameWidth}" lengthAdjust="spacingAndGlyphs">${esc(visibleName)}</text>
     <text class="szf-kit-player-number" x="200" y="336" text-anchor="middle">${esc(displayNumber)}</text>
-    ${displayNumber==='—'?'':(displayNumber.length===1?[200]:[155,245]).map(x=>`<g class="szf-kit-digit-emblem" transform="translate(${x} 324) scale(.72)">
-     <path d="M-5 -10 A10 10 0 1 0 5 8 A7.5 7.5 0 1 1 -5 -10Z" fill="#c91e2b"/>
-     <path d="M9 -8 L11 -2 L17 -2 L12 2 L14 8 L9 4 L4 8 L6 2 L1 -2 L7 -2Z" fill="#c91e2b"/>
-    </g>`).join('')}
+
    </svg>
   </span>
   <span class="szf-kit-footer">

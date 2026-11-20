@@ -1145,3 +1145,29 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
   filter:drop-shadow(0 1px 1px #5e111c88);
   pointer-events:none!important;
 }
+
+/* v280 — real football shirt typography, fixed shirt-space coordinates.
+   Limited to card reverse; original player ratings/stats/frontend remain unchanged. */
+.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > svg.szf-jersey-print-svg {
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ display:block!important;overflow:visible!important;opacity:1!important;
+ transform:none!important;pointer-events:none!important;
+}
+.szf-jersey-reverse .szf-jersey-print-layer {
+ font-kerning:normal;
+}
+.szf-jersey-reverse .szf-jersey-print-layer .szf-kit-name {
+ font-family:'Russo One','Arial Black',Impact,sans-serif!important;
+ font-size:41px!important;font-weight:900!important;
+ letter-spacing:.5px;fill:#fffdf8!important;stroke:#941729;stroke-width:.7px;
+ paint-order:stroke fill;opacity:1!important;
+}
+.szf-jersey-reverse .szf-jersey-print-layer .szf-kit-number {
+ font-family:'Teko','Arial Narrow',Impact,sans-serif!important;
+ font-size:246px!important;font-weight:700!important;
+ fill:#fffdf8!important;stroke:#fffdf8;stroke-width:1px;
+ paint-order:stroke fill;opacity:1!important;
+}
+.szf-jersey-reverse .szf-jersey-print-layer .szf-kit-number-edge {
+ fill:#bb9a46!important;stroke:#bb9a46!important;stroke-width:3px;
+}

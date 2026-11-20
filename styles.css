@@ -1184,3 +1184,15 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
  fill:#ae8c3d!important;stroke:#ae8c3d!important;
  stroke-width:4px!important;
 }
+
+/* v282 — tall professional kit digits, natural glyph proportions, no forced squashing */
+.szf-jersey-reverse .szf-jersey-print-layer .szf-kit-number{
+ font-family:'Anton',Impact,'Arial Narrow',sans-serif!important;
+ font-size:198px!important;font-weight:400!important;
+ letter-spacing:0!important;stroke-width:0!important;
+ fill:#fffdf8!important;
+}
+.szf-jersey-reverse .szf-jersey-print-layer .szf-kit-number-edge{
+ fill:#ae8c3d!important;stroke:#ae8c3d!important;
+ stroke-width:3px!important;
+}

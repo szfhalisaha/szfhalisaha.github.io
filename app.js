@@ -1308,20 +1308,21 @@ function szfJerseyBack(c){
  const number=Number(person?.jersey_number??c.jersey_number);
  const displayNumber=Number.isInteger(number)&&number>=1&&number<=99?String(number):'—';
  const visibleName=reverseName.toLocaleUpperCase('tr');
- // The approved Deniz artwork is shown unaltered; other players use the same fixed card proportions.
- if(/^deniz(?:\s|$)/iu.test(fullName) && displayNumber==='23'){
-  return `<button type="button" class="szf-kit-card szf-kit-approved" data-jersey-toggle="1" aria-label="Deniz forma kartı"><img src="szf-deniz-approved-card.jpg?v=285" alt="Deniz Yılmaz 23 onaylanan forma kartı" decoding="async"></button>`;
- }
+ // All players, including Deniz, use vector text rather than the low-resolution raster card.
  const stats=getFeatures(c).map(([k,l])=>`<span class="szf-kit-stat"><small>${esc(l)}</small><strong>${publicAbility(c,k)}</strong></span>`).join('');
  const label=cardDisplayName(c,true);
  const nameWidth=Math.min(250,Math.max(100,visibleName.length*26));
  return `<button type="button" class="szf-kit-card" data-jersey-toggle="1" aria-label="${attrs(fullName)} forma kartı">
   <span class="szf-kit-rating"><strong>${publicRating(c)}</strong><small>${esc(c.position==='ORT'?'OS':c.position)}</small></span>
   <span class="szf-kit-shirt">
-   <img src="szf-jersey-realistic.webp?v=285" alt="" decoding="async">
+   <img src="szf-jersey-realistic.webp?v=286" alt="" decoding="async">
    <svg viewBox="0 0 400 448" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
     <text class="szf-kit-player-name" x="200" y="142" text-anchor="middle" textLength="${nameWidth}" lengthAdjust="spacingAndGlyphs">${esc(visibleName)}</text>
     <text class="szf-kit-player-number" x="200" y="336" text-anchor="middle">${esc(displayNumber)}</text>
+    ${displayNumber==='—'?'':(displayNumber.length===1?[200]:[155,245]).map(x=>`<g class="szf-kit-digit-emblem" transform="translate(${x} 324) scale(.72)">
+     <path d="M-5 -10 A10 10 0 1 0 5 8 A7.5 7.5 0 1 1 -5 -10Z" fill="#c91e2b"/>
+     <path d="M9 -8 L11 -2 L17 -2 L12 2 L14 8 L9 4 L4 8 L6 2 L1 -2 L7 -2Z" fill="#c91e2b"/>
+    </g>`).join('')}
    </svg>
   </span>
   <span class="szf-kit-footer">

@@ -1021,9 +1021,14 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .detail-sidebar .szf-jersey-flipped .szf-jersey-reverse{display:block;animation:szf-jersey-reveal .24s ease-out}
 .detail-sidebar .szf-jersey-switch .fut-card{cursor:pointer}
 .detail-sidebar .szf-jersey-switch .fut-card:hover{transform:none}
-.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo{position:absolute!important;top:10%!important;left:50%!important;right:auto!important;bottom:auto!important;width:97%!important;height:68%!important;aspect-ratio:auto!important;transform:translateX(-50%)!important;overflow:visible!important;display:block!important;z-index:4!important;pointer-events:none}
+.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo{position:absolute!important;top:6%!important;left:50%!important;right:auto!important;bottom:auto!important;width:100%!important;height:58%!important;aspect-ratio:auto!important;transform:translateX(-50%)!important;overflow:hidden!important;display:block!important;z-index:4!important;pointer-events:none}
 .detail-sidebar .szf-jersey-art{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 4px 8px #0003)}
 .detail-sidebar .szf-jersey-reverse .fut-head{z-index:7}
 .detail-sidebar .szf-jersey-reverse .fut-name,.detail-sidebar .szf-jersey-reverse .fut-stats,.detail-sidebar .szf-jersey-reverse .fut-emblems{z-index:6}
 .detail-sidebar .szf-jersey-hint{font-size:12px;color:#9cb5a5;text-align:center;margin:9px 0 0}
 @keyframes szf-jersey-reveal{from{opacity:.5;transform:scaleX(.94)}to{opacity:1;transform:scaleX(1)}}
+
+/* v240: Keep jersey art above the original card's name divider without covering attributes. */
+.detail-sidebar .szf-jersey-reverse .szf-jersey-art{width:100%;height:100%;display:block;filter:drop-shadow(0 3px 5px #0002)}
+.detail-sidebar .szf-jersey-reverse .fut-name{top:65%;z-index:7}
+.detail-sidebar .szf-jersey-reverse .fut-stats{top:73%;z-index:7}

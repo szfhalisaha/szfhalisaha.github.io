@@ -1310,12 +1310,12 @@ function szfJerseyBack(c){
  const visibleName=reverseName.toLocaleUpperCase('tr');
  const printWidth=Math.min(216,Math.max(105,visibleName.length*23));
  const jerseyMarkup=`<div class="szf-jersey-real">
-  <img class="szf-jersey-base" src="szf-jersey-realistic.webp?v=281" alt="" decoding="async">
+  <img class="szf-jersey-base" src="szf-jersey-realistic.webp?v=282" alt="" decoding="async">
   <svg class="szf-jersey-print-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 448" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
    <g class="szf-jersey-print-layer">
     <text class="szf-kit-name" x="200" y="149" dominant-baseline="middle" text-anchor="middle" textLength="${printWidth}" lengthAdjust="spacingAndGlyphs">${esc(visibleName)}</text>
-    <text class="szf-kit-number szf-kit-number-edge" x="200" y="289" dominant-baseline="middle" text-anchor="middle" textLength="${displayNumber.length===1?'108':'190'}" lengthAdjust="spacingAndGlyphs">${esc(displayNumber)}</text>
-    <text class="szf-kit-number" x="200" y="286" dominant-baseline="middle" text-anchor="middle" textLength="${displayNumber.length===1?'108':'190'}" lengthAdjust="spacingAndGlyphs">${esc(displayNumber)}</text>
+    <text class="szf-kit-number szf-kit-number-edge" x="200" y="289" dominant-baseline="middle" text-anchor="middle" >${esc(displayNumber)}</text>
+    <text class="szf-kit-number" x="200" y="286" dominant-baseline="middle" text-anchor="middle" >${esc(displayNumber)}</text>
    </g>
   </svg>
  </div>`;

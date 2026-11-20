@@ -1309,7 +1309,7 @@ function szfJerseyBack(c){
  const displayNumber=Number.isInteger(number)&&number>=1&&number<=99?String(number):'—';
  const visibleName=reverseName.toLocaleUpperCase('tr');
  const jerseyMarkup=`<div class="szf-jersey-real">
-  <img class="szf-jersey-base" src="szf-jersey-realistic.webp?v=274" alt="" decoding="async">
+  <img class="szf-jersey-base" src="szf-jersey-realistic.webp?v=275" alt="" decoding="async">
   <span class="szf-jersey-print-name" style="--szf-back-name-size:${Math.max(12,Math.min(22,24-Math.max(0,visibleName.length-6)*1.15))}px">${esc(visibleName)}</span>
   <span class="szf-jersey-print-number">${esc(displayNumber)}</span>
  </div>`;

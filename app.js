@@ -1303,13 +1303,13 @@ function achievementData(c){
 const szfJerseyNames = {"Ahmet Hakan İnan":"ZAZA","Alper Sezer":"SEZER","Batuhan Tayfur":"TAYFUR","Bedirhan Çırakoğlu":"ÇIRAKOĞLU","Bekir Baran Kara":"KARA","Deniz":"YILMAZ","Efe Tatar":"TATAR","Emre Can Kasar":"KASAR","Engin Ç.":"ÇELEN","Erol Sin":"SİN","Hamza Bilal Kaya":"KAYA","Hasan Limon":"LİMON","İsmail Göçmel":"GÖÇMEL","İsmail Karadağ":"KARADAĞ","Kerim Taflan":"TAFLAN","Mehmet Çalman":"ÇALMAN","Murat Alptekin":"ALPTEKİN","Mustafa Eren":"EREN","Necati K.":"KORKMAZ","Ömer F. Karadağ":"KARADAĞ","Ozan Aydın":"AYDIN","Salih Akcan":"AKCAN","Samed Akyol":"AKYOL","Serkanycl":"YÜCEL","Talha":"GÜÇLÜ","Üzeyir Bayık":"BAYIK","Vedat Senses":"ŞENSES","Ysf A.":"YSF A.","Yunus Ayaydın":"AYAYDIN","Zafer Akgül":"AKGÜL"};
 function szfJerseyBack(c){
  const fullName=String(c.display_name||'').trim();
- const reverseName=szfJerseyNames[fullName]||fullName.split(/\\s+/).pop().toLocaleUpperCase('tr');
+ const reverseName=szfJerseyNames[fullName]||fullName.split(/\s+/).pop().toLocaleUpperCase('tr');
  const person=publicProfiles.find(p=>String(p.id)===String(c.id));
  const number=Number(person?.jersey_number??c.jersey_number);
  const displayNumber=Number.isInteger(number)&&number>=1&&number<=99?String(number):'—';
  const visibleName=reverseName.toLocaleUpperCase('tr');
  // The approved Deniz artwork is shown unaltered; other players use the same fixed card proportions.
- if(/^deniz(?:\\s|$)/iu.test(fullName) && displayNumber==='23'){
+ if(/^deniz(?:\s|$)/iu.test(fullName) && displayNumber==='23'){
   return `<button type="button" class="szf-kit-card szf-kit-approved" data-jersey-toggle="1" aria-label="Deniz forma kartı"><img src="szf-deniz-approved-card.jpg?v=285" alt="Deniz Yılmaz 23 onaylanan forma kartı" decoding="async"></button>`;
  }
  const stats=getFeatures(c).map(([k,l])=>`<span class="szf-kit-stat"><small>${esc(l)}</small><strong>${publicAbility(c,k)}</strong></span>`).join('');

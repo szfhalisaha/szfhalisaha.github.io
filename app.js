@@ -7,6 +7,7 @@ let openMatchRosters=new Set(), manualRed=new Set(), leagueMatches=[], leagueWal
 let extras={guests:[],waitlist:[],events:[],mvp:[]}, extraReady=true;
 let mvpStates={}, mvpEnabled=false;
 let guestOverallRatings={}; // Geçici, sadece takım dengesi için; FC değerlendirmesi değildir.
+let guestMatchRatings={}; // Misafirlerin maç bazlı denge puanı; isim değişikliğinde korunur.
 let teamRatingOverrides={}; // Yönetici tarafından, yalnızca takım dengesi için girilen geçici puanlar.
 let playerSort='rating_desc', rankingSort='rating_desc', rosterPickerMatch=null, rosterSearch='';
 let assessmentFlash=null;
@@ -347,6 +348,7 @@ setInterval(()=>{if(view==='home')refreshHomeCountdown()},1000);
 // Automatically restore the ordinary player list when the match rating window ends.
 setInterval(()=>{if(view!=='assessment'||!user)return;const current=assessmentFocusMatch();const id=current?String(current.id):null;if(id!==assessmentPickerFocusId)render();},30000);
 function guestKey(name){return formatPersonName(name||'').toLocaleLowerCase('tr-TR').replace(/\s+/g,' ').trim()}
+function guestTeamRating(g){return Number(guestMatchRatings[String(g.id)]??guestOverallRatings[guestKey(g.display_name)]??70)}
 function recurringGuestStats(){
  const groups=new Map();
  extras.guests.filter(g=>!linkedPlayerId(g)).forEach(g=>{
@@ -1342,7 +1344,7 @@ function teamBuilderCandidates(){
   // Aynı kullanıcı misafir olarak eşleştirilmişse iki kez gösterme
   if(linkedPlayerId(g)&&ids.has(String(linkedPlayerId(g))))return;
   const card=linkedCard(g);
-  result.push(card?{...card,id:'guest:'+g.id,is_guest:false,linked_user_id:linkedPlayerId(g)}:{id:'guest:'+g.id,display_name:g.display_name,position:g.position||'ORT',secondary_position:null,overall_rating:Number(guestOverallRatings[guestKey(g.display_name)]||70),is_guest:true});
+  result.push(card?{...card,id:'guest:'+g.id,is_guest:false,linked_user_id:linkedPlayerId(g)}:{id:'guest:'+g.id,display_name:g.display_name,position:g.position||'ORT',secondary_position:null,overall_rating:guestTeamRating(g),is_guest:true});
   if(card)ids.add(String(linkedPlayerId(g)));
  });
  return result;
@@ -1756,7 +1758,7 @@ function szfMatchTeamRating(people,guests,color){
  });
  guests.filter(x=>x.team_color===color).forEach(x=>{
   const card=linkedCard(x);
-  vals.push(card?szfTeamPlayerRating(card):Number(guestOverallRatings[guestKey(x.display_name)]||70));
+  vals.push(card?szfTeamPlayerRating(card):guestTeamRating(x));
  });
  return vals.length?`${(vals.reduce((a,b)=>a+b,0)/vals.length).toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1})} GEN`:'—';
 }
@@ -2716,13 +2718,14 @@ async function loadLeagueData(){
  const calls=await Promise.all([db.from('szf_admins').select('user_id').eq('user_id',user.id).maybeSingle(),db.from('szf_matches').select('*').order('match_date',{ascending:false}),db.from('szf_participants').select('*'),db.from('szf_match_declines').select('*'),db.from('szf_assessments').select('*'),db.rpc('szf_claim_weekly_credits'),db.from('szf_wallets').select('balance').eq('user_id',user.id).maybeSingle(),db.from('szf_leaderboard').select('*').order('balance',{ascending:false}),db.from('szf_match_deleters').select('user_id').eq('user_id',user.id).maybeSingle()]);
  adminInfo=!!calls[0].data;canDeleteMatch=!!calls[8]?.data;leagueMatches=calls[1].data||[];weeklyPlayers=calls[2].data||[];matchDeclines=calls[3].data||[];assessments=calls[4].data||[];leagueWallet=calls[6].data||null;leagueStandings=calls[7].data||[];
  const betRequest=db.from('szf_bets').select('match_id,pick,stake').eq('user_id',user.id);
- const extrasRequest=Promise.all(['szf_guest_players_v53','szf_waitlist_v53','szf_match_events_v53'].map(t=>db.from(t).select('*')));
+ const extrasRequest=Promise.all(['szf_guest_players_v53','szf_waitlist_v53','szf_match_events_v53','szf_guest_match_ratings'].map(t=>db.from(t).select('*')));
  const guestScoresRequest=db.from('szf_guest_overall_v125').select('guest_key,overall');
  const ratingChangesRequest=db.rpc('szf_my_match_rating_changes_v177');
  const [betLoad,extraCalls,guestScoresResult,ratingChanges]=await Promise.all([betRequest,extrasRequest,guestScoresRequest,ratingChangesRequest]);
  leagueBets=betLoad.data||[];if(betLoad.error)console.warn('Bahisler yüklenemedi:',betLoad.error.message);
  extraReady=extraCalls.every(r=>!r.error);
  extras={guests:extraCalls[0].data||[],waitlist:extraCalls[1].data||[],events:extraCalls[2].data||[],mvp:[]};
+ guestMatchRatings={};for(const row of extraCalls[3].data||[])guestMatchRatings[String(row.guest_id)]=Number(row.overall);
 
  guestOverallRatings={};if(!guestScoresResult.error)for(const item of guestScoresResult.data||[])guestOverallRatings[item.guest_key]=Number(item.overall);
  else console.warn('Misafir puan tablosu henüz kurulmamış:',guestScoresResult.error.message);

@@ -1123,3 +1123,15 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .detail-sidebar .szf-jersey-reverse .fut-card .szf-jersey-real{
   position:relative!important;width:100%!important;height:100%!important;
 }
+
+/* v278 — consistent separation between surname and jersey number */
+.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > span.szf-jersey-print-name {
+ top:33%!important;height:11%!important;line-height:1!important;
+}
+.detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > span.szf-jersey-print-number {
+ top:48%!important;height:39%!important;font-size:98px!important;
+ line-height:1!important;
+}
+@media(max-width:380px) {
+ .detail-sidebar .szf-jersey-reverse .fut-photo.szf-jersey-photo .szf-jersey-real > span.szf-jersey-print-number {font-size:clamp(68px,27vw,98px)!important;}
+}

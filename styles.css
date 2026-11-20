@@ -1208,3 +1208,18 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-jersey-reverse .szf-jersey-print-layer .szf-kit-number-edge {
  fill:#a51c27!important;stroke:#a51c27!important;stroke-width:5px!important;
 }
+
+/* v284: exact approved card artwork; no generic FUT overlays or clipping */
+.detail-sidebar .szf-jersey-reverse .fut-card.szf-approved-deniz-card{
+ width:100%!important;max-width:290px!important;aspect-ratio:1086/1448!important;
+ padding:0!important;margin:0!important;border:0!important;
+ background:transparent!important;clip-path:none!important;border-radius:0!important;
+ overflow:hidden!important;box-shadow:none!important;display:block!important;
+}
+.detail-sidebar .szf-jersey-reverse .fut-card.szf-approved-deniz-card::before,
+.detail-sidebar .szf-jersey-reverse .fut-card.szf-approved-deniz-card::after{display:none!important}
+.detail-sidebar .szf-jersey-reverse .fut-card.szf-approved-deniz-card > img{
+ display:block!important;width:100%!important;height:100%!important;
+ object-fit:contain!important;position:static!important;transform:none!important;
+ opacity:1!important;filter:none!important;
+}

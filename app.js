@@ -1806,7 +1806,7 @@ function orderedAssessmentPlayers(){
  return currentCards().filter(c=>String(c.id)!==String(user?.id)).sort((a,b)=>{
   const r=rank(a)-rank(b);
   return r||String(a.display_name||'').localeCompare(String(b.display_name||''),'tr');
- });
+ }).concat(currentCards().filter(c=>String(c.id)===String(user?.id)));
 }
 function focusAssessmentFirst(){
  const list=orderedAssessmentPlayers();
@@ -1827,6 +1827,12 @@ function renderAssessment(){
  if(!everyone.length)return sectionHead('Oyuncu Değerlendir','Değerlendirilecek oyuncu bulunmuyor.');
  weeklyIndex=Math.max(0,Math.min(weeklyIndex,everyone.length-1));
  const c=everyone[weeklyIndex],f=getFeatures(c),vote=myVotes.find(v=>String(v.target_id)===String(c.id));
+ if(String(c.id)===String(user.id)){
+  const picker='<select id="v70Target" class="text-input">'+everyone.map((p,i)=>'<option value="'+i+'" '+(i===weeklyIndex?'selected':'')+'>'+esc(formatPersonName(p.display_name))+(String(p.id)===String(user.id)?' · Ben':'')+'</option>').join('')+'</select>';
+  return sectionHead('Oyuncu Değerlendir','Kendi kartını görüntüleyebilirsin; kendine puan veremezsin.',picker)
+   +'<div class="assessment-layout"><div class="assessment-preview"><p class="soft">'+Number(c.v70_count??c.voter_count??0)+'/10 değerlendirme tamamlandı</p>'+assessmentCardHTML(c)+'</div><div class="assessment-panel"><h3>'+esc(formatPersonName(c.display_name))+'</h3><p class="notice">🔒 Kendine oy veremezsin. Bu ekran yalnızca kendi değerlendirmeni görüntülemek içindir.</p><div class="mode-buttons"><button type="button" class="btn ghost" data-assess-prev>← Önceki</button><button type="button" class="btn lime" disabled aria-disabled="true">Son oyuncudasın</button></div></div></div>';
+ }
+
  const permission=assessmentPermission(c.id);
  const savedChange=permission.mode==='match'?myMatchRatingChanges.find(x=>String(x.target_id)===String(c.id)&&String(x.match_id)===String(permission.match.id)):null;
  const baseline=savedChange?.base_scores?.length===6?savedChange.base_scores:vote?.scores;

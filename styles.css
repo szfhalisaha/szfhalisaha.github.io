@@ -1412,3 +1412,15 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-stats-body .szf-record-card p{border-top:1px solid #34553c;padding-top:9px}
 .szf-stats-body .szf-record-card p span{color:#adc5b0!important;opacity:1}
 @media(max-width:650px){.szf-stats-body .szf-records-grid{grid-template-columns:1fr}}
+
+
+/* Records share the dark-green ranking list visual system; no white cards. */
+.szf-stats-body .szf-record-list{display:flex;flex-direction:column;gap:9px;width:100%;max-width:900px}
+.szf-stats-body .szf-record-entry{background:#142e20;color:#e8f3e4;border:1px solid #34553c;border-radius:12px;padding:14px 17px}
+.szf-stats-body .szf-record-heading{display:flex;justify-content:space-between;align-items:center;gap:14px;border-bottom:1px solid #34553c;padding-bottom:10px}
+.szf-stats-body .szf-record-heading strong{color:#e8f3e4;font-size:15px}
+.szf-stats-body .szf-record-heading span{color:#d6fca5;font-size:19px;font-weight:800;white-space:nowrap}
+.szf-stats-body .szf-record-holders>div{display:flex;justify-content:space-between;gap:12px;padding-top:9px;align-items:center}
+.szf-stats-body .szf-record-holders b{color:#e8f3e4;font-size:14px}
+.szf-stats-body .szf-record-holders small{color:#adc5b0;text-align:right}
+@media(max-width:550px){.szf-stats-body .szf-record-entry{padding:12px}.szf-stats-body .szf-record-heading span{font-size:16px}}

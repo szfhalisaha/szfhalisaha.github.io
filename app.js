@@ -1511,8 +1511,8 @@ function szfPlayerDuel(){
   }
  }
  const nameA=esc(formatPersonName(first.display_name)),nameB=esc(formatPersonName(second.display_name));
- const rivalry='<div class="szf-duel-head-to-head"><h3>⚔️ Rekabet Geçmişi</h3><p>Rakip oldukları maç: <b>'+against+'</b></p>'+(against?'<div class="szf-duel-score"><span>'+nameA+'<b>'+firstWins+'</b></span><span>Beraberlik<b>'+draws+'</b></span><span>'+nameB+'<b>'+secondWins+'</b></span></div>':'<p class="soft">Henüz birbirlerine rakip olmadılar.</p>')+'</div>';
- const teammate='<div class="szf-duel-head-to-head"><h3>🤝 Takım Arkadaşlığı</h3><p>Birlikte oynadıkları maç: <b>'+together+'</b></p>'+(together?'<div class="szf-duel-teammate-grid"><span>Galibiyet<b>'+togetherWins+'</b></span><span>Beraberlik<b>'+togetherDraws+'</b></span><span>Mağlubiyet<b>'+togetherLosses+'</b></span><span>Galibiyet oranı<b>%'+(100*togetherWins/together).toLocaleString('tr-TR',{maximumFractionDigits:1})+'</b></span></div>':'<p class="soft">Henüz aynı takımda oynamadılar.</p>')+'</div>';
+ const rivalry='<div class="szf-duel-head-to-head"><h3>⚔️ Rekabet</h3><div class="szf-duel-compact-grid"><div><b>'+against+'</b><small>Rakip maç</small></div><div><b>'+firstWins+'</b><small>'+nameA+' galibiyet</small></div><div><b>'+draws+'</b><small>Beraberlik</small></div><div><b>'+secondWins+'</b><small>'+nameB+' galibiyet</small></div></div></div>';
+ const teammate='<div class="szf-duel-head-to-head"><h3>🤝 Takım Arkadaşlığı</h3><div class="szf-duel-compact-grid"><div><b>'+together+'</b><small>Birlikte maç</small></div><div><b>'+togetherWins+'</b><small>Galibiyet</small></div><div><b>'+togetherDraws+'</b><small>Beraberlik</small></div><div><b>'+togetherLosses+'</b><small>Mağlubiyet</small></div></div><p class="szf-duel-compact-rate">Birlikte galibiyet oranı: <strong>%'+(together?(100*togetherWins/together).toLocaleString('tr-TR',{maximumFractionDigits:1}):'0')+'</strong></p></div>';
  return select+'<div class="szf-duel-head"><strong>'+nameA+'</strong><span>⚔️</span><strong>'+nameB+'</strong></div><div class="table-wrap szf-duel-table"><table><tbody>'+rows+'</tbody></table></div>'+rivalry+teammate;
 }
 function renderStatistics(){

@@ -1363,12 +1363,12 @@ function szfStatisticsRecords(){
  add('🚀 Bir maçta en çok gol katkısı','katkı',contributions);
  const winStreaks=[],lossStreaks=[];
  for(const c of cards){
-  let wins=0,losses=0;
+  let winDates=[],lossDates=[];
   for(const res of playerStreakData(c.id).results){
-   wins=res.outcome==='G'?wins+1:0;
-   losses=res.outcome==='M'?losses+1:0;
-   if(wins)winStreaks.push({name:c.display_name,value:wins,date:res.date});
-   if(losses)lossStreaks.push({name:c.display_name,value:losses,date:res.date});
+   winDates=res.outcome==='G'?[...winDates,res.date]:[];
+   lossDates=res.outcome==='M'?[...lossDates,res.date]:[];
+   if(winDates.length)winStreaks.push({name:c.display_name,value:winDates.length,dates:[...winDates]});
+   if(lossDates.length)lossStreaks.push({name:c.display_name,value:lossDates.length,dates:[...lossDates]});
   }
  }
  add('🔥 En uzun galibiyet serisi','maç',winStreaks);

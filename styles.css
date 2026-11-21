@@ -1462,3 +1462,9 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 
 /* Oyuncu Düellosu: sol oyuncunun istatistik değerlerini sağa yasla */
 .szf-duel-table td:first-child{text-align:right;padding-right:22px}
+
+
+.szf-duel-teammate-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;text-align:center;margin-top:15px}
+.szf-duel-teammate-grid span{display:flex;flex-direction:column;gap:8px;align-items:center;font-size:13px;color:#d9edda}
+.szf-duel-teammate-grid b{font-size:24px;color:#d6fca5}
+@media(max-width:550px){.szf-duel-teammate-grid{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:16px}}

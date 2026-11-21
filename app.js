@@ -158,7 +158,7 @@ function szfEditorCardPanel(){
  const initial=szfEditorDraft&&szfEditorDraft.id===String(selected.id)?szfEditorDraft:{id:String(selected.id),mode,x:Number(stored?.x??0),y:Number(stored?.y??0),scale:Number(stored?.scale??1)};
  const opt=players.map(p=>`<option value="${attrs(p.id)}" ${String(p.id)===String(selected.id)?'selected':''}>${esc(p.display_name)}</option>`).join('');
  const available=szfCutoutAvailable(card);
- const cutoutOption=available?'<option value="cutout">Arka plansız fotoğraf</option>':'';
+ const cutoutOption=(available?'<option value="cutout">Arka plansız fotoğraf</option>':'')+(String(mode).startsWith('manual:')?`<option value="${attrs(mode)}">Manuel düzenlenen fotoğraf</option>`:'');
  return `<section class="profile-panel szf-card-editor" id="szf-card-editor"><h3>🖼️ Kart Fotoğrafı Düzenle</h3>
  <p class="soft">Sadece yöneticiler düzenler. Deniz kartını örnek alarak fotoğrafı büyüt, taşı ve kaydet. Orijinal dosya değişmez.</p>
  <div class="szf-editor-layout">
@@ -171,7 +171,7 @@ function szfEditorCardPanel(){
    <div class="szf-editor-actions"><button type="button" class="btn lime" id="szf-editor-save">Kaydet</button>
    <button type="button" class="btn ghost" id="szf-editor-reset">Sıfırla</button>
    <button type="button" class="btn ghost" id="szf-editor-original">Eski fotoğrafa dön</button></div>
-   <details id="szf-mask-panel" class="szf-mask-panel"><summary>🖌️ Manuel arka plan silgisi (yalnızca yönetici)</summary><p class="micro">Fotoğraf üzerinde parmağınla veya fareyle sil. Kaydettiğinde oyuncu kartı güncellenir.</p><canvas aria-label="Fotoğraf silme alanı"></canvas><label>Fırça boyutu <input id="szf-mask-size" type="range" min="4" max="90" value="28"></label><div class="szf-editor-actions"><button type="button" class="btn ghost" id="szf-mask-erase">Silgi</button><button type="button" class="btn ghost" id="szf-mask-undo">Geri Al</button><button type="button" class="btn ghost" id="szf-mask-reload">Baştan Başla</button><button type="button" class="btn lime" id="szf-mask-save">Şeffaf Fotoğrafı Kaydet</button></div><p class="micro" id="szf-mask-status" role="status"></p></details>
+   <details id="szf-mask-panel" class="szf-mask-panel"><summary>🖌️ Manuel arka plan silgisi (yalnızca yönetici)</summary><p class="micro">Fotoğraf üzerinde parmağınla veya fareyle sil. Kaydettiğinde oyuncu kartı güncellenir.</p><canvas aria-label="Fotoğraf silme alanı"></canvas><label>Fırça boyutu <input id="szf-mask-size" type="range" min="4" max="90" value="28"></label><div class="szf-editor-actions"><button type="button" class="btn ghost" id="szf-mask-erase">Silgi</button><button type="button" class="btn ghost" id="szf-mask-restore">Geri Getir</button><button type="button" class="btn ghost" id="szf-mask-undo">Geri Al</button><button type="button" class="btn ghost" id="szf-mask-reload">Baştan Başla</button><button type="button" class="btn lime" id="szf-mask-save">Şeffaf Fotoğrafı Kaydet</button></div><p class="micro" id="szf-mask-status" role="status"></p></details>
    <p class="micro" id="szf-editor-status" role="status">Önizleme değişiklikleri kaydedilene kadar yalnızca burada görünür.</p>
   </div>
   <div class="szf-editor-preview"><p class="micro">Canlı kart önizlemesi</p><div id="szf-editor-preview-card" class="szf-editor-card-host">${cardHTML(card,true)}</div></div>
@@ -206,7 +206,7 @@ function szfEditorBind(){
   const source=publicProfiles.find(p=>String(p.id)===String(selected.id))?.avatar_path;
   imageEl.src=szfPlayerPhotoUrl(c,source,current.mode);
  };
- controls.mode.value=current.mode==='cutout'&&szfCutoutAvailable(selected)?'cutout':'original';
+ controls.mode.value=String(current.mode).startsWith('manual:')?current.mode:current.mode==='cutout'&&szfCutoutAvailable(selected)?'cutout':'original';
  controls.scale.value=Math.round(current.scale*100);controls.x.value=current.x;controls.y.value=current.y;
  Object.values(controls).forEach(el=>el?.addEventListener('input',paint));
  area.querySelector('#szf-editor-player')?.addEventListener('change',event=>{szfEditorPlayerId=event.target.value;szfEditorDraft=null;render()});
@@ -237,19 +237,19 @@ function szfManualMaskEditor(area,selected,controls,paint){
  const wrap=area.querySelector('#szf-mask-panel');if(!wrap)return;
  const canvas=wrap.querySelector('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
  const status=wrap.querySelector('#szf-mask-status');
- let history=[],drawing=false,tool='erase',imageLoaded=false;
+ let history=[],drawing=false,tool='erase',imageLoaded=false,originalCanvas=document.createElement('canvas');
  const setStatus=t=>{status.textContent=t};
  const source=()=>{const c=currentCards().find(p=>String(p.id)===String(selected.id))||selected;return szfPlayerPhotoUrl(c,selected.avatar_path,controls.mode.value)};
- const load=async()=>{try{const url=source();if(!url)throw Error('Fotoğraf bulunamadı');const img=new Image();img.crossOrigin='anonymous';await new Promise((ok,fail)=>{img.onload=ok;img.onerror=()=>fail(Error('Fotoğraf yüklenemedi'));img.src=url});canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0);history=[];imageLoaded=true;setStatus('Fırçayla sil; geri almak için Geri Al kullan.');}catch(e){imageLoaded=false;setStatus('Düzenleme açılamadı: '+e.message)}};
+ const load=async()=>{try{const url=source();if(!url)throw Error('Fotoğraf bulunamadı');const img=new Image();img.crossOrigin='anonymous';await new Promise((ok,fail)=>{img.onload=ok;img.onerror=()=>fail(Error('Fotoğraf yüklenemedi'));img.src=url});canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0);originalCanvas.width=canvas.width;originalCanvas.height=canvas.height;originalCanvas.getContext('2d').drawImage(img,0,0);history=[];imageLoaded=true;setStatus('Fırçayla sil; geri almak için Geri Al kullan.');}catch(e){imageLoaded=false;setStatus('Düzenleme açılamadı: '+e.message)}};
  const position=e=>{const rect=canvas.getBoundingClientRect();return {x:(e.clientX-rect.left)*canvas.width/rect.width,y:(e.clientY-rect.top)*canvas.height/rect.height}};
- const stroke=(a,b)=>{const size=Number(wrap.querySelector('#szf-mask-size').value)*canvas.width/400;ctx.save();ctx.globalCompositeOperation=tool==='erase'?'destination-out':'source-over';ctx.lineWidth=size;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.restore()};
+ const stroke=(a,b)=>{const size=Number(wrap.querySelector('#szf-mask-size').value)*canvas.width/400;ctx.save();if(tool==='restore'){ctx.beginPath();ctx.lineWidth=size;ctx.lineCap='round';ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.clip();ctx.drawImage(originalCanvas,0,0)}else{ctx.globalCompositeOperation='destination-out';ctx.lineWidth=size;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}ctx.restore()};
  let previous=null;
  canvas.addEventListener('pointerdown',e=>{if(!imageLoaded)return;e.preventDefault();history.push(ctx.getImageData(0,0,canvas.width,canvas.height));if(history.length>12)history.shift();drawing=true;canvas.setPointerCapture(e.pointerId);previous=position(e);stroke(previous,previous)});
  canvas.addEventListener('pointermove',e=>{if(!drawing)return;e.preventDefault();const p=position(e);stroke(previous,p);previous=p});
  const stop=()=>{drawing=false;previous=null};canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);
  wrap.querySelector('#szf-mask-undo').onclick=()=>{const prev=history.pop();if(prev)ctx.putImageData(prev,0,0)};
  wrap.querySelector('#szf-mask-erase').onclick=()=>{tool='erase';setStatus('Silgi etkin')};
- wrap.querySelector('#szf-mask-restore').onclick=()=>{tool='restore';setStatus('Geri getirme: Orijinal fotoğrafı yeniden yükleyip silmeyi tekrar yapabilir veya Geri Al kullanabilirsin.');tool='erase'};
+ wrap.querySelector('#szf-mask-restore').onclick=()=>{tool='restore';setStatus('Geri getirme fırçası etkin')};
  wrap.querySelector('#szf-mask-reload').onclick=load;
  wrap.querySelector('#szf-mask-save').onclick=async()=>{if(!adminInfo||!user||!imageLoaded)return;const btn=wrap.querySelector('#szf-mask-save');btn.disabled=true;setStatus('Şeffaf fotoğraf kaydediliyor…');try{
  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('PNG oluşturulamadı');

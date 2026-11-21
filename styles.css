@@ -1373,3 +1373,9 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
  .fut-card:has(.szf-split-name){grid-template-rows:minmax(0,1fr) 36px auto 20px!important}
  .players-grid .fut-card .fut-name:has(.szf-split-name){height:36px!important;min-height:36px!important;font-size:clamp(10px,2.7vw,13px)!important}
 }
+
+/* Admin-only manual transparent portrait editor */
+.szf-mask-panel{margin:16px 0;padding:12px;border:1px solid #78965b88;border-radius:12px}
+.szf-mask-panel summary{cursor:pointer;font-weight:800;margin-bottom:10px}
+.szf-mask-panel canvas{display:block;width:min(100%,400px);height:auto;max-height:480px;object-fit:contain;touch-action:none;cursor:crosshair;background:repeating-conic-gradient(#d8d8d8 0 25%,#fff 0 50%) 0 0/24px 24px;border-radius:8px;margin:12px auto}
+.szf-mask-panel .szf-editor-actions{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}

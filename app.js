@@ -1440,27 +1440,25 @@ function szfStatisticsRecords(){
 
 function szfGoldenGlove(){
  const totals=new Map();
- for(const entry of szfGoalkeepers){
-  const match=leagueMatches.find(m=>String(m.id)===String(entry.match_id)&&m.status==='completed');
-  if(!match||!['red','white'].includes(entry.team_color))continue;
-  const conceded=entry.team_color==='red'?match.white_score:match.red_score;
-  if(conceded==null||conceded===''||!Number.isFinite(Number(conceded)))continue;
-  const player=currentCards().find(c=>String(c.id)===String(entry.player_id))||publicProfiles.find(p=>String(p.id)===String(entry.player_id));
-  if(!player)continue;
-  const id=String(entry.player_id);
-  if(!totals.has(id))totals.set(id,{name:player.display_name,played:0,conceded:0});
-  const row=totals.get(id);row.played++;row.conceded+=Number(conceded);
+ const cards=currentCards();
+ for(const match of leagueMatches.filter(m=>m.status==='completed')){
+  for(const color of ['red','white']){
+   const conceded=color==='red'?match.white_score:match.red_score;
+   if(conceded==null||conceded===''||!Number.isFinite(Number(conceded)))continue;
+   const roster=[
+    ...weeklyPlayers.filter(p=>String(p.match_id)===String(match.id)&&p.team_color===color).map(p=>{const c=cards.find(c=>String(c.id)===String(p.player_id))||publicProfiles.find(c=>String(c.id)===String(p.player_id));return {id:String(p.player_id),name:c?.display_name||'Oyuncu',position:c?.position||'ORT',secondary_position:c?.secondary_position||''}}),
+    ...extras.guests.filter(g=>String(g.match_id)===String(match.id)&&g.team_color===color&&!weeklyPlayers.some(p=>String(p.match_id)===String(match.id)&&String(p.player_id)===String(linkedPlayerId(g)))).map(g=>{const c=linkedCard(g);return {id:String(linkedPlayerId(g)||'guest:'+g.id),name:c?.display_name||guestDisplayName(g),position:c?.position||g.position||'ORT',secondary_position:c?.secondary_position||g.secondary_position||''}})
+   ];
+   if(roster.length!==7)continue;
+   const keeper=pitchFormation(roster).find(p=>p.assigned_role==='KL');
+   if(!keeper)continue;
+   const key=String(keeper.id);
+   if(!totals.has(key))totals.set(key,{name:keeper.name,played:0,conceded:0});
+   const row=totals.get(key);row.played++;row.conceded+=Number(conceded);
+  }
  }
  const ranked=[...totals.values()].sort((a,b)=>a.conceded/a.played-b.conceded/b.played||b.played-a.played||a.name.localeCompare(b.name,'tr'));
- return '<p class="soft">Yalnızca maçta kaleci olarak kaydedilen oyuncular listelenir. En az 1 maç yeterlidir; maç başına daha az gol yiyen üsttedir.</p>'+(ranked.length?'<div class="table-wrap"><table><thead><tr><th>#</th><th>KALECİ</th><th>MAÇ</th><th>YENİLEN GOL</th><th>MAÇ BAŞINA</th></tr></thead><tbody>'+ranked.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(formatPersonName(x.name))+'</td><td>'+x.played+'</td><td>'+x.conceded+'</td><td class="accent">'+(x.conceded/x.played).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td></tr>').join('')+'</tbody></table></div>':'<p class="empty">Henüz kaleci kaydı bulunan tamamlanmış maç yok.</p>');
-}
-async function szfSaveGoalkeeper(matchId,color,playerId){
- if(!adminInfo||!db)return;
- let result;
- if(!playerId)result=await db.from('szf_match_goalkeepers').delete().eq('match_id',matchId).eq('team_color',color);
- else result=await db.from('szf_match_goalkeepers').upsert({match_id:matchId,team_color:color,player_id:playerId},{onConflict:'match_id,team_color'});
- if(result.error)return toast('Kaleci kaydedilemedi: '+formatError(result.error),true);
- await loadLeagueData();render();toast('Kaleci kaydedildi.');
+ return '<p class="soft">Kaleciler, maçın kayıtlı 1-3-2-1 dizilişindeki KL pozisyonundan otomatik belirlenir. En az 1 maç yeterlidir; maç başına daha az gol yiyen üsttedir.</p>'+(ranked.length?'<div class="table-wrap"><table><thead><tr><th>#</th><th>KALECİ</th><th>MAÇ</th><th>YENİLEN GOL</th><th>MAÇ BAŞINA</th></tr></thead><tbody>'+ranked.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(formatPersonName(x.name))+'</td><td>'+x.played+'</td><td>'+x.conceded+'</td><td class="accent">'+(x.conceded/x.played).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td></tr>').join('')+'</tbody></table></div>':'<p class="empty">Kaleci hesaplanabilecek tamamlanmış maç bulunamadı.</p>');
 }
 function renderStatistics(){
  const stats=currentCards().map(p=>({player:p,...playerWinStats(p.id)})).sort((a,b)=>(b.played?b.pct:-1)-(a.played?a.pct:-1)||b.played-a.played||String(a.player.display_name).localeCompare(String(b.player.display_name),'tr'));
@@ -2162,7 +2160,7 @@ function matchBlock(m){
  ${!completed&&m.status==='open'?`<button class="btn small ghost" data-open-roster-picker="${attrs(m.id)}">＋ Oyuncu Ekle</button>`:''}
 
  ${scoreEntryReady&&completed&&adminInfo&&!agedMatch?`<button class="btn small lime" data-score-editor="${attrs(m.id)}">⚽ Sonuç, Gol ve Asist Düzenle</button>`:''}${completed&&m.red_score!=null&&m.white_score!=null?`<button class="btn small lime" data-share-match="${attrs(m.id)}">↗ Sonucu Paylaş</button>${szfNewspaperData(m)?`<button type="button" class="btn small ghost" data-szf-newspaper="${attrs(szfEmreSpecialActive()&&String(szfEmreSpecialMatch()?.id)===String(m.id)?'emre-17-kasim-2026':m.id)}">📰 Gazeteyi Oku</button>`:''} `:''}
- ${completed&&adminInfo?`<div class="szf-keeper-editor"><strong>🧤 Maçın kalecileri</strong>${['red','white'].map(color=>{const options=[...people.map(p=>({id:p.player_id,color:p.team_color,name:currentCards().find(c=>String(c.id)===String(p.player_id))?.display_name})),...guests.filter(g=>linkedPlayerId(g)).map(g=>({id:linkedPlayerId(g),color:g.team_color,name:guestDisplayName(g)}))].filter(p=>p.color===color&&p.name);const saved=szfGoalkeepers.find(g=>String(g.match_id)===String(m.id)&&g.team_color===color)?.player_id||'';return '<label>'+(color==='red'?'🔴 Kırmızı':'⚪ Beyaz')+' kaleci <select data-szf-keeper-match="'+attrs(m.id)+'" data-szf-keeper-color="'+color+'"><option value="">Seçilmedi</option>'+options.map(p=>'<option value="'+attrs(p.id)+'" '+(String(saved)===String(p.id)?'selected':'')+'>'+esc(formatPersonName(p.name))+'</option>').join('')+'</select></label>'}).join('')}</div>`:''}
+
  ${mayEditMatch&&!agedMatch?`<button class="btn small ghost" data-edit-match="${attrs(m.id)}">✎ Düzenle</button>`:''}
  ${canDeleteMatch?`<button class="btn small ghost" data-delete-match="${attrs(m.id)}">Maçı Sil</button>`:''}
  ${completed&&adminInfo&&!agedMatch?`<label class="vest-record">🎽 Yelek giyen takım <select data-vest-match="${attrs(m.id)}"><option value="" ${!m.vest_team?'selected':''}>Henüz girilmedi</option><option value="red" ${m.vest_team==='red'?'selected':''}>🔴 Kırmızı</option><option value="white" ${m.vest_team==='white'?'selected':''}>⚪ Beyaz</option></select></label>`:completed?`<span class="vest-record">🎽 Yelek giyen takım: ${m.vest_team==='red'?'🔴 Kırmızı':m.vest_team==='white'?'⚪ Beyaz':'Henüz girilmedi'}</span>`:''}
@@ -2461,7 +2459,6 @@ function bindContent(){
   $('rivalryCompare')?.addEventListener('click',()=>{if(!rivalryLeft||!rivalryRight||rivalryLeft===rivalryRight)return;rivalryCompared=true;render()});
  }
 
- document.querySelectorAll('[data-szf-keeper-match]').forEach(el=>el.addEventListener('change',()=>szfSaveGoalkeeper(el.dataset.szfKeeperMatch,el.dataset.szfKeeperColor,el.value)));
  document.querySelectorAll('[data-stats-tab]').forEach(btn=>btn.addEventListener('click',()=>{selectedStatsTab=btn.dataset.statsTab;render()}));
  document.querySelector('[data-stats-sort]')?.addEventListener('change',el=>{statsSortMode[el.target.dataset.statsSort]=el.target.value;render()});
  document.querySelectorAll('[data-stats-sort-head]').forEach(btn=>btn.addEventListener('click',()=>{statsSortMode[btn.dataset.statsSortFor]=btn.dataset.statsSortHead;render()}));

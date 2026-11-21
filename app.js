@@ -1489,18 +1489,31 @@ function szfPlayerDuel(){
  const lines=[['Oynanan maç','played'],['Galibiyet','wins'],['Galibiyet yüzdesi','pct'],['Gol','goals'],['Asist','assists'],['Gol katkısı','contributions'],['Maçın Adamı','mvp']];
  a.contributions=a.goals+a.assists;b.contributions=b.goals+b.assists;
  const rows=lines.map(([label,key])=>'<tr><td class="'+(a[key]>b[key]?'accent':'')+'">'+fmt(a[key],key==='pct')+'</td><th>'+label+'</th><td class="'+(b[key]>a[key]?'accent':'')+'">'+fmt(b[key],key==='pct')+'</td></tr>').join('');
- let against=0,firstWins=0,secondWins=0,draws=0,together=0;
+ let against=0,firstWins=0,secondWins=0,draws=0,together=0,togetherWins=0,togetherDraws=0,togetherLosses=0;
  for(const [mid,e] of entryA){
   const other=entryB.get(mid);if(!other)continue;
   if(!['red','white'].includes(e.team_color)||!['red','white'].includes(other.team_color))continue;
-  if(e.team_color===other.team_color){together++;continue}
   const m=finished.get(mid);
-  const valid=m.red_score!=null&&m.white_score!=null&&Number.isFinite(Number(m.red_score))&&Number.isFinite(Number(m.white_score));
-  const outcome=valid?(Number(m.red_score)>Number(m.white_score)?'red':Number(m.red_score)<Number(m.white_score)?'white':'draw'):m.result;
+  const red=m.red_score,white=m.white_score;
+  const valid=red!==null&&red!==undefined&&red!==''&&white!==null&&white!==undefined&&white!==''&&Number.isFinite(Number(red))&&Number.isFinite(Number(white));
+  const outcome=valid?(Number(red)>Number(white)?'red':Number(red)<Number(white)?'white':'draw'):m.result;
   if(!['red','white','draw'].includes(outcome))continue;
-  against++;if(outcome==='draw')draws++;else if(outcome===e.team_color)firstWins++;else secondWins++;
+  if(e.team_color===other.team_color){
+   together++;
+   if(outcome==='draw')togetherDraws++;
+   else if(outcome===e.team_color)togetherWins++;
+   else togetherLosses++;
+  }else{
+   against++;
+   if(outcome==='draw')draws++;
+   else if(outcome===e.team_color)firstWins++;
+   else secondWins++;
+  }
  }
- return select+'<div class="szf-duel-head"><strong>'+esc(formatPersonName(first.display_name))+'</strong><span>⚔️</span><strong>'+esc(formatPersonName(second.display_name))+'</strong></div><div class="table-wrap szf-duel-table"><table><tbody>'+rows+'</tbody></table></div><div class="szf-duel-head-to-head"><h3>⚔️ Karşılıklı maçlar</h3><p>Rakip oldukları maç: <b>'+against+'</b> · Aynı takımda: <b>'+together+'</b></p><div class="szf-duel-score"><span>'+esc(formatPersonName(first.display_name))+'<b>'+firstWins+'</b></span><span>Beraberlik<b>'+draws+'</b></span><span>'+esc(formatPersonName(second.display_name))+'<b>'+secondWins+'</b></span></div></div>';
+ const nameA=esc(formatPersonName(first.display_name)),nameB=esc(formatPersonName(second.display_name));
+ const rivalry='<div class="szf-duel-head-to-head"><h3>⚔️ Rekabet Geçmişi</h3><p>Rakip oldukları maç: <b>'+against+'</b></p>'+(against?'<div class="szf-duel-score"><span>'+nameA+'<b>'+firstWins+'</b></span><span>Beraberlik<b>'+draws+'</b></span><span>'+nameB+'<b>'+secondWins+'</b></span></div>':'<p class="soft">Henüz birbirlerine rakip olmadılar.</p>')+'</div>';
+ const teammate='<div class="szf-duel-head-to-head"><h3>🤝 Takım Arkadaşlığı</h3><p>Birlikte oynadıkları maç: <b>'+together+'</b></p>'+(together?'<div class="szf-duel-teammate-grid"><span>Galibiyet<b>'+togetherWins+'</b></span><span>Beraberlik<b>'+togetherDraws+'</b></span><span>Mağlubiyet<b>'+togetherLosses+'</b></span><span>Galibiyet oranı<b>%'+(100*togetherWins/together).toLocaleString('tr-TR',{maximumFractionDigits:1})+'</b></span></div>':'<p class="soft">Henüz aynı takımda oynamadılar.</p>')+'</div>';
+ return select+'<div class="szf-duel-head"><strong>'+nameA+'</strong><span>⚔️</span><strong>'+nameB+'</strong></div><div class="table-wrap szf-duel-table"><table><tbody>'+rows+'</tbody></table></div>'+rivalry+teammate;
 }
 function renderStatistics(){
  const stats=currentCards().map(p=>({player:p,...playerWinStats(p.id)})).sort((a,b)=>(b.played?b.pct:-1)-(a.played?a.pct:-1)||b.played-a.played||String(a.player.display_name).localeCompare(String(b.player.display_name),'tr'));

@@ -1391,3 +1391,12 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 
 
 .szf-records-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.szf-record-card{border:1px solid var(--line,#d7d7d7);border-radius:13px;padding:17px;background:var(--surface,#fff)}.szf-record-card h3{font-size:16px;margin:0 0 10px}.szf-record-value{font-size:32px;font-weight:900;margin:8px 0 14px;color:var(--accent,#b62c36)}.szf-record-value small{font-size:14px;font-weight:600}.szf-record-card p{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:8px 0;font-size:14px}.szf-record-card p span{font-size:12px;opacity:.7;text-align:right}@media(max-width:650px){.szf-records-grid{grid-template-columns:1fr}}
+
+
+/* Records cards: enforce readable contrast on the light card background. */
+.szf-stats-body .szf-records-grid .szf-record-card{background:#fffdf7;color:#202b25;border:1px solid #d5d6ce}
+.szf-stats-body .szf-record-card h3{color:#263d30!important;opacity:1}
+.szf-stats-body .szf-record-card p,.szf-stats-body .szf-record-card p strong{color:#25362c!important;opacity:1}
+.szf-stats-body .szf-record-card p span{color:#526156!important;opacity:1}
+.szf-stats-body .szf-record-card .szf-record-value{color:#ba3344!important}
+.szf-stats-body .szf-record-card .szf-record-value small{color:#703b46!important}

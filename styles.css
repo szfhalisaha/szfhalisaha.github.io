@@ -1293,3 +1293,22 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .detail-sidebar .szf-jersey-reverse .szf-kit-card .szf-kit-flag{
  display:none!important;
 }
+
+/* v292 — Keep extra-long player names inside the shield, including Bedirhan and Ahmet Hakan. */
+.players-grid .fut-card .fut-name.szf-name-very-long{
+  position:relative!important;
+  left:auto!important;right:auto!important;
+  width:100%!important;max-width:100%!important;
+  transform:none!important;
+  font-size:clamp(11px,1.15vw,14px)!important;
+  letter-spacing:-.055em!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+@media(max-width:720px){
+  .players-grid .fut-card .fut-name.szf-name-very-long{
+    font-size:clamp(10px,3.05vw,13px)!important;
+    letter-spacing:-.07em!important;
+  }
+}

@@ -1327,7 +1327,7 @@ function szfStatisticsRecords(){
  const cards=currentCards();
  const matchById=new Map(matches.map(m=>[String(m.id),m]));
  const records=[];
- const add=(title,unit,entries)=>{if(!entries.length)return;const max=Math.max(...entries.map(e=>e.value));if(!Number.isFinite(max)||max<=0)return;records.push({title,value:max,unit,holders:[...Map.groupBy(entries.filter(e=>e.value===max),e=>String(e.name).trim().toLocaleLowerCase('tr-TR')).values()].map(group=>({name:group[0].name,dates:[...new Set(group.map(e=>e.date).filter(Boolean).map(d=>matchDateText(d)))]}))})};
+ const add=(title,unit,entries)=>{if(!entries.length)return;const max=Math.max(...entries.map(e=>e.value));if(!Number.isFinite(max)||max<=0)return;records.push({title,value:max,unit,holders:[...entries.filter(e=>e.value===max).reduce((map,e)=>{const key=String(e.name).trim().toLocaleLowerCase('tr-TR');if(!map.has(key))map.set(key,[]);map.get(key).push(e);return map},new Map()).values()].map(group=>({name:group[0].name,dates:[...new Set(group.map(e=>e.date).filter(Boolean).map(d=>matchDateText(d)))]}))})};
  for(const [kind,title] of [['goal','⚽ Bir maçta en çok gol'],['assist','🎯 Bir maçta en çok asist']]){
   const entries=[];
   for(const c of cards)for(const [mid,value] of playerEventCountsByMatch(c.id,kind)){

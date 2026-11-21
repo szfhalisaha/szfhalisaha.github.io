@@ -1321,6 +1321,7 @@ function renderRanking(){
  +(arr.length?`<div class="table-wrap"><table><thead><tr><th>#</th>${h('OYUNCU','name')}${h('MEVKİ','position')}${h('RATING','rating')}${h('HIZ','hiz')}${h('ŞUT','sut')}${h('PAS','pas')}${h('DRİ','dripling')}${h('DEF','defans')}${h('KON','dayaniklilik')}</tr></thead><tbody>${arr.map((p,i)=>`<tr><td class="rank">${i+1}</td><td class="${activeCol==='name'?'active-col':''}">${esc(formatPersonName(p.display_name))}</td><td class="${activeCol==='position'?'active-col':''}">${esc(posName[p.position]||p.position)}</td><td class="${activeCol==='rating'?'active-col accent':'accent'}">${publicRating(p)}</td>${features.map(([key])=>`<td class="${activeCol===key?'active-col':''}">${publicAbility(p,key)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'<div class="empty">Henüz onaylı oyuncu yok.</div>');
 }
 let selectedStatsTab='wins';
+let szfDuelLeft='',szfDuelRight='';
 let statsSortMode={goals:'total',assists:'total'};
 
 function szfStatisticsRecords(){
@@ -1460,6 +1461,47 @@ function szfGoldenGlove(){
  const ranked=[...totals.values()].sort((a,b)=>a.conceded/a.played-b.conceded/b.played||b.played-a.played||a.name.localeCompare(b.name,'tr'));
  return '<p class="soft">Maç başı daha az yiyen üsttedir.</p>'+(ranked.length?'<div class="table-wrap"><table><thead><tr><th>#</th><th>KALECİ</th><th>MAÇ</th><th>YENİLEN GOL</th><th>MAÇ BAŞINA</th></tr></thead><tbody>'+ranked.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(formatPersonName(x.name))+'</td><td>'+x.played+'</td><td>'+x.conceded+'</td><td class="accent">'+(x.conceded/x.played).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td></tr>').join('')+'</tbody></table></div>':'<p class="empty">Kaleci hesaplanabilecek tamamlanmış maç bulunamadı.</p>');
 }
+function szfPlayerDuel(){
+ const players=[...currentCards()].sort((a,b)=>String(a.display_name).localeCompare(String(b.display_name),'tr'));
+ if(!players.length)return '<p class="empty">Karşılaştırılacak oyuncu bulunamadı.</p>';
+ const ids=new Set(players.map(p=>String(p.id)));
+ if(!ids.has(String(szfDuelLeft)))szfDuelLeft=String(players[0].id);
+ if(!ids.has(String(szfDuelRight))||szfDuelRight===szfDuelLeft)szfDuelRight=String(players.find(p=>String(p.id)!==szfDuelLeft)?.id||'');
+ const optionList=chosen=>'<option value="">Oyuncu seç</option>'+players.map(p=>'<option value="'+attrs(p.id)+'" '+(String(p.id)===String(chosen)?'selected':'')+'>'+esc(formatPersonName(p.display_name))+'</option>').join('');
+ const first=players.find(p=>String(p.id)===szfDuelLeft),second=players.find(p=>String(p.id)===szfDuelRight);
+ const select='<div class="szf-duel-pickers"><label>Oyuncu 1<select class="text-input" data-szf-duel="left">'+optionList(szfDuelLeft)+'</select></label><span class="szf-duel-vs">VS</span><label>Oyuncu 2<select class="text-input" data-szf-duel="right">'+optionList(szfDuelRight)+'</select></label></div>';
+ if(!first||!second||String(first.id)===String(second.id))return select+'<p class="soft">Karşılaştırmak için iki farklı oyuncu seç.</p>';
+ const finished=new Map(leagueMatches.filter(m=>m.status==='completed').map(m=>[String(m.id),m]));
+ const entryA=new Map(playerMatchEntries(first.id).filter(e=>finished.has(String(e.match_id))).map(e=>[String(e.match_id),e]));
+ const entryB=new Map(playerMatchEntries(second.id).filter(e=>finished.has(String(e.match_id))).map(e=>[String(e.match_id),e]));
+ const stats=p=>{
+  const w=playerWinStats(p.id);
+  const goals=[...playerEventCountsByMatch(p.id,'goal').values()].reduce((a,b)=>a+b,0);
+  const assists=[...playerEventCountsByMatch(p.id,'assist').values()].reduce((a,b)=>a+b,0);
+  const mvp= [...finished.values()].filter(m=>{
+   const st=mvpStates[String(m.id)];
+   return st?.finished&&Array.isArray(st.winners)&&st.winners.some(x=>{const k=String(typeof x==='object'&&x!==null?(x.target||x.id||x.player_id||''):x);return k==='p:'+p.id||k===String(p.id)||k.toLocaleLowerCase('tr-TR')===String(p.display_name).toLocaleLowerCase('tr-TR')});
+  }).length;
+  return {played:w.played,wins:w.wins,pct:w.pct,goals,assists,mvp};
+ };
+ const a=stats(first),b=stats(second);
+ const fmt=(n,percent=false)=>percent?n.toLocaleString('tr-TR',{maximumFractionDigits:1})+'%':String(n);
+ const lines=[['Oynanan maç','played'],['Galibiyet','wins'],['Galibiyet yüzdesi','pct'],['Gol','goals'],['Asist','assists'],['Gol katkısı','contributions'],['Maçın Adamı','mvp']];
+ a.contributions=a.goals+a.assists;b.contributions=b.goals+b.assists;
+ const rows=lines.map(([label,key])=>'<tr><td class="'+(a[key]>b[key]?'accent':'')+'">'+fmt(a[key],key==='pct')+'</td><th>'+label+'</th><td class="'+(b[key]>a[key]?'accent':'')+'">'+fmt(b[key],key==='pct')+'</td></tr>').join('');
+ let against=0,firstWins=0,secondWins=0,draws=0,together=0;
+ for(const [mid,e] of entryA){
+  const other=entryB.get(mid);if(!other)continue;
+  if(!['red','white'].includes(e.team_color)||!['red','white'].includes(other.team_color))continue;
+  if(e.team_color===other.team_color){together++;continue}
+  const m=finished.get(mid);
+  const valid=m.red_score!=null&&m.white_score!=null&&Number.isFinite(Number(m.red_score))&&Number.isFinite(Number(m.white_score));
+  const outcome=valid?(Number(m.red_score)>Number(m.white_score)?'red':Number(m.red_score)<Number(m.white_score)?'white':'draw'):m.result;
+  if(!['red','white','draw'].includes(outcome))continue;
+  against++;if(outcome==='draw')draws++;else if(outcome===e.team_color)firstWins++;else secondWins++;
+ }
+ return select+'<div class="szf-duel-head"><strong>'+esc(formatPersonName(first.display_name))+'</strong><span>⚔️</span><strong>'+esc(formatPersonName(second.display_name))+'</strong></div><div class="table-wrap szf-duel-table"><table><tbody>'+rows+'</tbody></table></div><div class="szf-duel-head-to-head"><h3>⚔️ Karşılıklı maçlar</h3><p>Rakip oldukları maç: <b>'+against+'</b> · Aynı takımda: <b>'+together+'</b></p><div class="szf-duel-score"><span>'+esc(formatPersonName(first.display_name))+'<b>'+firstWins+'</b></span><span>Beraberlik<b>'+draws+'</b></span><span>'+esc(formatPersonName(second.display_name))+'<b>'+secondWins+'</b></span></div></div>';
+}
 function renderStatistics(){
  const stats=currentCards().map(p=>({player:p,...playerWinStats(p.id)})).sort((a,b)=>(b.played?b.pct:-1)-(a.played?a.pct:-1)||b.played-a.played||String(a.player.display_name).localeCompare(String(b.player.display_name),'tr'));
  const tallyFor=kind=>{
@@ -1478,11 +1520,11 @@ function renderStatistics(){
   const sortHeader=(value,caption)=>`<button type="button" class="szf-stats-sort-heading ${sort===value?'active':''}" data-stats-sort-head="${value}" data-stats-sort-for="${tab}" aria-label="${caption} değerine göre sırala" aria-pressed="${sort===value}">${caption}${sort===value?' ↓':''}</button>`;
   return sortControl+`<div class="table-wrap"><table><thead><tr><th>#</th><th>OYUNCU</th><th>MAÇ</th><th>${sortHeader('total','TOPLAM '+label.toLocaleUpperCase('tr'))}</th><th>${sortHeader('average','MAÇ BAŞINA')}</th></tr></thead><tbody>${entries.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(formatPersonName(x.player.display_name))}</td><td>${x.played}</td><td class="${sort==='total'?'accent':''}">${x.total}</td><td class="${sort==='average'?'accent':''}">${x.avg.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>`).join('')}</tbody></table></div>`;
  };
- const tabs=[['wins','🏆 Galibiyet Yüzdesi'],['goals','⚽ Gol Krallığı'],['assists','🎯 Asist Krallığı'],['keepers','🧤 Altın Eldiven'],['records','📖 Rekorlar Kitabı']];
+ const tabs=[['wins','🏆 Galibiyet Yüzdesi'],['goals','⚽ Gol Krallığı'],['assists','🎯 Asist Krallığı'],['keepers','🧤 Altın Eldiven'],['records','📖 Rekorlar Kitabı'],['duel','⚔️ Oyuncu Düellosu']];
  const legacyTabMap={goals_avg:'goals',assists_avg:'assists'};
  const normalizedTab=legacyTabMap[selectedStatsTab]||selectedStatsTab;
  const active=tabs.some(t=>t[0]===normalizedTab)?normalizedTab:'wins';
- const content=active==='records'?szfStatisticsRecords():active==='keepers'?szfGoldenGlove():active==='wins'
+ const content=active==='duel'?szfPlayerDuel():active==='records'?szfStatisticsRecords():active==='keepers'?szfGoldenGlove():active==='wins'
  ? `<p class="soft">Yalnızca tamamlanmış ve oyuncunun takımı kaydedilmiş maçlar hesaplanır.</p><div class="table-wrap szf-win-table"><table><thead><tr><th>#</th><th>OYUNCU</th><th>MAÇ</th><th>GALİBİYET</th><th>ORAN</th></tr></thead><tbody>${stats.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(formatPersonName(x.player.display_name))}</td><td>${x.played}</td><td>${x.wins}</td><td class="accent">${x.played?x.pct.toLocaleString('tr-TR',{maximumFractionDigits:1})+'%':'—'}</td></tr>`).join('')}</tbody></table></div>`
  :`${active==='goals'?'<p class="soft">Gol sıralamasında toplam gol ve maç başına gol birlikte gösterilir.</p>':'<p class="soft">Asist sıralamasında toplam asist ve maç başına asist birlikte gösterilir.</p>'}${board(active==='goals'?'goal':'assist',active==='goals'?'gol':'asist',active)}`;
  return sectionHead('İstatistikler','Tüm zamanların oyuncu performansları')
@@ -2459,6 +2501,7 @@ function bindContent(){
   $('rivalryCompare')?.addEventListener('click',()=>{if(!rivalryLeft||!rivalryRight||rivalryLeft===rivalryRight)return;rivalryCompared=true;render()});
  }
 
+ document.querySelectorAll('[data-szf-duel]').forEach(el=>el.addEventListener('change',()=>{if(el.dataset.szfDuel==='left')szfDuelLeft=el.value;else szfDuelRight=el.value;render()}));
  document.querySelectorAll('[data-stats-tab]').forEach(btn=>btn.addEventListener('click',()=>{selectedStatsTab=btn.dataset.statsTab;render()}));
  document.querySelector('[data-stats-sort]')?.addEventListener('change',el=>{statsSortMode[el.target.dataset.statsSort]=el.target.value;render()});
  document.querySelectorAll('[data-stats-sort-head]').forEach(btn=>btn.addEventListener('click',()=>{statsSortMode[btn.dataset.statsSortFor]=btn.dataset.statsSortHead;render()}));

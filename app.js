@@ -1157,7 +1157,7 @@ function szfPreviewPaper(match){
  const goalRecord=all[0]?.goals||0;
  const goalHolders=all.filter(p=>goalRecord&&p.goals===goalRecord).map(name);
  const recordNotes=[];
- if(goalRecord)recordNotes.push('Tek maçta '+goalRecord+' gol rekoru '+goalHolders.join(', ')+' adına kayıtlı. Bu hafta bu rekoru kim zorlayacak?');
+ if(goalRecord)recordNotes.push('Tek maçta '+goalRecord+' golle rekoru elinde tutan '+goalHolders.join(', ')+"'i bu hafta kim zorlayacak?");
  const winning=roster.map(p=>({...p,st:streak(p)})).filter(p=>p.st.current>=2).sort((a,b)=>b.st.current-a.st.current);
  if(winning.length)recordNotes.push(name(winning[0])+' '+winning[0].st.current+' maçlık galibiyet serisiyle geliyor; seri devam edecek mi?');
  const losing=roster.map(p=>({...p,loss:lossStreak(p)})).filter(p=>p.loss>=2).sort((a,b)=>b.loss-a.loss);

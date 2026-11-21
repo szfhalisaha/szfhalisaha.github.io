@@ -1312,3 +1312,28 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
     letter-spacing:-.07em!important;
   }
 }
+
+/* v293 — Strict containment for extra-long names: never bleed beyond card edges. */
+.players-grid .fut-card .fut-name.szf-name-very-long,
+.fut-card .fut-name.szf-name-very-long{
+  box-sizing:border-box!important;
+  display:block!important;
+  position:relative!important;
+  left:auto!important;right:auto!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  padding-left:2px!important;padding-right:2px!important;
+  font-size:clamp(10px,1.1vw,13px)!important;
+  letter-spacing:-.065em!important;
+  transform:scaleX(.84)!important;
+  transform-origin:center center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+@media(max-width:720px){
+  .players-grid .fut-card .fut-name.szf-name-very-long,
+  .fut-card .fut-name.szf-name-very-long{
+    font-size:clamp(9px,2.7vw,12px)!important;
+    transform:scaleX(.8)!important;
+  }
+}

@@ -1459,3 +1459,6 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-duel-score span{display:flex;flex-direction:column;gap:7px;font-size:13px}
 .szf-duel-score b{font-size:25px;color:#d6fca5}
 @media(max-width:600px){.szf-duel-pickers{gap:6px}.szf-duel-head{gap:5px;font-size:12px}.szf-duel-score{gap:5px}}
+
+/* Oyuncu Düellosu: sol oyuncunun istatistik değerlerini sağa yasla */
+.szf-duel-table td:first-child{text-align:right;padding-right:22px}

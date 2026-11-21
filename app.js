@@ -1333,7 +1333,8 @@ function szfStatisticsRecords(){
   const grouped=new Map();
   for(const e of entries.filter(e=>e.value===max)){
    const key=String(e.name).trim().toLocaleLowerCase('tr-TR');
-   if(!grouped.has(key))grouped.set(key,{name:e.name,dates:[]});
+   if(!grouped.has(key))grouped.set(key,{name:e.name,dates:[],breakdowns:[]});
+   if(e.breakdown)grouped.get(key).breakdowns.push(e.breakdown);
    if(e.dates)grouped.get(key).dates.push(...e.dates);
    else if(e.date)grouped.get(key).dates.push(e.date);
   }
@@ -1357,10 +1358,15 @@ function szfStatisticsRecords(){
   const g=goals.get(String(c.id)),a=assists.get(String(c.id));
   for(const mid of new Set([...g.keys(),...a.keys()])){
    const m=matchById.get(String(mid));
-   if(m)contributions.push({name:c.display_name,value:(g.get(mid)||0)+(a.get(mid)||0),date:m.match_date});
+   if(m)contributions.push({name:c.display_name,value:(g.get(mid)||0)+(a.get(mid)||0),date:m.match_date,breakdown:(g.get(mid)||0)+' gol, '+(a.get(mid)||0)+' asist'});
   }
  }
  add('🚀 Bir maçta en çok gol katkısı','katkı',contributions);
+ const contributionRecord=records[records.length-1];
+ if(contributionRecord?.title==='🚀 Bir maçta en çok gol katkısı'){
+  const allBreakdowns=[...new Set(contributionRecord.holders.flatMap(h=>h.breakdowns))];
+  if(allBreakdowns.length===1)contributionRecord.detail=allBreakdowns[0];
+ }
  const winStreaks=[],lossStreaks=[];
  for(const c of cards){
   let winDates=[],lossDates=[];
@@ -1428,7 +1434,7 @@ function szfStatisticsRecords(){
  const totalGoals=matches.filter(m=>m.red_score!=null&&m.white_score!=null&&Number.isFinite(Number(m.red_score))&&Number.isFinite(Number(m.white_score))).map(m=>({name:'Kırmızı '+m.red_score+' – '+m.white_score+' Beyaz',value:Number(m.red_score)+Number(m.white_score),date:m.match_date}));
  add('🥅 En gollü karşılaşma','gol',totalGoals);
  if(!records.length)return '<p class="soft">Henüz hesaplanabilecek tamamlanmış maç kaydı bulunmuyor.</p>';
- return '<p class="soft">Rekorlar tamamlanmış maçlardan hesaplanır; eşit rekor sahipleri birlikte gösterilir. Rekor sahibine dokunarak tarihleri görebilirsiniz.</p><div class="szf-record-list">'+records.map(r=>'<div class="szf-record-entry"><div class="szf-record-heading"><strong>'+esc(r.title)+'</strong><span>'+Number(r.value.toFixed(2)).toLocaleString('tr-TR')+' '+esc(r.unit)+'</span></div><div class="szf-record-holders">'+r.holders.map(h=>'<details class="szf-record-holder"><summary><b>'+esc(formatPersonName(h.name))+'</b><span class="szf-record-chevron">⌄</span></summary><div class="szf-record-dates">'+(h.dates.length?h.dates.map(d=>'<div>'+esc(d)+'</div>').join(''):'Tarih bilgisi bulunamadı.')+'</div></details>').join('')+'</div></div>').join('')+'</div>';
+ return '<p class="soft">Rekorlar tamamlanmış maçlardan hesaplanır; eşit rekor sahipleri birlikte gösterilir. Rekor sahibine dokunarak tarihleri görebilirsiniz.</p><div class="szf-record-list">'+records.map(r=>'<div class="szf-record-entry"><div class="szf-record-heading"><strong>'+esc(r.title)+'</strong><span>'+Number(r.value.toFixed(2)).toLocaleString('tr-TR')+' '+esc(r.unit)+(r.detail?' ('+esc(r.detail)+')':'')+'</span></div><div class="szf-record-holders">'+r.holders.map(h=>'<details class="szf-record-holder"><summary><b>'+esc(formatPersonName(h.name))+'</b><span class="szf-record-chevron">⌄</span></summary><div class="szf-record-dates">'+(h.dates.length?h.dates.map((d,i)=>'<div>'+esc(d)+(r.title==='🚀 Bir maçta en çok gol katkısı'&&!r.detail&&h.breakdowns[i]?' ('+esc(h.breakdowns[i])+')':'')+'</div>').join(''):'Tarih bilgisi bulunamadı.')+'</div></details>').join('')+'</div></div>').join('')+'</div>';
 }
 
 function renderStatistics(){

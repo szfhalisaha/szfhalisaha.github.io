@@ -1162,9 +1162,21 @@ function szfPreviewPaper(match){
  const columnists=['Ahmet Çakmaz','Uğur Karayollukçu','Rıdvan Dilim','Erman Torpiloğlu','Uğur Menemen','Şansal Küçüka','Serdar Ali Çekirdekler','Mehmet Demirgöl','Ömer Üfürdül','Sinan Yengin'];
  const index=new Date(match.match_date).getDate()%10;
  const writerNames=[columnists[index],columnists[(index+3)%10],columnists[(index+7)%10]];
- const subjects=[stars[0],losing[0]||stars[1],winning[0]||stars[2]].filter(Boolean);
- const writerComment=(p,i)=>{const st=streak(p),loss=lossStreak(p);return i===0?name(p)+' bu maçın kilit isimlerinden. Rakip savunmanın ona özel önlem alması şart.':loss>=2?name(p)+' için bu maç bir kırılma noktası; '+loss+' maçlık yenilgi serisi artık ağır geliyor.':st.current>=2?name(p)+' galibiyete alıştı; '+st.current+' maçlık seriyi sürdürmek için sahada olacak.':name(p)+' bugün sessiz kalırsa şaşırırım; sürpriz bir performans bekliyorum.'};
- const writers=writerNames.map((w,i)=>[w,subjects[i]?writerComment(subjects[i],i):'Bu maçta küçük ayrıntılar büyük fark yaratabilir.']);
+ // Rekor haberinde geçen oyuncuları köşe yazılarında tekrar etmeyelim.
+ const mentioned=new Set([...goalHolders,...winning.slice(0,1).map(name),...losing.slice(0,1).map(name),...stars.map(name)].map(n=>n.toLocaleLowerCase('tr-TR')));
+ const eligible=roster.filter(p=>!mentioned.has(name(p).toLocaleLowerCase('tr-TR')));
+ const seed=new Date(match.match_date).getDate();
+ const subjects=[...eligible.slice(seed%Math.max(eligible.length,1)),...eligible.slice(0,seed%Math.max(eligible.length,1))].slice(0,3);
+ const writerComment=(p,i)=>[
+  name(p)+' bu maçın gizli kahramanı olabilir. Herkes yıldızlara bakarken onun performansını izleyin.',
+  name(p)+' için önemli bir sınav. Sahada göstereceği mücadele maçın yönünü değiştirebilir.',
+  name(p)+' bu hafta sürpriz yaparsa kimse şaşırmasın; bence gözden kaçan isim o.'
+ ][i];
+ const writers=writerNames.map((w,i)=>[w,subjects[i]?writerComment(subjects[i],i):[
+  'Bu maçta kenardan gelen katkı belirleyici olabilir; herkes sadece yıldızları konuşuyor.',
+  'İki takımın da savunma disiplini sonucu değiştirecek; isimlerden çok takım oyununa bakıyorum.',
+  'Herkes golcüleri konuşuyor, ben orta sahadaki mücadeleyi merak ediyorum.'
+ ][i]]);
  const headline=complete?(Math.abs(avg(red)-avg(white))<1?'DENGELER BIÇAK SIRTI!':'SAHADA HESAPLAR KARIŞACAK!'):'SAHADA FIRTINA ÖNCESİ SESSİZLİK!';
  const newsSection=(title,body)=>'<section class="szf-preview-news-section"><div class="szf-news-kicker">'+title+'</div>'+body+'</section>';
  const starBody=stars.length?stars.map(p=>'<p><strong>'+esc(name(p))+'</strong> — '+esc(starText(p))+'</p>').join(''):'<p>Kadro netleşince öne çıkan oyuncular belirlenecek.</p>';

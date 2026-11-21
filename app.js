@@ -1128,51 +1128,12 @@ async function szfOpenNewspaper(id){
 
 
 
-/* SZF match-day newspaper: appears at T-72h, remains archived with its match. */
-function szfPaperTeams(m){
- const people=weeklyPlayers.filter(p=>String(p.match_id)===String(m.id));
- const guests=extras.guests.filter(g=>String(g.match_id)===String(m.id));
- return ['red','white'].map(color=>{
-  const members=people.filter(p=>p.team_color===color).map(p=>{const c=currentCards().find(x=>String(x.id)===String(p.player_id));return c?{...c,overall_rating:szfTeamPlayerRating(c)}:null}).filter(Boolean);
-  guests.filter(g=>g.team_color===color&&!people.some(p=>String(p.player_id)===String(linkedPlayerId(g)))).forEach(g=>{const c=linkedCard(g);members.push({id:c?.id||'guest:'+g.id,display_name:guestDisplayName(g),avatar_path:c?.avatar_path,overall_rating:c?szfTeamPlayerRating(c):guestTeamRating(g)})});
-  return members;
- });
-}
-function szfPaperOdds(teams){
- if(teams.some(t=>t.length!==7))return null;
- const avg=t=>t.reduce((n,p)=>n+Number(p.overall_rating||70),0)/7;
- const form=t=>{let n=0,w=0;t.forEach(p=>{if(!p.id||String(p.id).startsWith('guest:'))return;playerStreakData(p.id).results.slice(-5).forEach(x=>{n++;w+=x.outcome==='G'?1:x.outcome==='B'?.5:0})});return n?w/n:.5};
- const delta=(avg(teams[0])-avg(teams[1]))*.60/12+(form(teams[0])-form(teams[1]))*.40;
- const red=Math.round(Math.max(15,Math.min(85,100/(1+Math.exp(-2*delta)))));
- return [red,100-red];
-}
-function szfPaperPhoto(p){
- if(!p?.avatar_path)return '<span class="szf-paper-silhouette">⚽</span>';
- const c=currentCards().find(x=>String(x.id)===String(p.id));
- const src=c?szfPlayerPhotoUrl(c,p.avatar_path):avatarUrl(p.avatar_path);
- return '<img loading="lazy" src="'+attrs(src)+'" alt="'+attrs(formatPersonName(p.display_name||'Oyuncu'))+'">';
-}
-function szfPrematchNewspaper(m){
- if(!m)return '';
- const start=new Date(m.match_date).getTime(),now=Date.now();
- if(!Number.isFinite(start)||now<start-72*3600000)return '';
- const teams=szfPaperTeams(m),odds=szfPaperOdds(teams),before=now<start;
- const picks=teams.map(t=>[...t].sort((a,b)=>Number(b.overall_rating)-Number(a.overall_rating))[0]);
- const name=p=>p?formatPersonName(p.display_name):'Henüz belirlenmedi';
- const lead=odds?(odds[0]>odds[1]?'KIRMIZI BİR ADIM ÖNDE!':odds[1]>odds[0]?'BEYAZ FAVORİ GÖSTERİLİYOR!':'SAHADA DENGELER EŞİT!'):'DEV MAÇ ÖNCESİ GERİ SAYIM!';
- const writers=[['Ahmet Çakmaz','Bu maçta kağıt üzerindeki favori değil, sahada mücadele eden kazanacak!'],['Uğur Karayollukçu','İki takımın puanları kadar son maçlardaki formuna da bakmak gerekiyor.'],['Rıdvan Dilim','Orta sahayı kontrol eden takım maçın temposunu belirler.'],['Erman Torpiloğlu','Bu mücadelede her pozisyonun ayrı bir hikâyesi olacak.'],['Uğur Menemen','Rakamlar bir şey söylüyor ama top yuvarlak.'],['Şansal Küçüka','Sahadan önce kulislerde büyük heyecan var.'],['Serdar Ali Çekirdekler','Bu karşılaşma çok konuşulur.'],['Mehmet Demirgöl','Takım dengesi maçın kaderini belirleyecek.'],['Ömer Üfürdül','Çok enteresan bir maç bizi bekliyor.'],['Sinan Yengin','Bu maçta mücadele seviyesi yüksek olacak.']];
- const chosen=[writers[(new Date(m.match_date).getDate()+2)%10],writers[(new Date(m.match_date).getDate()+6)%10],writers[(new Date(m.match_date).getDate()+9)%10]];
- const stats=teams.flat().filter(p=>p.id&&!String(p.id).startsWith('guest:')).map(p=>({p,streak:playerStreakData(p.id).best})).sort((a,b)=>b.streak-a.streak)[0];
- return '<section class="szf-newspaper" aria-label="SZF maç öncesi gazetesi"><div class="szf-paper-top"><span>⚽ SZF AIRPORT SPOR</span><span>'+esc(before?'MAÇ ÖNCESİ ÖZEL SAYI':'MAÇ ARŞİVİ · ÖZEL SAYI')+'</span></div><div class="szf-paper-brand"><b>SZF</b> HALI SAHA <em>GAZETESİ</em></div><div class="szf-paper-date"><span>'+esc(matchDateText(new Date(start-72*3600000)))+' · Yayın</span><span>'+esc(matchDateText(m.match_date))+' · Maç</span></div><div class="szf-paper-headline">'+esc(lead)+'</div><div class="szf-paper-intro">Kırmızı ve Beyaz takım kozlarını paylaşmaya hazırlanıyor. SZF’de haftanın büyük karşılaşması için nefesler tutuldu.</div><div class="szf-paper-hero"><div class="szf-paper-figure red">'+szfPaperPhoto(picks[0])+'<strong>'+esc(name(picks[0]))+'</strong><small>KIRMIZI TAKIM</small></div><div class="szf-paper-vs">VS</div><div class="szf-paper-figure white">'+szfPaperPhoto(picks[1])+'<strong>'+esc(name(picks[1]))+'</strong><small>BEYAZ TAKIM</small></div></div><div class="szf-paper-columns"><div class="szf-paper-section"><h3>📊 KAZANMA OLASILIĞI</h3>'+(odds?'<div class="szf-paper-percent"><b>🔴 %'+odds[0]+'</b><b>⚪ %'+odds[1]+'</b></div><div class="szf-paper-meter"><span style="width:'+odds[0]+'%"></span></div><p>Oyuncu güçleri ve son maç formuna göre tahmin. Beraberlik ayrıca hesaplanmaz; bahis ligini etkilemez.</p>':'<p>Takımlar kesinleştiğinde kazanma olasılıkları burada yayınlanacak.</p>')+'</div><div class="szf-paper-section"><h3>🚨 REKOR ALARMI</h3><p>'+(stats?'🔥 '+esc(name(stats.p))+' geçmişte '+stats.streak+' maçlık galibiyet serisine ulaştı. Yeni bir seri yazılacak mı?':'Bu maç yeni rekorlara sahne olabilir. Tarih yazmak için 14 oyuncu sahaya çıkıyor.')+'</p></div></div><div class="szf-paper-section szf-paper-writers"><h3>✒️ KÖŞE YAZARLARI</h3>'+chosen.map(([n,q])=>'<div class="szf-paper-column"><div class="szf-paper-writer-icon">✍</div><div><b>'+esc(n)+'</b><p>“'+esc(q)+'”</p></div></div>').join('')+'</div><div class="szf-paper-footer">SZF HALI SAHA · '+esc(m.title||'Haftalık Maç')+' · '+esc(matchDateText(m.match_date))+'<small>Yazarlar ve yorumlar kurgusaldır. Maç verileri güncellendikçe sayfa yenilenir.</small></div></section>';
-}
-
 function renderHome(){
  if(authBooting)return `<section class="home-landing"><div class="home-next" role="status" aria-live="polite"><small>SZF AIRPORT HALI SAHA</small><h2>Oturum ve maç bilgileri yükleniyor…</h2><p class="soft">Kayıtlı hesabın kontrol ediliyor.</p></div></section>`;
  const playerCount=currentCards().length;
  const future=leagueMatches.filter(m=>m.status==='open'&&new Date(m.match_date).getTime()>Date.now()).sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
  const next=future[0];
- const paperMatch=next&&Date.now()>=new Date(next.match_date).getTime()-72*3600000?next:null;
- return `<section class="home-landing">${next?homeNextMatchCard(next):`<div class="home-next"><small>SIRADAKİ MAÇ</small><h2>Henüz planlanmış maç yok</h2></div>`}${paperMatch?szfPrematchNewspaper(paperMatch):''}<div class="szf-ball-plane-strip" role="img" aria-label="Futbol topu ilerlerken yeşil bir uçağa dönüşüyor">
+ return `<section class="home-landing">${next?homeNextMatchCard(next):`<div class="home-next"><small>SIRADAKİ MAÇ</small><h2>Henüz planlanmış maç yok</h2></div>`}<div class="szf-ball-plane-strip" role="img" aria-label="Futbol topu ilerlerken yeşil bir uçağa dönüşüyor">
  <svg viewBox="0 0 640 100" class="szf-ball-plane-svg" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
  <defs><linearGradient id="szf-plane-v133" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e3ffd1"/><stop offset="1" stop-color="#9cf456"/></linearGradient></defs>
  <path d="M18 78 H622" stroke="#b9f46d" stroke-width="1" opacity=".13"/>

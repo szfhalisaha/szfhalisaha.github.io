@@ -1142,18 +1142,36 @@ function szfPreviewPaper(match){
  const delta=complete?(avg(red)-avg(white))*.065+(form(red)-form(white))*1.4:0;
  const chance=Math.round(Math.max(15,Math.min(85,100/(1+Math.exp(-delta)))));
  const stars=[...roster].sort((a,b)=>b.rating-a.rating).slice(0,3);
- const all=cards.map(c=>({name:c.display_name,streak:playerStreakData(c.id).best,goals:Math.max(0,...playerEventCountsByMatch(c.id,'goal').values())})).sort((a,b)=>b.goals-a.goals);
+ const name=p=>formatPersonName(p?.name||'');
+ const streak=p=>p?.id?playerStreakData(p.id):{current:0,best:0,results:[]};
+ const lossStreak=p=>{let n=0;for(const r of [...streak(p).results].reverse()){if(r.outcome!=='M')break;n++}return n};
+ const starText=p=>{const st=streak(p),loss=lossStreak(p);return st.current>=2?'Son '+st.current+' maçını kazanarak geliyor; rakibin işi kolay değil.':loss>=2?'Üst üste '+loss+' yenilgiyi bitirmek için sahaya çıkıyor.':st.results.length?'Bu hafta oyunun dengesini değiştirmesi beklenen isimlerden.':'Yeni maçta bütün gözler üzerinde olacak.'};
+ const all=cards.map(c=>({id:c.id,name:c.display_name,streak:playerStreakData(c.id).best,goals:Math.max(0,...playerEventCountsByMatch(c.id,'goal').values())})).sort((a,b)=>b.goals-a.goals);
  const goalRecord=all[0]?.goals||0;
- const alert=goalRecord?('Tek maçta '+goalRecord+' gollük mevcut oyuncu rekoru bu hafta yeniden zorlanabilir.'):('Bu maçta ilk büyük bireysel rekor yazılabilir.');
- const columnists=[['Ahmet Çakmaz','Bu maçın kilidi tempo; erken gol her şeyi değiştirir.'],['Uğur Karayollukçu','İstatistikler konuşuyor ama son sözü saha söyler.'],['Rıdvan Dilim','Orta saha mücadelesi maçın kaderini belirleyebilir.'],['Erman Torpiloğlu','Savunmada yapılan bir hata bütün planları bozabilir.'],['Uğur Menemen','Form grafiği tek başına yeterli değil.'],['Şansal Küçüka','Sahada yeni bir hikâye yazılacak.'],['Serdar Ali Çekirdekler','Bu maçın ardından çok konuşulacak.'],['Mehmet Demirgöl','Dengeyi bozan bireysel performans olacak.'],['Ömer Üfürdül','Çok enteresan bir mücadele bizi bekliyor.'],['Sinan Yengin','Mücadele etmeden maç kazanılmaz.']];
- const index=new Date(match.match_date).getDate()%10,writers=[columnists[index],columnists[(index+3)%10],columnists[(index+7)%10]];
+ const goalHolders=all.filter(p=>goalRecord&&p.goals===goalRecord).map(name);
+ const recordNotes=[];
+ if(goalRecord)recordNotes.push('Tek maçta '+goalRecord+' gol rekoru '+goalHolders.join(', ')+' adına kayıtlı. Bu hafta bu rekoru kim zorlayacak?');
+ const winning=roster.map(p=>({...p,st:streak(p)})).filter(p=>p.st.current>=2).sort((a,b)=>b.st.current-a.st.current);
+ if(winning.length)recordNotes.push(name(winning[0])+' '+winning[0].st.current+' maçlık galibiyet serisiyle geliyor; seri devam edecek mi?');
+ const losing=roster.map(p=>({...p,loss:lossStreak(p)})).filter(p=>p.loss>=2).sort((a,b)=>b.loss-a.loss);
+ if(losing.length)recordNotes.push(name(losing[0])+' '+losing[0].loss+' maçtır galibiyete hasret; kötü gidişatı bitirebilecek mi?');
+ if(!recordNotes.length)recordNotes.push('Henüz öne çıkan bir seri veya gol rekoru yok; yeni hikâyeyi bu maç yazabilir.');
+ const rivalPairs=red.length&&white.length?[[red[0],white[0]],[red[red.length-1],white[white.length-1]]]:[];
+ const taunts=['“Bu hafta rakibe topu ancak maçtan sonra veririz!”','“Onlar plan yapadursun, biz golleri sayarız!”','“Maçtan sonra bahane değil skor konuşulsun!”','“Sahada görüşürüz, gazeteye değil tabelaya bakın!”'];
+ const gossip=rivalPairs.length?rivalPairs.map(([p,q],i)=>'<p><strong>'+esc(name(p))+'</strong>, <strong>'+esc(name(q))+'</strong> için '+esc(taunts[(i+new Date(match.match_date).getDate())%taunts.length])+' dediği iddia ediliyor.</p>').join(''):'<p>Takımlar belli olduğunda oyuncuların birbirine attığı hayalî laflar burada olacak.</p>';
+ const columnists=['Ahmet Çakmaz','Uğur Karayollukçu','Rıdvan Dilim','Erman Torpiloğlu','Uğur Menemen','Şansal Küçüka','Serdar Ali Çekirdekler','Mehmet Demirgöl','Ömer Üfürdül','Sinan Yengin'];
+ const index=new Date(match.match_date).getDate()%10;
+ const writerNames=[columnists[index],columnists[(index+3)%10],columnists[(index+7)%10]];
+ const subjects=[stars[0],losing[0]||stars[1],winning[0]||stars[2]].filter(Boolean);
+ const writerComment=(p,i)=>{const st=streak(p),loss=lossStreak(p);return i===0?name(p)+' bu maçın kilit isimlerinden. Rakip savunmanın ona özel önlem alması şart.':loss>=2?name(p)+' için bu maç bir kırılma noktası; '+loss+' maçlık yenilgi serisi artık ağır geliyor.':st.current>=2?name(p)+' galibiyete alıştı; '+st.current+' maçlık seriyi sürdürmek için sahada olacak.':name(p)+' bugün sessiz kalırsa şaşırırım; sürpriz bir performans bekliyorum.'};
+ const writers=writerNames.map((w,i)=>[w,subjects[i]?writerComment(subjects[i],i):'Bu maçta küçük ayrıntılar büyük fark yaratabilir.']);
  const headline=complete?(Math.abs(avg(red)-avg(white))<1?'DENGELER BIÇAK SIRTI!':'SAHADA HESAPLAR KARIŞACAK!'):'SAHADA FIRTINA ÖNCESİ SESSİZLİK!';
  const box=(title,body)=>'<div class="szf-preview-box"><h3>'+title+'</h3>'+body+'</div>';
  return '<section class="szf-preview-paper"><div class="szf-preview-masthead"><small>SZF AIRPORT · MAÇ ÖNCESİ ÖZEL</small><h2>SAHA GAZETESİ</h2><span>'+esc(matchDateText(match.match_date))+'</span></div><h2 class="szf-preview-headline">'+headline+'</h2><p class="szf-preview-lead">Haftanın karşılaşması yaklaşırken gözler formda oyunculara ve kırılabilecek rekorlara çevrildi.</p><div class="szf-preview-grid">'+
  box('📊 KAZANMA OLASILIĞI',complete?'<div class="szf-preview-odds"><b>🔴 %'+chance+'</b><b>⚪ %'+(100-chance)+'</b></div><div class="szf-preview-bar"><span style="width:'+chance+'%"></span></div><small>Oyuncu puanları ve son 5 maç formuna dayalı tahmin; beraberlik ayrı hesaplanmaz.</small>':'<p>Takımlar kesinleşince yüzdeler burada görünecek.</p>')+
- box('⭐ KİLİT OYUNCULAR',stars.length?'<p>'+stars.map(p=>'<strong>'+esc(formatPersonName(p.name))+'</strong> ('+p.rating.toFixed(1)+')').join(' · ')+'</p><small>Mevcut oyuncu puanlarına göre öne çıkanlar.</small>':'<p>Kadro netleşince öne çıkan oyuncular belirlenecek.</p>')+
- box('🚨 REKOR ALARMI','<p>'+esc(alert)+'</p>')+
- box('🤫 KULİS','<p>İddialara göre soyunma odalarında taktik tahtaları çoktan hazır! İlk golü atan tarafın sesi epey yükselecek.</p><small>Bu bölüm mizah ve kurgudur.</small>')+
+ box('⭐ KİLİT OYUNCULAR',stars.length?stars.map(p=>'<p><strong>'+esc(name(p))+'</strong> — '+esc(starText(p))+'</p>').join(''):'<p>Kadro netleşince öne çıkan oyuncular belirlenecek.</p>')+
+ box('🚨 REKOR ALARMI',recordNotes.map(note=>'<p>'+esc(note)+'</p>').join(''))+
+ box('🤫 KULİS',gossip+'<small>Oyuncu sözleri tamamen kurgusal mizah içerikleridir.</small>')+
  '</div>'+box('✍️ YAZARLAR',writers.map(w=>'<div class="szf-preview-column"><b>'+esc(w[0])+'</b><p>“'+esc(w[1])+'”</p></div>').join('')+'<small>Yazar isimleri ve yorumları parodidir.</small>')+'</section>';
 }
 

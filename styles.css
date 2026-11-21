@@ -1337,3 +1337,19 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
     transform:scaleX(.8)!important;
   }
 }
+
+/* v294 — Two-line name layout for the two exceptionally long player names. */
+.fut-card .fut-name:has(.szf-split-name),
+.players-grid .fut-card .fut-name:has(.szf-split-name){
+  left:auto!important;right:auto!important;transform:none!important;
+  width:100%!important;max-width:100%!important;
+  overflow:visible!important;white-space:normal!important;
+  font-size:clamp(12px,1.3vw,16px)!important;
+  line-height:1.02!important;padding-top:1px!important;
+  min-height:35px!important;
+}
+.fut-name .szf-split-name{display:block;max-width:100%;white-space:nowrap;font-size:.9em;letter-spacing:-.045em}
+.fut-name .szf-split-last{display:block;font-size:1.06em;line-height:1.06}
+@media(max-width:720px){
+ .players-grid .fut-card .fut-name:has(.szf-split-name){font-size:clamp(11px,3.1vw,14px)!important;min-height:30px!important}
+}

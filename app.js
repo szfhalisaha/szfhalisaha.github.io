@@ -171,6 +171,7 @@ function szfEditorCardPanel(){
    <div class="szf-editor-actions"><button type="button" class="btn lime" id="szf-editor-save">Kaydet</button>
    <button type="button" class="btn ghost" id="szf-editor-reset">Sıfırla</button>
    <button type="button" class="btn ghost" id="szf-editor-original">Eski fotoğrafa dön</button></div>
+   <details id="szf-mask-panel" class="szf-mask-panel"><summary>🖌️ Manuel arka plan silgisi (yalnızca yönetici)</summary><p class="micro">Fotoğraf üzerinde parmağınla veya fareyle sil. Kaydettiğinde oyuncu kartı güncellenir.</p><canvas aria-label="Fotoğraf silme alanı"></canvas><label>Fırça boyutu <input id="szf-mask-size" type="range" min="4" max="90" value="28"></label><div class="szf-editor-actions"><button type="button" class="btn ghost" id="szf-mask-erase">Silgi</button><button type="button" class="btn ghost" id="szf-mask-undo">Geri Al</button><button type="button" class="btn ghost" id="szf-mask-reload">Baştan Başla</button><button type="button" class="btn lime" id="szf-mask-save">Şeffaf Fotoğrafı Kaydet</button></div><p class="micro" id="szf-mask-status" role="status"></p></details>
    <p class="micro" id="szf-editor-status" role="status">Önizleme değişiklikleri kaydedilene kadar yalnızca burada görünür.</p>
   </div>
   <div class="szf-editor-preview"><p class="micro">Canlı kart önizlemesi</p><div id="szf-editor-preview-card" class="szf-editor-card-host">${cardHTML(card,true)}</div></div>
@@ -227,8 +228,40 @@ function szfEditorBind(){
   controls.scale.value='100';controls.x.value='0';controls.y.value='0';paint();
  });
  paint();
+ szfManualMaskEditor(area,selected,controls,paint);
 }
 
+
+/* Admin-only manual portrait mask editor; saves transparent PNG to existing avatar storage. */
+function szfManualMaskEditor(area,selected,controls,paint){
+ const wrap=area.querySelector('#szf-mask-panel');if(!wrap)return;
+ const canvas=wrap.querySelector('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+ const status=wrap.querySelector('#szf-mask-status');
+ let history=[],drawing=false,tool='erase',imageLoaded=false;
+ const setStatus=t=>{status.textContent=t};
+ const source=()=>{const c=currentCards().find(p=>String(p.id)===String(selected.id))||selected;return szfPlayerPhotoUrl(c,selected.avatar_path,controls.mode.value)};
+ const load=async()=>{try{const url=source();if(!url)throw Error('Fotoğraf bulunamadı');const img=new Image();img.crossOrigin='anonymous';await new Promise((ok,fail)=>{img.onload=ok;img.onerror=()=>fail(Error('Fotoğraf yüklenemedi'));img.src=url});canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0);history=[];imageLoaded=true;setStatus('Fırçayla sil; geri almak için Geri Al kullan.');}catch(e){imageLoaded=false;setStatus('Düzenleme açılamadı: '+e.message)}};
+ const position=e=>{const rect=canvas.getBoundingClientRect();return {x:(e.clientX-rect.left)*canvas.width/rect.width,y:(e.clientY-rect.top)*canvas.height/rect.height}};
+ const stroke=(a,b)=>{const size=Number(wrap.querySelector('#szf-mask-size').value)*canvas.width/400;ctx.save();ctx.globalCompositeOperation=tool==='erase'?'destination-out':'source-over';ctx.lineWidth=size;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.restore()};
+ let previous=null;
+ canvas.addEventListener('pointerdown',e=>{if(!imageLoaded)return;e.preventDefault();history.push(ctx.getImageData(0,0,canvas.width,canvas.height));if(history.length>12)history.shift();drawing=true;canvas.setPointerCapture(e.pointerId);previous=position(e);stroke(previous,previous)});
+ canvas.addEventListener('pointermove',e=>{if(!drawing)return;e.preventDefault();const p=position(e);stroke(previous,p);previous=p});
+ const stop=()=>{drawing=false;previous=null};canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);
+ wrap.querySelector('#szf-mask-undo').onclick=()=>{const prev=history.pop();if(prev)ctx.putImageData(prev,0,0)};
+ wrap.querySelector('#szf-mask-erase').onclick=()=>{tool='erase';setStatus('Silgi etkin')};
+ wrap.querySelector('#szf-mask-restore').onclick=()=>{tool='restore';setStatus('Geri getirme: Orijinal fotoğrafı yeniden yükleyip silmeyi tekrar yapabilir veya Geri Al kullanabilirsin.');tool='erase'};
+ wrap.querySelector('#szf-mask-reload').onclick=load;
+ wrap.querySelector('#szf-mask-save').onclick=async()=>{if(!adminInfo||!user||!imageLoaded)return;const btn=wrap.querySelector('#szf-mask-save');btn.disabled=true;setStatus('Şeffaf fotoğraf kaydediliyor…');try{
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('PNG oluşturulamadı');
+ const path=user.id+'/card-cutout-'+selected.id+'-'+Date.now()+'.png';
+ const uploaded=await db.storage.from('avatars').upload(path,blob,{contentType:'image/png',upsert:false});if(uploaded.error)throw uploaded.error;
+ const mode='manual:'+path;
+ const settings=szfStoredCardPhotoSettings.get(String(selected.id))||{x:0,y:0,scale:1};
+ const saved=await db.from('szf_card_photo_settings_v232').upsert({player_id:selected.id,mode,x:Number(controls.x.value),y:Number(controls.y.value),scale:Number(controls.scale.value)/100,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:'player_id'});if(saved.error)throw saved.error;
+ szfStoredCardPhotoSettings.set(String(selected.id),{...settings,mode,x:Number(controls.x.value),y:Number(controls.y.value),scale:Number(controls.scale.value)/100});szfEditorDraft=null;render();toast('Manuel arka plan kaydedildi.');
+ }catch(e){setStatus('Kaydedilemedi: '+(e.message||String(e)));btn.disabled=false}};
+ load();
+}
 /* v225 — generated cutouts can be disabled globally, without touching avatars.
    Also supports ?originalPhotos=1 for side-by-side comparison and easy rollback. */
 const SZF_USE_GENERATED_CARD_PHOTOS=true; // One-line global rollback: set false.
@@ -258,6 +291,7 @@ function szfPlayerPhotoUrl(c,originalPath,previewMode){
  const original=avatarUrl(originalPath);
  const forceOriginal=new URLSearchParams(location.search).has('originalPhotos');
  const configured=previewMode||szfStoredCardPhotoSettings.get(String(c.id))?.mode;
+ if(String(configured||'').startsWith('manual:'))return db.storage.from('avatars').getPublicUrl(String(configured).slice(7)).data.publicUrl;
  const useCutout=configured==='cutout'||(configured!=='original'&&SZF_APPROVED_CUTOUT_PLAYER_IDS.has(String(c.id)));
  if(!originalPath||forceOriginal||!SZF_USE_GENERATED_CARD_PHOTOS||!useCutout)return original;
  if(String(c.id)==='2a56dc03-3fbd-416d-9533-ff53e4331241')

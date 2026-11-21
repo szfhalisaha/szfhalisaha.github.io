@@ -1468,3 +1468,15 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-duel-teammate-grid span{display:flex;flex-direction:column;gap:8px;align-items:center;font-size:13px;color:#d9edda}
 .szf-duel-teammate-grid b{font-size:24px;color:#d6fca5}
 @media(max-width:550px){.szf-duel-teammate-grid{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:16px}}
+
+
+/* Oyuncu Düellosu: eski karşılaştırma ekranı gibi kompakt istatistik kutuları */
+.szf-duel-head-to-head{padding:13px 15px;margin-top:12px}
+.szf-duel-head-to-head h3{font-size:14px;margin:0 0 12px}
+.szf-duel-compact-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.szf-duel-compact-grid>div{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:#203c2b;border:1px solid #34553c;border-radius:9px;padding:12px 5px;text-align:center}
+.szf-duel-compact-grid b{font-size:20px;line-height:1.1;color:#d6fca5}
+.szf-duel-compact-grid small{font-size:11px;line-height:1.35;color:#d9edda;overflow-wrap:anywhere}
+.szf-duel-compact-rate{text-align:center;font-size:12px;margin:10px 0 0;color:#c8ddc8}
+.szf-duel-compact-rate strong{color:#d6fca5}
+@media(max-width:550px){.szf-duel-compact-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.szf-duel-compact-grid b{font-size:18px}}

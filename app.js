@@ -1172,7 +1172,7 @@ function renderHome(){
  const future=leagueMatches.filter(m=>m.status==='open'&&new Date(m.match_date).getTime()>Date.now()).sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
  const next=future[0];
  const paperMatch=leagueMatches.filter(m=>Number.isFinite(new Date(m.match_date).getTime())&&Date.now()>=new Date(m.match_date).getTime()-72*3600000&&Date.now()<new Date(m.match_date).getTime()).sort((a,b)=>new Date(a.match_date)-new Date(b.match_date))[0];
- return `<section class="home-landing">${paperMatch?szfPrematchNewspaper(paperMatch):''}<div class="szf-ball-plane-strip" role="img" aria-label="Futbol topu ilerlerken yeşil bir uçağa dönüşüyor">
+ return `<section class="home-landing">${next?homeNextMatchCard(next):`<div class="home-next"><small>SIRADAKİ MAÇ</small><h2>Henüz planlanmış maç yok</h2></div>`}${paperMatch?szfPrematchNewspaper(paperMatch):''}<div class="szf-ball-plane-strip" role="img" aria-label="Futbol topu ilerlerken yeşil bir uçağa dönüşüyor">
  <svg viewBox="0 0 640 100" class="szf-ball-plane-svg" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
  <defs><linearGradient id="szf-plane-v133" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e3ffd1"/><stop offset="1" stop-color="#9cf456"/></linearGradient></defs>
  <path d="M18 78 H622" stroke="#b9f46d" stroke-width="1" opacity=".13"/>
@@ -1191,7 +1191,7 @@ function renderHome(){
   return `<section class="szf-home-mvp"><h2>🏆 Maçın Adamını Seç</h2><p>${esc(m.title||'Haftalık Maç')} · ${esc(matchDateText(m.match_date))} · Oylama 24 saat açıktır. Oy sayıları gizlidir.</p><p class="szf-v200-mvp-prize"><span>✦ MVP ÖDÜLÜ</span> Oylama sona erdiğinde Maçın Adamı seçilen oyuncunun tüm özelliklerine <b>+1 güç bonusu</b> eklenir.</p>${v.voted?'<strong>Oyun kaydedildi.</strong>':(v.eligible||localEligible)?`<div class="szf-mvp-options">${opts.map(x=>`<label class="szf-mvp-option"><input type="radio" name="mvp-${attrs(m.id)}" value="${attrs(x.key)}"><span>${esc(formatPersonName(x.name))}</span></label>`).join('')}</div><button class="btn lime" data-mvp="${attrs(m.id)}">Oyumu Onayla</button>`:'<p class="soft">Yalnızca maçın katılımcıları oy verebilir.</p>'}</section>`;
  }).join('')}
  ${szfLatestNewspaperHome()}
- ${next?homeNextMatchCard(next):`<div class="home-next"><small>SIRADAKİ MAÇ</small><h2>Henüz planlanmış maç yok</h2></div>`}
+ 
  <h2 class="home-shortcuts-title">Hızlı erişim</h2><div class="home-shortcuts"><button data-home-nav="players">◈ <strong>Oyuncu Kartları</strong><span>Tüm oyuncuları gör</span></button><button data-home-nav="matches">⚽ <strong>Maçlar</strong><span>Katıl veya oyuncu ekle</span></button><button data-home-nav="ranking">▥ <strong>Sıralama</strong><span>Oyuncu puanlarını incele</span></button></div>
  <div class="home-summary" aria-label="Genel sayılar"><div><small>OYUNCU KARTLARI</small><strong>${playerCount}</strong><span>Kayıtlı oyuncu</span></div><div><small>MAÇLAR</small><strong>${leagueMatches.length}</strong><span>Toplam maç</span></div></div></section>`;
 }

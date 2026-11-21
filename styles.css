@@ -1400,3 +1400,15 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-stats-body .szf-record-card p span{color:#526156!important;opacity:1}
 .szf-stats-body .szf-record-card .szf-record-value{color:#ba3344!important}
 .szf-stats-body .szf-record-card .szf-record-value small{color:#703b46!important}
+
+
+/* Records book: match the existing SZF dark-green statistics visual language. */
+.szf-stats-body .szf-records-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.szf-stats-body .szf-records-grid .szf-record-card{background:#142e20!important;color:#e5f0df!important;border:1px solid #34553c!important;border-radius:12px;box-shadow:none;padding:17px}
+.szf-stats-body .szf-record-card h3{color:#d6fca5!important;font-size:16px;font-weight:800;opacity:1}
+.szf-stats-body .szf-record-card .szf-record-value{color:#d6fca5!important;font-size:30px}
+.szf-stats-body .szf-record-card .szf-record-value small{color:#b6cdb9!important}
+.szf-stats-body .szf-record-card p,.szf-stats-body .szf-record-card p strong{color:#e5f0df!important}
+.szf-stats-body .szf-record-card p{border-top:1px solid #34553c;padding-top:9px}
+.szf-stats-body .szf-record-card p span{color:#adc5b0!important;opacity:1}
+@media(max-width:650px){.szf-stats-body .szf-records-grid{grid-template-columns:1fr}}

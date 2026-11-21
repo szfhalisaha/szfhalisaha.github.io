@@ -1321,6 +1321,37 @@ function renderRanking(){
 }
 let selectedStatsTab='wins';
 let statsSortMode={goals:'total',assists:'total'};
+
+function szfStatisticsRecords(){
+ const matches=leagueMatches.filter(m=>m.status==='completed');
+ const cards=currentCards();
+ const matchById=new Map(matches.map(m=>[String(m.id),m]));
+ const records=[];
+ const add=(title,unit,entries)=>{if(!entries.length)return;const max=Math.max(...entries.map(e=>e.value));if(!Number.isFinite(max)||max<=0)return;records.push({title,value:max,unit,holders:entries.filter(e=>e.value===max)})};
+ for(const [kind,title] of [['goal','⚽ Bir maçta en çok gol'],['assist','🎯 Bir maçta en çok asist']]){
+  const entries=[];
+  for(const c of cards)for(const [mid,value] of playerEventCountsByMatch(c.id,kind)){
+   const m=matchById.get(String(mid));if(m)entries.push({name:c.display_name,value,date:m.match_date,match:m});
+  }
+  add(title,kind==='goal'?'gol':'asist',entries);
+ }
+ const streaks=[];
+ for(const c of cards){
+  const data=playerStreakData(c.id);let run=0;
+  for(const res of data.results){run=res.outcome==='G'?run+1:0;if(run>0)streaks.push({name:c.display_name,value:run,date:res.date,match:matchById.get(String(res.match_id))});}
+ }
+ add('🔥 En uzun galibiyet serisi','maç',streaks);
+ const margins=matches.filter(m=>Number.isFinite(Number(m.red_score))&&Number.isFinite(Number(m.white_score))&&m.red_score!=null&&m.white_score!=null).map(m=>({name:Number(m.red_score)>Number(m.white_score)?'Kırmızı Takım':'Beyaz Takım',value:Math.abs(Number(m.red_score)-Number(m.white_score)),date:m.match_date,match:m})).filter(e=>e.value>0);
+ add('🏆 En farklı galibiyet','gol farkı',margins);
+ const totalGoals=matches.filter(m=>m.red_score!=null&&m.white_score!=null&&Number.isFinite(Number(m.red_score))&&Number.isFinite(Number(m.white_score))).map(m=>({name:'Kırmızı '+m.red_score+' – '+m.white_score+' Beyaz',value:Number(m.red_score)+Number(m.white_score),date:m.match_date,match:m}));
+ add('🥅 En gollü karşılaşma','gol',totalGoals);
+ const mvps=[];
+ for(const c of cards){let count=0,latest=null;for(const m of matches){const mv=mvpStates[String(m.id)];if(!mv?.finished||!Array.isArray(mv.winners))continue;if(mv.winners.some(w=>String(w)===String(c.id)||String(w).toLocaleLowerCase('tr-TR')===String(c.display_name).toLocaleLowerCase('tr-TR'))){count++;latest=m;}}if(count)mvps.push({name:c.display_name,value:count,date:latest?.match_date,match:latest});}
+ add('🌟 En çok Maçın Adamı','kez',mvps);
+ if(!records.length)return '<p class="soft">Henüz hesaplanabilecek tamamlanmış maç kaydı bulunmuyor.</p>';
+ return '<p class="soft">Rekorlar yalnızca tamamlanmış maçların kayıtlarından hesaplanır. Eşit rekor sahipleri birlikte gösterilir.</p><div class="szf-records-grid">'+records.map(r=>'<article class="szf-record-card"><h3>'+esc(r.title)+'</h3><div class="szf-record-value">'+r.value+' <small>'+esc(r.unit)+'</small></div>'+r.holders.map(h=>'<p><strong>'+esc(formatPersonName(h.name))+'</strong><span>'+esc(h.date?matchDateText(h.date):'')+'</span></p>').join('')+'</article>').join('')+'</div>';
+}
+
 function renderStatistics(){
  const stats=currentCards().map(p=>({player:p,...playerWinStats(p.id)})).sort((a,b)=>(b.played?b.pct:-1)-(a.played?a.pct:-1)||b.played-a.played||String(a.player.display_name).localeCompare(String(b.player.display_name),'tr'));
  const tallyFor=kind=>{
@@ -1339,11 +1370,11 @@ function renderStatistics(){
   const sortHeader=(value,caption)=>`<button type="button" class="szf-stats-sort-heading ${sort===value?'active':''}" data-stats-sort-head="${value}" data-stats-sort-for="${tab}" aria-label="${caption} değerine göre sırala" aria-pressed="${sort===value}">${caption}${sort===value?' ↓':''}</button>`;
   return sortControl+`<div class="table-wrap"><table><thead><tr><th>#</th><th>OYUNCU</th><th>MAÇ</th><th>${sortHeader('total','TOPLAM '+label.toLocaleUpperCase('tr'))}</th><th>${sortHeader('average','MAÇ BAŞINA')}</th></tr></thead><tbody>${entries.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(formatPersonName(x.player.display_name))}</td><td>${x.played}</td><td class="${sort==='total'?'accent':''}">${x.total}</td><td class="${sort==='average'?'accent':''}">${x.avg.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>`).join('')}</tbody></table></div>`;
  };
- const tabs=[['wins','🏆 Galibiyet Yüzdesi'],['goals','⚽ Gol Krallığı'],['assists','🎯 Asist Krallığı']];
+ const tabs=[['wins','🏆 Galibiyet Yüzdesi'],['goals','⚽ Gol Krallığı'],['assists','🎯 Asist Krallığı'],['records','📖 Rekorlar Kitabı']];
  const legacyTabMap={goals_avg:'goals',assists_avg:'assists'};
  const normalizedTab=legacyTabMap[selectedStatsTab]||selectedStatsTab;
  const active=tabs.some(t=>t[0]===normalizedTab)?normalizedTab:'wins';
- const content=active==='wins'
+ const content=active==='records'?szfStatisticsRecords():active==='wins'
  ? `<p class="soft">Yalnızca tamamlanmış ve oyuncunun takımı kaydedilmiş maçlar hesaplanır.</p><div class="table-wrap szf-win-table"><table><thead><tr><th>#</th><th>OYUNCU</th><th>MAÇ</th><th>GALİBİYET</th><th>ORAN</th></tr></thead><tbody>${stats.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(formatPersonName(x.player.display_name))}</td><td>${x.played}</td><td>${x.wins}</td><td class="accent">${x.played?x.pct.toLocaleString('tr-TR',{maximumFractionDigits:1})+'%':'—'}</td></tr>`).join('')}</tbody></table></div>`
  :`${active==='goals'?'<p class="soft">Gol sıralamasında toplam gol ve maç başına gol birlikte gösterilir.</p>':'<p class="soft">Asist sıralamasında toplam asist ve maç başına asist birlikte gösterilir.</p>'}${board(active==='goals'?'goal':'assist',active==='goals'?'gol':'asist',active)}`;
  return sectionHead('İstatistikler','Tüm zamanların oyuncu performansları')

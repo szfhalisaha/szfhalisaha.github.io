@@ -1162,9 +1162,7 @@ function szfPreviewPaper(match){
  const losing=roster.map(p=>({...p,loss:lossStreak(p)})).filter(p=>p.loss>=2).sort((a,b)=>b.loss-a.loss);
  if(losing.length)recordNotes.push(name(losing[0])+' '+losing[0].loss+' maçtır galibiyete hasret; kötü gidişatı bitirebilecek mi?');
  if(!recordNotes.length)recordNotes.push('Henüz öne çıkan bir seri veya gol rekoru yok; yeni hikâyeyi bu maç yazabilir.');
- const rivalPairs=red.length&&white.length?[[red[0],white[0]],[red[red.length-1],white[white.length-1]]]:[];
  const taunts=['“Bu hafta rakibe topu ancak maçtan sonra veririz!”','“Onlar plan yapadursun, biz golleri sayarız!”','“Maçtan sonra bahane değil skor konuşulsun!”','“Sahada görüşürüz, gazeteye değil tabelaya bakın!”'];
- const gossip=rivalPairs.length?rivalPairs.map(([p,q],i)=>'<p><strong>'+esc(name(p))+'</strong>, <strong>'+esc(name(q))+'</strong> için '+esc(taunts[(i+new Date(match.match_date).getDate())%taunts.length])+' dediği iddia ediliyor.</p>').join(''):'<p>Takımlar belli olduğunda oyuncuların birbirine attığı hayalî laflar burada olacak.</p>';
  const columnists=['Ahmet Çakmaz','Uğur Karayollukçu','Rıdvan Dilim','Erman Torpiloğlu','Uğur Menemen','Şansal Küçüka','Serdar Ali Çekirdekler','Mehmet Demirgöl','Ömer Üfürdül','Sinan Yengin'];
  const index=new Date(match.match_date).getDate()%10;
  const writerNames=[columnists[index],columnists[(index+3)%10],columnists[(index+7)%10]];
@@ -1183,6 +1181,13 @@ function szfPreviewPaper(match){
   'İki takımın da savunma disiplini sonucu değiştirecek; isimlerden çok takım oyununa bakıyorum.',
   'Herkes golcüleri konuşuyor, ben orta sahadaki mücadeleyi merak ediyorum.'
  ][i]]);
+ // Kuliste, rekor/kilit/yazar bölümlerinde adı geçmeyen futbolcuları konuştur.
+ const excluded=new Set([...mentioned,...subjects.map(p=>name(p).toLocaleLowerCase('tr-TR'))]);
+ const fresh=roster.filter(p=>!excluded.has(name(p).toLocaleLowerCase('tr-TR')));
+ const rotated=fresh.length?[...fresh.slice(seed%fresh.length),...fresh.slice(0,seed%fresh.length)]:[];
+ const pairs=[];
+ for(const speaker of rotated){const target=rotated.find(p=>p.team!==speaker.team&&!pairs.some(pair=>pair.some(x=>x.id===p.id||name(x)===name(p)))&&name(p)!==name(speaker));if(target&&!pairs.some(pair=>pair.some(x=>x.id===speaker.id||name(x)===name(speaker))))pairs.push([speaker,target]);if(pairs.length===2)break;}
+ const gossip=pairs.length?pairs.map(([p,q],i)=>'<p><strong>'+esc(name(p))+'</strong>, <strong>'+esc(name(q))+'</strong> için '+esc(taunts[(i+seed)%taunts.length])+' dediği iddia ediliyor.</p>').join(''):'<p>Bu haftanın kulislerinde taktik savaşları konuşuluyor; iki takım da kozlarını maç saatine saklıyor.</p>';
  const headline=complete?(Math.abs(avg(red)-avg(white))<1?'DENGELER BIÇAK SIRTI!':'SAHADA HESAPLAR KARIŞACAK!'):'SAHADA FIRTINA ÖNCESİ SESSİZLİK!';
  const newsSection=(title,body)=>'<section class="szf-preview-news-section"><div class="szf-news-kicker">'+title+'</div>'+body+'</section>';
  const starBody=stars.length?stars.map((p,i)=>'<p><strong>'+esc(name(p))+'</strong> — '+esc(starText(p,i))+'</p>').join(''):'<p>Kadro netleşince öne çıkan oyuncular belirlenecek.</p>';

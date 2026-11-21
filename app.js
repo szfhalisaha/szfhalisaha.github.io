@@ -1171,8 +1171,7 @@ function renderHome(){
  const playerCount=currentCards().length;
  const future=leagueMatches.filter(m=>m.status==='open'&&new Date(m.match_date).getTime()>Date.now()).sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
  const next=future[0];
- const paperMatch=leagueMatches.filter(m=>Number.isFinite(new Date(m.match_date).getTime())&&Date.now()>=new Date(m.match_date).getTime()-72*3600000&&Date.now()<new Date(m.match_date).getTime()).sort((a,b)=>new Date(a.match_date)-new Date(b.match_date))[0];
- return `<section class="home-landing">${next?homeNextMatchCard(next):`<div class="home-next"><small>SIRADAKİ MAÇ</small><h2>Henüz planlanmış maç yok</h2></div>`}${paperMatch?szfPrematchNewspaper(paperMatch):''}<div class="szf-ball-plane-strip" role="img" aria-label="Futbol topu ilerlerken yeşil bir uçağa dönüşüyor">
+ return `<section class="home-landing">${next?homeNextMatchCard(next):`<div class="home-next"><small>SIRADAKİ MAÇ</small><h2>Henüz planlanmış maç yok</h2></div>`}<div class="szf-ball-plane-strip" role="img" aria-label="Futbol topu ilerlerken yeşil bir uçağa dönüşüyor">
  <svg viewBox="0 0 640 100" class="szf-ball-plane-svg" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
  <defs><linearGradient id="szf-plane-v133" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e3ffd1"/><stop offset="1" stop-color="#9cf456"/></linearGradient></defs>
  <path d="M18 78 H622" stroke="#b9f46d" stroke-width="1" opacity=".13"/>

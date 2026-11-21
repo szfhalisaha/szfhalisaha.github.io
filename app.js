@@ -1185,9 +1185,29 @@ function szfPreviewPaper(match){
  const excluded=new Set([...mentioned,...subjects.map(p=>name(p).toLocaleLowerCase('tr-TR'))]);
  const fresh=roster.filter(p=>!excluded.has(name(p).toLocaleLowerCase('tr-TR')));
  const rotated=fresh.length?[...fresh.slice(seed%fresh.length),...fresh.slice(0,seed%fresh.length)]:[];
- const pairs=[];
- for(const speaker of rotated){const target=rotated.find(p=>p.team!==speaker.team&&!pairs.some(pair=>pair.some(x=>x.id===p.id||name(x)===name(p)))&&name(p)!==name(speaker));if(target&&!pairs.some(pair=>pair.some(x=>x.id===speaker.id||name(x)===name(speaker))))pairs.push([speaker,target]);if(pairs.length===2)break;}
- const gossip=pairs.length?pairs.map(([p,q],i)=>'<p><strong>'+esc(name(p))+'</strong>, <strong>'+esc(name(q))+'</strong> için '+esc(taunts[(i+seed)%taunts.length])+' dediği iddia ediliyor.</p>').join(''):'<p>Bu haftanın kulislerinde taktik savaşları konuşuluyor; iki takım da kozlarını maç saatine saklıyor.</p>';
+ const modes=['rival','teammate','ownTeam','otherTeam'];
+ const quotes={
+  rival:['“Sahada görüşürüz, gazeteye değil tabelaya bakın!”','“Maçtan sonra bahane değil skor konuşulsun!”'],
+  teammate:['“Bu hafta pasları düzgün at, gerisini bana bırak!”','“Geçen hafta seni kurtardım, bu hafta sıra sende!”'],
+  ownTeam:['“Beyler, bu hafta kimse yürüyerek oynamasın!”','“Herkes görevini yapsın, maç sonunda çaylar benden!”'],
+  otherTeam:['“Karşı takım hazırlansın, bu hafta kolay lokma yok!”','“Rakibe söyleyin, maça gelirken bahanelerini de getirsin!”']
+ };
+ const used=new Set();
+ const stories=[];
+ for(let i=0;i<Math.min(2,rotated.length);i++){
+  const speaker=rotated.find(p=>!used.has(name(p)));
+  if(!speaker)break;
+  used.add(name(speaker));
+  const mode=modes[(seed+i)%modes.length];
+  const target=rotated.find(p=>!used.has(name(p))&&(mode==='teammate'?p.team===speaker.team:p.team!==speaker.team));
+  let label='';
+  if((mode==='rival'||mode==='teammate')&&target){label='<strong>'+esc(name(target))+'</strong> için ';used.add(name(target));}
+  else if(mode==='teammate'||mode==='ownTeam')label='takım arkadaşlarına ';
+  else label='karşı takıma ';
+  const actualMode=(mode==='rival'||mode==='teammate')&&!target?(mode==='teammate'?'ownTeam':'otherTeam'):mode;
+  stories.push('<p><strong>'+esc(name(speaker))+'</strong>, '+label+esc(quotes[actualMode][(seed+i)%2])+' dediği iddia ediliyor.</p>');
+ }
+ const gossip=stories.length?stories.join(''):'<p>Bu haftanın kulislerinde taktik savaşları konuşuluyor; iki takım da kozlarını maç saatine saklıyor.</p>';
  const headline=complete?(Math.abs(avg(red)-avg(white))<1?'DENGELER BIÇAK SIRTI!':'SAHADA HESAPLAR KARIŞACAK!'):'SAHADA FIRTINA ÖNCESİ SESSİZLİK!';
  const newsSection=(title,body)=>'<section class="szf-preview-news-section"><div class="szf-news-kicker">'+title+'</div>'+body+'</section>';
  const starBody=stars.length?stars.map((p,i)=>'<p><strong>'+esc(name(p))+'</strong> — '+esc(starText(p,i))+'</p>').join(''):'<p>Kadro netleşince öne çıkan oyuncular belirlenecek.</p>';

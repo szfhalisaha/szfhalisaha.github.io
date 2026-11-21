@@ -1349,7 +1349,7 @@ function szfStatisticsRecords(){
  for(const c of cards){let count=0,latest=null;for(const m of matches){const mv=mvpStates[String(m.id)];if(!mv?.finished||!Array.isArray(mv.winners))continue;if(mv.winners.some(w=>String(w)===String(c.id)||String(w).toLocaleLowerCase('tr-TR')===String(c.display_name).toLocaleLowerCase('tr-TR'))){count++;latest=m;}}if(count)mvps.push({name:c.display_name,value:count,date:latest?.match_date,match:latest});}
  add('🌟 En çok Maçın Adamı','kez',mvps);
  if(!records.length)return '<p class="soft">Henüz hesaplanabilecek tamamlanmış maç kaydı bulunmuyor.</p>';
- return '<p class="soft">Rekorlar yalnızca tamamlanmış maçların kayıtlarından hesaplanır. Eşit rekor sahipleri birlikte gösterilir.</p><div class="szf-records-grid">'+records.map(r=>'<article class="szf-record-card"><h3>'+esc(r.title)+'</h3><div class="szf-record-value">'+r.value+' <small>'+esc(r.unit)+'</small></div>'+r.holders.map(h=>'<p><strong>'+esc(formatPersonName(h.name))+'</strong><span>'+esc(h.date?matchDateText(h.date):'')+'</span></p>').join('')+'</article>').join('')+'</div>';
+ return '<p class="soft">Rekorlar tamamlanmış maçlardan hesaplanır; eşit rekor sahipleri birlikte gösterilir.</p><div class="szf-record-list">'+records.map(r=>'<div class="szf-record-entry"><div class="szf-record-heading"><strong>'+esc(r.title)+'</strong><span>'+r.value+' '+esc(r.unit)+'</span></div><div class="szf-record-holders">'+r.holders.map(h=>'<div><b>'+esc(formatPersonName(h.name))+'</b><small>'+esc(h.date?matchDateText(h.date):'')+'</small></div>').join('')+'</div></div>').join('')+'</div>';
 }
 
 function renderStatistics(){

@@ -1441,3 +1441,21 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-keeper-editor select{max-width:200px;min-width:120px;background:#0d2117;color:#e8f3e4;border:1px solid #5b865b;border-radius:7px;padding:7px}
 .szf-stats-tabs{flex-wrap:wrap}
 .szf-stats-tab{flex:1 1 155px}
+
+
+.szf-duel-pickers{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;gap:12px;margin-bottom:22px}
+.szf-duel-pickers label{display:flex;flex-direction:column;gap:7px;color:#d9edda;font-weight:700;font-size:13px;min-width:0}
+.szf-duel-pickers select{width:100%;min-width:0}
+.szf-duel-vs{color:#d6fca5;font-weight:900;padding-bottom:12px}
+.szf-duel-head{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;text-align:center;align-items:center;padding:15px;background:#142e20;border:1px solid #34553c;border-radius:12px;color:#e8f3e4}
+.szf-duel-head span{color:#d6fca5}
+.szf-duel-table{margin-top:12px}
+.szf-duel-table table{width:100%;text-align:center}
+.szf-duel-table th{color:#d5ead5;text-align:center}
+.szf-duel-table td{width:34%;font-weight:800}
+.szf-duel-head-to-head{margin-top:18px;padding:17px;border:1px solid #34553c;border-radius:12px;background:#142e20;color:#e8f3e4}
+.szf-duel-head-to-head h3{margin:0 0 8px}
+.szf-duel-score{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;margin-top:15px}
+.szf-duel-score span{display:flex;flex-direction:column;gap:7px;font-size:13px}
+.szf-duel-score b{font-size:25px;color:#d6fca5}
+@media(max-width:600px){.szf-duel-pickers{gap:6px}.szf-duel-head{gap:5px;font-size:12px}.szf-duel-score{gap:5px}}

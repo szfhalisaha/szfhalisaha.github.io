@@ -1421,7 +1421,9 @@ function szfStatisticsRecords(){
  add('🤝 En başarılı ikili','%',eligible.map(p=>({name:p.name,value:100*p.wins/p.played,dates:p.dates})));
  if(eligible.length){
   const min=Math.min(...eligible.map(p=>100*p.wins/p.played));
-  add('💀 En başarısız ikili','%',eligible.filter(p=>Math.abs(100*p.wins/p.played-min)<0.000001).map(p=>({name:p.name,value:100-min,dates:p.dates})).map(p=>({...p,value:100-min})));
+  const worst=eligible.filter(p=>Math.abs(100*p.wins/p.played-min)<0.000001).map(p=>({name:p.name,value:min,dates:p.dates}));
+  const holders=worst.map(p=>({name:p.name,dates:[...new Set(p.dates.map(d=>matchDateText(d)))]}));
+  records.push({title:'💀 En başarısız ikili',value:min,unit:'%',holders});
  }
  const totalGoals=matches.filter(m=>m.red_score!=null&&m.white_score!=null&&Number.isFinite(Number(m.red_score))&&Number.isFinite(Number(m.white_score))).map(m=>({name:'Kırmızı '+m.red_score+' – '+m.white_score+' Beyaz',value:Number(m.red_score)+Number(m.white_score),date:m.match_date}));
  add('🥅 En gollü karşılaşma','gol',totalGoals);

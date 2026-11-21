@@ -1830,7 +1830,7 @@ function renderAssessment(){
  if(String(c.id)===String(user.id)){
   const picker='<select id="v70Target" class="text-input">'+everyone.map((p,i)=>'<option value="'+i+'" '+(i===weeklyIndex?'selected':'')+'>'+esc(formatPersonName(p.display_name))+(String(p.id)===String(user.id)?' · Ben':'')+'</option>').join('')+'</select>';
   return sectionHead('Oyuncu Değerlendir','Kendi kartını görüntüleyebilirsin; kendine puan veremezsin.',picker)
-   +'<div class="assessment-layout"><div class="assessment-preview"><p class="soft">'+Number(c.v70_count??c.voter_count??0)+'/10 değerlendirme tamamlandı</p>'+assessmentCardHTML(c)+'</div><div class="assessment-panel"><h3>'+esc(formatPersonName(c.display_name))+'</h3><p class="notice">🔒 Kendine oy veremezsin. Bu ekran yalnızca kendi değerlendirmeni görüntülemek içindir.</p><div class="mode-buttons"><button type="button" class="btn ghost" data-assess-prev>← Önceki</button><button type="button" class="btn lime" disabled aria-disabled="true">Son oyuncudasın</button></div></div></div>';
+   +'<div class="assessment-layout"><div class="assessment-preview"><p class="soft">'+Number(c.v70_count??c.voter_count??0)+'/10 değerlendirme tamamlandı</p>'+assessmentCardHTML(c)+'</div><div class="assessment-panel"><h3>'+esc(formatPersonName(c.display_name))+'</h3><p class="notice">Kendine oy veremezsin.</p><div class="mode-buttons"><button type="button" class="btn ghost" data-assess-prev>← Önceki</button><button type="button" class="btn lime" disabled aria-disabled="true">Son oyuncudasın</button></div></div></div>';
  }
 
  const permission=assessmentPermission(c.id);

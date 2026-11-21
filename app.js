@@ -1128,12 +1128,42 @@ async function szfOpenNewspaper(id){
 
 
 
+
+function szfPreviewPaper(match){
+ if(!match)return '';
+ const people=weeklyPlayers.filter(p=>String(p.match_id)===String(match.id));
+ const guests=extras.guests.filter(g=>String(g.match_id)===String(match.id)&&!people.some(p=>String(p.player_id)===String(linkedPlayerId(g))));
+ const cards=currentCards(),roster=people.map(p=>{const c=cards.find(c=>String(c.id)===String(p.player_id));return c?{id:c.id,name:c.display_name,team:p.team_color,rating:szfTeamPlayerRating(c)}:null}).filter(Boolean);
+ guests.forEach(g=>{const c=linkedCard(g);roster.push({id:c?.id||null,name:guestDisplayName(g),team:g.team_color,rating:c?szfTeamPlayerRating(c):guestTeamRating(g)})});
+ const red=roster.filter(p=>p.team==='red'),white=roster.filter(p=>p.team==='white');
+ const avg=t=>t.length?t.reduce((n,p)=>n+p.rating,0)/t.length:0;
+ const form=t=>{let n=0,w=0;t.forEach(p=>{if(!p.id)return;playerStreakData(p.id).results.slice(-5).forEach(r=>{n++;w+=r.outcome==='G'?1:r.outcome==='B'?.5:0})});return n?w/n:.5};
+ const complete=red.length===7&&white.length===7;
+ const delta=complete?(avg(red)-avg(white))*.065+(form(red)-form(white))*1.4:0;
+ const chance=Math.round(Math.max(15,Math.min(85,100/(1+Math.exp(-delta)))));
+ const stars=[...roster].sort((a,b)=>b.rating-a.rating).slice(0,3);
+ const all=cards.map(c=>({name:c.display_name,streak:playerStreakData(c.id).best,goals:Math.max(0,...playerEventCountsByMatch(c.id,'goal').values())})).sort((a,b)=>b.goals-a.goals);
+ const goalRecord=all[0]?.goals||0;
+ const alert=goalRecord?('Tek maçta '+goalRecord+' gollük mevcut oyuncu rekoru bu hafta yeniden zorlanabilir.'):('Bu maçta ilk büyük bireysel rekor yazılabilir.');
+ const columnists=[['Ahmet Çakmaz','Bu maçın kilidi tempo; erken gol her şeyi değiştirir.'],['Uğur Karayollukçu','İstatistikler konuşuyor ama son sözü saha söyler.'],['Rıdvan Dilim','Orta saha mücadelesi maçın kaderini belirleyebilir.'],['Erman Torpiloğlu','Savunmada yapılan bir hata bütün planları bozabilir.'],['Uğur Menemen','Form grafiği tek başına yeterli değil.'],['Şansal Küçüka','Sahada yeni bir hikâye yazılacak.'],['Serdar Ali Çekirdekler','Bu maçın ardından çok konuşulacak.'],['Mehmet Demirgöl','Dengeyi bozan bireysel performans olacak.'],['Ömer Üfürdül','Çok enteresan bir mücadele bizi bekliyor.'],['Sinan Yengin','Mücadele etmeden maç kazanılmaz.']];
+ const index=new Date(match.match_date).getDate()%10,writers=[columnists[index],columnists[(index+3)%10],columnists[(index+7)%10]];
+ const headline=complete?(Math.abs(avg(red)-avg(white))<1?'DENGELER BIÇAK SIRTI!':'SAHADA HESAPLAR KARIŞACAK!'):'SAHADA FIRTINA ÖNCESİ SESSİZLİK!';
+ const box=(title,body)=>'<div class="szf-preview-box"><h3>'+title+'</h3>'+body+'</div>';
+ return '<section class="szf-preview-paper"><div class="szf-preview-masthead"><small>SZF AIRPORT · MAÇ ÖNCESİ ÖZEL</small><h2>SAHA GAZETESİ</h2><span>'+esc(matchDateText(match.match_date))+'</span></div><h2 class="szf-preview-headline">'+headline+'</h2><p class="szf-preview-lead">Haftanın karşılaşması yaklaşırken gözler formda oyunculara ve kırılabilecek rekorlara çevrildi.</p><div class="szf-preview-grid">'+
+ box('📊 KAZANMA OLASILIĞI',complete?'<div class="szf-preview-odds"><b>🔴 %'+chance+'</b><b>⚪ %'+(100-chance)+'</b></div><div class="szf-preview-bar"><span style="width:'+chance+'%"></span></div><small>Oyuncu puanları ve son 5 maç formuna dayalı tahmin; beraberlik ayrı hesaplanmaz.</small>':'<p>Takımlar kesinleşince yüzdeler burada görünecek.</p>')+
+ box('⭐ KİLİT OYUNCULAR',stars.length?'<p>'+stars.map(p=>'<strong>'+esc(formatPersonName(p.name))+'</strong> ('+p.rating.toFixed(1)+')').join(' · ')+'</p><small>Mevcut oyuncu puanlarına göre öne çıkanlar.</small>':'<p>Kadro netleşince öne çıkan oyuncular belirlenecek.</p>')+
+ box('🚨 REKOR ALARMI','<p>'+esc(alert)+'</p>')+
+ box('🤫 KULİS','<p>İddialara göre soyunma odalarında taktik tahtaları çoktan hazır! İlk golü atan tarafın sesi epey yükselecek.</p><small>Bu bölüm mizah ve kurgudur.</small>')+
+ '</div>'+box('✍️ YAZARLAR',writers.map(w=>'<div class="szf-preview-column"><b>'+esc(w[0])+'</b><p>“'+esc(w[1])+'”</p></div>').join('')+'<small>Yazar isimleri ve yorumları parodidir.</small>')+'</section>';
+}
+
 function renderHome(){
  if(authBooting)return `<section class="home-landing"><div class="home-next" role="status" aria-live="polite"><small>SZF AIRPORT HALI SAHA</small><h2>Oturum ve maç bilgileri yükleniyor…</h2><p class="soft">Kayıtlı hesabın kontrol ediliyor.</p></div></section>`;
  const playerCount=currentCards().length;
  const future=leagueMatches.filter(m=>m.status==='open'&&new Date(m.match_date).getTime()>Date.now()).sort((a,b)=>new Date(a.match_date)-new Date(b.match_date));
  const next=future[0];
- return `<section class="home-landing">${next?homeNextMatchCard(next):`<div class="home-next"><small>SIRADAKİ MAÇ</small><h2>Henüz planlanmış maç yok</h2></div>`}<div class="szf-ball-plane-strip" role="img" aria-label="Futbol topu ilerlerken yeşil bir uçağa dönüşüyor">
+ const preview=next&&Date.now()>=new Date(next.match_date).getTime()-72*3600000?next:null;
+ return `<section class="home-landing">${next?homeNextMatchCard(next):`<div class="home-next"><small>SIRADAKİ MAÇ</small><h2>Henüz planlanmış maç yok</h2></div>`}${preview?szfPreviewPaper(preview):''}<div class="szf-ball-plane-strip" role="img" aria-label="Futbol topu ilerlerken yeşil bir uçağa dönüşüyor">
  <svg viewBox="0 0 640 100" class="szf-ball-plane-svg" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
  <defs><linearGradient id="szf-plane-v133" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e3ffd1"/><stop offset="1" stop-color="#9cf456"/></linearGradient></defs>
  <path d="M18 78 H622" stroke="#b9f46d" stroke-width="1" opacity=".13"/>

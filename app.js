@@ -1465,11 +1465,13 @@ function szfPlayerDuel(){
  const players=[...currentCards()].sort((a,b)=>String(a.display_name).localeCompare(String(b.display_name),'tr'));
  if(!players.length)return '<p class="empty">Karşılaştırılacak oyuncu bulunamadı.</p>';
  const ids=new Set(players.map(p=>String(p.id)));
- if(!ids.has(String(szfDuelLeft)))szfDuelLeft=String(players[0].id);
- if(!ids.has(String(szfDuelRight))||szfDuelRight===szfDuelLeft)szfDuelRight=String(players.find(p=>String(p.id)!==szfDuelLeft)?.id||'');
+ const myPlayer=players.find(p=>String(p.id)===String(user?.id));
+ if(myPlayer)szfDuelLeft=String(myPlayer.id);
+ else if(!ids.has(String(szfDuelLeft)))szfDuelLeft='';
+ if(!ids.has(String(szfDuelRight))||szfDuelRight===szfDuelLeft)szfDuelRight='';
  const optionList=chosen=>'<option value="">Oyuncu seç</option>'+players.map(p=>'<option value="'+attrs(p.id)+'" '+(String(p.id)===String(chosen)?'selected':'')+'>'+esc(formatPersonName(p.display_name))+'</option>').join('');
  const first=players.find(p=>String(p.id)===szfDuelLeft),second=players.find(p=>String(p.id)===szfDuelRight);
- const select='<div class="szf-duel-pickers"><label>Oyuncu 1<select class="text-input" data-szf-duel="left">'+optionList(szfDuelLeft)+'</select></label><span class="szf-duel-vs">VS</span><label>Oyuncu 2<select class="text-input" data-szf-duel="right">'+optionList(szfDuelRight)+'</select></label></div>';
+ const select='<div class="szf-duel-pickers"><label>Oyuncu 1<select class="text-input" data-szf-duel="left" '+(myPlayer?'disabled':'')+'>'+optionList(szfDuelLeft)+'</select></label><span class="szf-duel-vs">VS</span><label>Oyuncu 2<select class="text-input" data-szf-duel="right">'+optionList(szfDuelRight)+'</select></label></div>';
  if(!first||!second||String(first.id)===String(second.id))return select+'<p class="soft">Karşılaştırmak için iki farklı oyuncu seç.</p>';
  const finished=new Map(leagueMatches.filter(m=>m.status==='completed').map(m=>[String(m.id),m]));
  const entryA=new Map(playerMatchEntries(first.id).filter(e=>finished.has(String(e.match_id))).map(e=>[String(e.match_id),e]));
@@ -2516,7 +2518,7 @@ function bindContent(){
  }
 
  document.querySelectorAll('[data-szf-duel]').forEach(el=>el.addEventListener('change',()=>{if(el.dataset.szfDuel==='left')szfDuelLeft=el.value;else szfDuelRight=el.value;render()}));
- document.querySelectorAll('[data-stats-tab]').forEach(btn=>btn.addEventListener('click',()=>{selectedStatsTab=btn.dataset.statsTab;render()}));
+ document.querySelectorAll('[data-stats-tab]').forEach(btn=>btn.addEventListener('click',()=>{if(btn.dataset.statsTab==='duel'&&selectedStatsTab!=='duel')szfDuelRight='';selectedStatsTab=btn.dataset.statsTab;render()}));
  document.querySelector('[data-stats-sort]')?.addEventListener('change',el=>{statsSortMode[el.target.dataset.statsSort]=el.target.value;render()});
  document.querySelectorAll('[data-stats-sort-head]').forEach(btn=>btn.addEventListener('click',()=>{statsSortMode[btn.dataset.statsSortFor]=btn.dataset.statsSortHead;render()}));
  refreshHomeCountdown();

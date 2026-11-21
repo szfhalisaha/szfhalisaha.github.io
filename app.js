@@ -1392,7 +1392,7 @@ function szfStatisticsRecords(){
   if(dates.length>=2)mvps.push({name:c.display_name,value:dates.length,dates});
  }
  add('🌟 En çok Maçın Adamı','kez',mvps,2);
- const winRates=cards.map(c=>({name:c.display_name,...playerWinStats(c.id)})).filter(x=>x.played>0).map(x=>({name:x.name,value:x.pct,dates:playerMatchEntries(cards.find(c=>c.display_name===x.name)?.id).map(e=>matchById.get(String(e.match_id))?.match_date).filter(Boolean)}));
+ const winRates=cards.map(c=>({name:c.display_name,...playerWinStats(c.id)})).filter(x=>x.played>=2).map(x=>({name:x.name,value:x.pct,dates:playerMatchEntries(cards.find(c=>c.display_name===x.name)?.id).map(e=>matchById.get(String(e.match_id))?.match_date).filter(Boolean)}));
  add('🎖️ En yüksek galibiyet yüzdesi','%',winRates);
  add('💀 En uzun mağlubiyet serisi','maç',lossStreaks);
  const roster=new Map();

@@ -110,7 +110,10 @@ function cardDisplayName(c,showNumber=false){
  const person=publicProfiles.find(p=>String(p.id)===String(c.id));
  const jersey=Number(person?.jersey_number??c.jersey_number);
  const number=showNumber&&Number.isInteger(jersey)&&jersey>=1&&jersey<=99?`${jersey} `:'';
- return number+formatPersonName(c.display_name);
+ const full=formatPersonName(c.display_name);
+ const key=String(c.display_name||'').trim().toLocaleLowerCase('tr-TR');
+ const shortName=/^ahmet\s+hakan\s+inan\b/i.test(key)?'Ahmet H. İnan':/^bedirhan\s+çırakoğlu\b/i.test(key)?'Bedirhan Ç.':full;
+ return number+shortName;
 }
 /* v221 — Per-player portrait tuning. Add requested corrections here,
    indexed by the stable player UUID (preferred) or full display name.
@@ -272,7 +275,7 @@ function cardHTML(c,showNumber=false){
  return `<button type="button" class="card-face fut-card tier-${rankTier(c)} ${showNumber?'szf-numbered-card':''} ${denizTrial?'szf-deniz-cutout-trial':''}" data-player="${attrs(c.id)}"${szfPortraitStyle(c)} aria-label="${attrs(formatPersonName(c.display_name))} oyuncu kartı">
  <div class="fut-head"><div class="fut-overall">${publicRating(c)}</div><div class="fut-pos">${esc(c.position==='ORT'?'OS':c.position)}</div></div>
  <div class="fut-photo">${photo?`<img src="${attrs(cardPhotoUrl)}" alt="" loading="lazy">`:`<span>${esc(initials)}</span>`}</div>
- <div class="fut-name ${cardDisplayName(c,showNumber).length>22?'szf-name-very-long':cardDisplayName(c,showNumber).length>15?'szf-name-long':''}">${/^(?:bedirhan|ahmet hakan)\b/i.test(String(c.display_name||"").toLocaleLowerCase("tr-TR"))?`<span class="szf-split-name">${esc(cardDisplayName(c,showNumber).replace(/\s+[^\s]+$/,""))}<span class="szf-split-last">${esc(cardDisplayName(c,showNumber).split(/\s+/).pop())}</span></span>`:esc(cardDisplayName(c,showNumber))}</div><div class="fut-stats">${values}</div><div class="fut-emblems"><img class="fut-flag-img" src="turkiye-bayragi.svg" alt="Türkiye"></div></button>`;
+ <div class="fut-name ${cardDisplayName(c,showNumber).length>22?'szf-name-very-long':cardDisplayName(c,showNumber).length>15?'szf-name-long':''}">${esc(cardDisplayName(c,showNumber))}</div><div class="fut-stats">${values}</div><div class="fut-emblems"><img class="fut-flag-img" src="turkiye-bayragi.svg" alt="Türkiye"></div></button>`;
 }
 function getAvatarInitials(name){
  const parts=String(name||'').trim().split(/\s+/).filter(Boolean);

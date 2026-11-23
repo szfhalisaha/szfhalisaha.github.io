@@ -939,6 +939,34 @@ function szfNewsScoreComment(m,d){
  const seed=[...String(m.id)].reduce((n,c)=>((n*31+c.charCodeAt(0))>>>0),11);
  return options[seed%options.length];
 }
+/* v262 — Maç sonu köşe yazarları: maçın gerçek skoruna ve MVP sonucuna bağlı parodi yorumlar. */
+function szfPostMatchColumnists(match,data){
+ if(!match||!data||new Date(match.match_date).getTime()<Date.parse('2026-11-23T00:00:00+03:00'))return '';
+ const names=['Ahmet Çakmaz','Uğur Karayollukçu','Rıdvan Dilim','Erman Torpiloğlu','Uğur Menemen','Şansal Küçüka','Serdar Ali Çekirdekler','Mehmet Demirgöl','Ömer Üfürdül','Sinan Yengin'];
+ const seed=[...String(match.id)].reduce((n,c)=>n+c.charCodeAt(0),0);
+ const selected=[names[seed%10],names[(seed+3)%10],names[(seed+7)%10]];
+ const r=Number(data.red),w=Number(data.white),draw=r===w;
+ const winner=draw?'iki takım':r>w?'Kırmızı takım':'Beyaz takım';
+ const loser=draw?'iki takım':r>w?'Beyaz takım':'Kırmızı takım';
+ const star=(data.winners||[]).join(' ve ')||'maçın öne çıkan oyuncuları';
+ const voices={
+  'Ahmet Çakmaz':[`Veriyi açalım: skor ${r}-${w}. ${draw?'Denge bozulmamış.':'Kazanan '+winner+'.'} Sonuç belli; şimdi oyunun neden böyle bittiğini konuşmak lazım.`,`Skor ${r}-${w}. Algıyla değil, kayıtla konuşalım; ${star} MVP oylamasında öne çıktı.`],
+  'Uğur Karayollukçu':[`Arkadaşlar, ${r}-${w} bitmiş maç. ${draw?'İki taraf da kazanma fırsatını kaçırmış.':loser+' için bahane değil çözüm zamanı.'} Bunu bir kenara yazın.`,`${star} alkışı hak etmiş. Ama bu maçın bütün hesabını tek kişiye bağlamak doğru değil.`],
+  'Rıdvan Dilim':[`Futbolda bazen küçük detaylar sonucu belirler. ${r}-${w} bize sonucu gösteriyor; sahadaki tercihleri ayrıca değerlendirmek gerekir.`,`${star} öne çıkmış ama takım oyunu olmadan sonuç gelmez. Doğru pozisyon almak her şeydir.`],
+  'Erman Torpiloğlu':[`Yahu kardeşim, maç ${r}-${w} bitmiş! ${draw?'Kimse galibiyet pozu kesmesin.':loser+' şimdi aynaya bakacak.'} Top yuvarlak ama bahane köşeli!`,`Bak şimdi, ${star} maçın adamı olmuş. Helal olsun! Ötekiler de çay içmeye mi gelmiş, sahada mücadele edeceksin arkadaş!`],
+  'Uğur Menemen':[`Arkadaşlar bu skor konuşulur! ${r}-${w}! ${draw?'İki taraf da son sözü söyleyemedi!':winner+' kazandı ve mesajı verdi!'}`,`Ben net söylüyorum: ${star} bugün adını yazdırdı! Böyle maçlarda sorumluluk alan fark yaratır!`],
+  'Şansal Küçüka':[`Değerli futbolseverler, ${r}-${w} sonuçlanan karşılaşmanın ardından bütün gözler ${star} üzerinde. Gecenin gündemi belli.`,`Sevgili seyirciler, ${winner} açısından dikkat çekici bir akşam geride kaldı. Maçın yankıları sürecek.`],
+  'Serdar Ali Çekirdekler':[`Abi skor ${r}-${w}. ${draw?'Kimse bunu zafer diye pazarlamasın.':loser+' için bu tablo kabul edilebilir değil.'} Net!`,`Abi ${star} öne çıkmış, tamam. Ama sahada mücadele etmeyene de hikâye yazmayalım. Net!`],
+  'Mehmet Demirgöl':[`Skor ${r}-${w}; futbol mücadele ve disiplin işidir. ${draw?'İki taraf da ders çıkarmalı.':winner+' emeğinin karşılığını aldı.'}`,`${star} alkışlanır ama futbol bireysel gösteri değildir. Takım için ter dökmek gerekir.`],
+  'Ömer Üfürdül':[`Maç ${r}-${w} bitti. ${draw?'Dengeyi değiştirecek hamle gelmedi.':winner+' sonuç almayı bildi.'} Alan paylaşımı ve geçişler önemliydi.`,`${star} için önemli bir gece. Yine de bu sonucun arkasında takımın birlikte hareket etmesi var.`],
+  'Sinan Yengin':[`Bana kimse masal anlatmasın! Tabela ${r}-${w} yazıyor. ${draw?'İki taraf da kazanamamış!':loser+' kaybetmiş, mesele bu!'}`,`${star} öne çıkmış, tebrik ederim! Ama geri kalanlar da sorumluluk alacak, başka yolu yok!`]
+ };
+ const columns=selected.map((writer,i)=>{
+  const pool=voices[writer],comment=pool[(seed+i)%pool.length];
+  return '<p><strong>'+esc(writer)+':</strong> “'+esc(comment)+'”</p>';
+ }).join('');
+ return '<section class="szf-news-third"><div class="szf-news-kicker">✍️ MAÇ SONU · KÖŞE YAZARLARI</div>'+columns+'<small>Yazar isimleri ve yorumları mizahi parodidir; gerçek alıntı değildir.</small></section>';
+}
 function szfNewspaperMarkup(id){
  const m=leagueMatches.find(x=>String(x.id)===String(id)),d=szfNewspaperData(m);
  // 15 Kasım 2026 tarihli yayımlanmış Emre manşeti arşivde kalıcıdır.
@@ -968,7 +996,7 @@ function szfNewspaperMarkup(id){
   const seed=[...String(m.id)].reduce((n,c)=>n+c.charCodeAt(0),0);
   return choices[seed%choices.length];
  })();
- return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(date)+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ SONU ÖZEL SAYISI</div><h1>'+esc(emreEdition?'EMRE 3 MAÇTIR GALİBİYETE HASRET!':d.headline)+'</h1><p class="szf-news-deck">'+esc(emreEdition?'Üç maç, sıfır galibiyet! Emre’nin galibiyet hanesinde yaprak kımıldamıyor. SZF Spor soruyor: İlk zafer ne zaman gelecek?':d.summary)+'</p><div class="szf-news-score"><span>KIRMIZI</span><strong>'+d.red+' <i>–</i> '+d.white+'</strong><span>BEYAZ</span></div><div class="szf-news-caption">'+esc(szfNewsScoreComment(m,d))+'</div><div class="szf-news-columns"><section><div class="szf-news-kicker">🏆 '+mvpLabel+'</div><h2>'+esc(names)+'</h2><p>'+esc(mvpPraise)+'</p></section><section><div class="szf-news-kicker">🎙️ MİKROFON SAHADA</div><h2>'+esc(press.name)+' konuştu!</h2><p>“'+esc(press.quote)+'”</p></section></div><section class="szf-news-third"><div class="szf-news-kicker">📰 SAHANIN GÜNDEMİ · ÜÇÜNCÜ HABER</div><h2>'+esc(third.headline)+'</h2><p>'+esc(third.body)+'</p></section><div class="szf-news-bottom"><strong>SON DAKİKA</strong><span>Bir sonraki maçın gündemi şimdiden merak ediliyor.</span></div><footer>SZF SPOR · SAYI: '+esc(String(m.id).slice(0,6).toUpperCase())+' · KAYNAK: RESMÎ MAÇ KAYITLARI</footer></article>';
+ return '<article class="szf-news-paper"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(date)+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ SONU ÖZEL SAYISI</div><h1>'+esc(emreEdition?'EMRE 3 MAÇTIR GALİBİYETE HASRET!':d.headline)+'</h1><p class="szf-news-deck">'+esc(emreEdition?'Üç maç, sıfır galibiyet! Emre’nin galibiyet hanesinde yaprak kımıldamıyor. SZF Spor soruyor: İlk zafer ne zaman gelecek?':d.summary)+'</p><div class="szf-news-score"><span>KIRMIZI</span><strong>'+d.red+' <i>–</i> '+d.white+'</strong><span>BEYAZ</span></div><div class="szf-news-caption">'+esc(szfNewsScoreComment(m,d))+'</div><div class="szf-news-columns"><section><div class="szf-news-kicker">🏆 '+mvpLabel+'</div><h2>'+esc(names)+'</h2><p>'+esc(mvpPraise)+'</p></section><section><div class="szf-news-kicker">🎙️ MİKROFON SAHADA</div><h2>'+esc(press.name)+' konuştu!</h2><p>“'+esc(press.quote)+'”</p></section></div><section class="szf-news-third"><div class="szf-news-kicker">📰 SAHANIN GÜNDEMİ · ÜÇÜNCÜ HABER</div><h2>'+esc(third.headline)+'</h2><p>'+esc(third.body)+'</p></section>'+szfPostMatchColumnists(m,d)+'<div class="szf-news-bottom"><strong>SON DAKİKA</strong><span>Bir sonraki maçın gündemi şimdiden merak ediliyor.</span></div><footer>SZF SPOR · SAYI: '+esc(String(m.id).slice(0,6).toUpperCase())+' · KAYNAK: RESMÎ MAÇ KAYITLARI</footer></article>';
 }
 /* Özel manşet yalnızca üst haberi değiştirir; skor, MVP ve mikrofon bölümü korunur. */
 function szfEmreSpecialMatch(){

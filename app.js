@@ -1221,6 +1221,37 @@ function szfPreviewPaper(match){
  const writerBody=writers.map(w=>'<p><strong>'+esc(w[0])+'</strong>: “'+esc(w[1])+'”</p>').join('')+'<small>Yazar isimleri ve yorumları parodidir.</small>';
  return '<article class="szf-news-paper szf-preview-edition"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(matchDateText(match.match_date))+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ ÖNÜ ÖZEL SAYISI</div><h1>'+esc(headline)+'</h1><p class="szf-news-deck">Haftanın karşılaşması yaklaşırken gözler oyuncuların formuna, rekorlara ve kulislerdeki atışmalara çevrildi.</p><div class="szf-news-columns">'+newsSection('⭐ KİLİT OYUNCULAR',starBody)+newsSection('📊 KAZANMA OLASILIĞI',oddsBody)+'</div><div class="szf-news-columns">'+newsSection('🚨 REKOR ALARMI',recordNotes.map(note=>'<p>'+esc(note)+'</p>').join(''))+newsSection('🤫 KULİS',gossip)+'</div><section class="szf-news-third">'+newsSection('✍️ KÖŞE YAZARLARI',writerBody)+'</section><div class="szf-news-bottom"><strong>MAÇ ÖNCESİ</strong><span>Son sözü sahadaki mücadele söyleyecek!</span></div><footer>SZF SPOR · MAÇ ÖNÜ ÖZEL SAYISI · İSTATİSTİKLER: RESMÎ MAÇ KAYITLARI</footer></article>';
 }
+/* v260 — Maç önü gazetesi, başka cihazda değiştirilen kadroyu da izler.
+   Tamamlanmış maçların gazete arşivine müdahale edilmez. */
+let szfPreviewRosterSyncAt=0,szfPreviewRosterSyncBusy=false;
+async function szfSyncPreviewRoster(){
+ if(szfPreviewRosterSyncBusy||!db||!user||view!=='home'||document.hidden)return;
+ const upcoming=leagueMatches.some(m=>m.status==='open'&&new Date(m.match_date).getTime()>Date.now()&&new Date(m.match_date).getTime()-Date.now()<=72*3600000);
+ if(!upcoming)return;
+ const now=Date.now();
+ if(now-szfPreviewRosterSyncAt<15000)return;
+ szfPreviewRosterSyncAt=now;szfPreviewRosterSyncBusy=true;
+ try{
+  const [participants,guests]=await Promise.all([
+   db.from('szf_participants').select('*'),
+   db.from('szf_guest_players_v53').select('*,szf_guest_match_ratings(overall)')
+  ]);
+  if(participants.error||guests.error)throw participants.error||guests.error;
+  const before=JSON.stringify(weeklyPlayers.map(p=>[p.match_id,p.player_id,p.team_color]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))))+
+   JSON.stringify(extras.guests.map(g=>[g.id,g.match_id,g.display_name,g.team_color]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))));
+  const after=JSON.stringify((participants.data||[]).map(p=>[p.match_id,p.player_id,p.team_color]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))))+
+   JSON.stringify((guests.data||[]).map(g=>[g.id,g.match_id,g.display_name,g.team_color]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))));
+  if(before!==after){
+   weeklyPlayers=participants.data||[];
+   extras.guests=guests.data||[];
+   if(view==='home')render();
+  }
+ }catch(err){console.warn('Maç önü kadro senkronizasyonu:',err);}
+ finally{szfPreviewRosterSyncBusy=false;}
+}
+setInterval(szfSyncPreviewRoster,30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)szfSyncPreviewRoster();});
+window.addEventListener('focus',szfSyncPreviewRoster);
 function renderHome(){
  if(authBooting)return `<section class="home-landing"><div class="home-next" role="status" aria-live="polite"><small>SZF AIRPORT HALI SAHA</small><h2>Oturum ve maç bilgileri yükleniyor…</h2><p class="soft">Kayıtlı hesabın kontrol ediliyor.</p></div></section>`;
  const playerCount=currentCards().length;

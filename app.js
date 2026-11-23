@@ -1172,16 +1172,27 @@ function szfPreviewPaper(match){
  const eligible=roster.filter(p=>!mentioned.has(name(p).toLocaleLowerCase('tr-TR')));
  const seed=new Date(match.match_date).getDate();
  const subjects=[...eligible.slice(seed%Math.max(eligible.length,1)),...eligible.slice(0,seed%Math.max(eligible.length,1))].slice(0,3);
- const writerComment=(p,i)=>[
-  name(p)+' bu maçın gizli kahramanı olabilir. Herkes yıldızlara bakarken onun performansını izleyin.',
-  name(p)+' için önemli bir sınav. Sahada göstereceği mücadele maçın yönünü değiştirebilir.',
-  name(p)+' bu hafta sürpriz yaparsa kimse şaşırmasın; bence gözden kaçan isim o.'
- ][i];
- const writers=writerNames.map((w,i)=>[w,subjects[i]?writerComment(subjects[i],i):[
-  'Bu maçta kenardan gelen katkı belirleyici olabilir; herkes sadece yıldızları konuşuyor.',
-  'İki takımın da savunma disiplini sonucu değiştirecek; isimlerden çok takım oyununa bakıyorum.',
-  'Herkes golcüleri konuşuyor, ben orta sahadaki mücadeleyi merak ediyorum.'
- ][i]]);
+ // Her parodi yorumcunun ayrı söz dağarcığı ve bakış açısı var.
+ // Yorumlar gerçek kişilere ait alıntı değil, karakterlerinden esinlenen kurgulardır.
+ const writerComment=(writer,p,i)=>{
+  const n=p?name(p):'Bu takım',rating=p?Number(p.rating):0;
+  const advantage=complete?(chance>=55?'Kırmızı takım':'Beyaz takım'):'iki takım';
+  const voices={
+   'Ahmet Çakmaz':[`${n} için istatistikleri açtım. Rakamlar bir şey söylüyor ama maç başka bir şey anlatabilir; veriyle sahayı karıştırmayalım.`,`${n} konusunda algı değil performans konuşalım. Pozisyon pozisyon bakınca asıl hikâye ortaya çıkıyor.`],
+   'Uğur Karayollukçu':[`${n} için beklenti büyük. Ama bu iş isimle olmuyor arkadaşlar; sahada karşılığını göreceğiz.`,`Bakın, ${n} bugün sorumluluk almazsa maçtan sonra çok konuşulur. Bunu bir kenara yazın.`],
+   'Rıdvan Dilim':[`${n} doğru yerde doğru pası verirse rakibin bütün savunma dengesi bozulur. Futbol bazen bu kadar basit.`,`Şimdi ${n} üzerinden düşünelim: Topu kazandığı an ilk tercihi doğru yaparsa takımını rahatlatır.`],
+   'Erman Torpiloğlu':[`Yahu ${n}, sahaya çıkınca topa mı bakacak, rakibe mi? Kardeşim, halı saha burası; ayakta kalan kazanır!`,`Bak şimdi, ${n} bugün koşmazsa takım arkadaşları onu sırtında mı taşıyacak? Böyle iş olmaz arkadaş!`],
+   'Uğur Menemen':[`${n} için çok net bir şey söyleyeceğim: Bugün sahada karakter koyarsa bütün hesaplar değişir!`,`Arkadaşlar, ${n} konusunda büyük konuşuyorum; bu maçın kırılma anında onun adını duyabiliriz!`],
+   'Şansal Küçüka':[`Değerli futbolseverler, ${n} için kritik bir akşam. Mücadelenin kaderini belirleyecek ayrıntıları dikkatle izleyeceğiz.`,`Sevgili seyirciler, ${n} cephesinde beklenti yüksek; bakalım sahadaki tablo bize ne gösterecek.`],
+   'Serdar Ali Çekirdekler':[`Abi ${n} meselesi net. Bu tempoya ayak uyduramazsa bütün plan çöker. Kimse hikâye anlatmasın!`,`Abi bak, ${n} bugün fark yaratırsa şaşırmam. Ama yapamazsa da bahane dinlemem. Net!`],
+   'Mehmet Demirgöl':[`${n} için mesele yetenekten önce mücadele. Futbol emek ister, disiplin ister; gerisi laftır.`,`Sahada herkes koşacak. ${n} de buna dahil. Takım oyunu olmadan yıldızlık olmaz.`],
+   'Ömer Üfürdül':[`${n} bugün doğru zamanda doğru koşuyu yaparsa savunmanın ezberini bozar. Benim dikkat edeceğim nokta bu.`,`${n} için kilit mesele alan paylaşımı. Bir adım erken çıkarsa rakibi zor durumda bırakır.`],
+   'Sinan Yengin':[`Ben ${n} konusunda iddialıyım! Bu maçta bir şey yapacaksa şimdi yapsın; sonra konuşmanın anlamı yok!`,`Bana masal anlatmayın! ${n} bugün sorumluluk alacak, almazsa eleştiriyi de duyacak!`]
+  };
+  const pool=voices[writer]||[`${n} bu maçın dikkat edilmesi gereken isimlerinden.`];
+  return pool[(seed+i)%pool.length];
+ };
+ const writers=writerNames.map((w,i)=>[w,writerComment(w,subjects[i]||null,i)]);
  // Kuliste, rekor/kilit/yazar bölümlerinde adı geçmeyen futbolcuları konuştur.
  const excluded=new Set([...mentioned,...subjects.map(p=>name(p).toLocaleLowerCase('tr-TR'))]);
  const fresh=roster.filter(p=>!excluded.has(name(p).toLocaleLowerCase('tr-TR')));

@@ -1,4 +1,4 @@
-const CACHE='szf-shell-v291';const ASSETS=['./','./index.html','./styles.css?v=291','./app.js?v=291','./szf-jersey-realistic.webp?v=291','./szf-deniz-approved-card.jpg?v=291','./icon-192.png','./icon-512.png'];
+const CACHE='szf-shell-v292';const ASSETS=['./','./index.html','./styles.css?v=292','./app.js?v=292','./szf-jersey-realistic.webp?v=292','./szf-deniz-approved-card.jpg?v=292','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE&&k.startsWith('szf-shell-')).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',event=>{const req=event.request;if(req.method!=='GET'||new URL(req.url).origin!==self.location.origin)return;const u=new URL(req.url);if(!/\.(?:css|js|html|png|svg)$/.test(u.pathname)&&!u.pathname.endsWith('/'))return;event.respondWith(fetch(req).catch(()=>caches.match(req)));});

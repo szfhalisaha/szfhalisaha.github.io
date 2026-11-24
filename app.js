@@ -2412,7 +2412,7 @@ function buildInlineSharePreviewMarkup(id){
    if(!grouped.has(scorer))grouped.set(scorer,{count:0,assists:[]});
    const row=grouped.get(scorer);row.count++;
    const a=assists.find(x=>String(x.goal_event_id||'')===String(g.id));
-   if(a)row.assists.push(personName(a));
+   row.assists.push(a?personName(a):'Asistsiz');
   }
   const entries=[...grouped].sort((a,b)=>b[1].count-a[1].count||a[0].localeCompare(b[0],'tr'));
   return entries.length?entries.map(([name,info])=>'<div class="szf-v190-goal"><div><strong>'+esc(name)+'</strong><b>×'+info.count+'</b></div>'+(info.assists.length?'<small>Asist: '+esc(info.assists.join(', '))+'</small>':'')+'</div>').join(''):'<p class="szf-v190-empty">Henüz gol kaydı yok</p>';

@@ -2409,12 +2409,15 @@ function buildInlineSharePreviewMarkup(id){
   const grouped=new Map();
   for(const g of goalEvents){
    const scorer=personName(g)+(g.kind==='own_goal'?' (KK)':'');
-   if(!grouped.has(scorer))grouped.set(scorer,{count:0,assists:[]});
-   const row=grouped.get(scorer);row.count++;
    const a=assists.find(x=>String(x.goal_event_id||'')===String(g.id));
-   row.assists.push(a?personName(a):'Asistsiz');
+   const key=JSON.stringify([scorer,Boolean(a)]);
+   if(!grouped.has(key))grouped.set(key,{name:scorer,count:0,assists:[]});
+   const row=grouped.get(key);row.count++;
+   if(a)row.assists.push(personName(a));
   }
-  const entries=[...grouped].sort((a,b)=>b[1].count-a[1].count||a[0].localeCompare(b[0],'tr'));
+  const totals=new Map();
+  for(const row of grouped.values())totals.set(row.name,(totals.get(row.name)||0)+row.count);
+  const entries=[...grouped.values()].sort((a,b)=>totals.get(b.name)-totals.get(a.name)||a.name.localeCompare(b.name,'tr')||Number(Boolean(b.assists.length))-Number(Boolean(a.assists.length))).map(row=>[row.name,row]);
   return entries.length?entries.map(([name,info])=>'<div class="szf-v190-goal"><div><strong>'+esc(name)+'</strong><b>×'+info.count+'</b></div>'+(info.assists.length?'<small>Asist: '+esc(info.assists.join(', '))+'</small>':'')+'</div>').join(''):'<p class="szf-v190-empty">Henüz gol kaydı yok</p>';
  };
  const mv=mvpStates[String(m.id)]||{};

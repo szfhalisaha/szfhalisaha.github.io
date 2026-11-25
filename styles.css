@@ -1552,3 +1552,5 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 @media(max-width:650px){.szf-stats-body .szf-record-list{grid-template-columns:1fr;gap:12px}.szf-stats-body .szf-record-entry{padding:20px 14px}.szf-stats-body .szf-record-holder summary b{font-size:20px}.szf-stats-body .szf-record-score b{font-size:42px}}
 
 .szf-record-match-result{display:flex;justify-content:center;align-items:center;gap:10px}.szf-record-match-result b{font-size:14px;font-weight:800;min-width:16px}.szf-record-result-G{color:#65d98b!important}.szf-record-result-M{color:#ff737b!important}.szf-record-result-B{color:#e8c36a!important}
+
+.szf-stats-body .szf-record-emblem{font-size:28px;line-height:1}

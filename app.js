@@ -1520,7 +1520,7 @@ function szfStatisticsRecords(){
   if(!p||!p.matchIds.has(String(a.match_id)))continue;
   p.assists++;countedGoals.add(String(g.id));
  }
- add('⚡ Sihirli İkili','asist/maç',eligible.map(p=>({name:p.name,value:p.assists/p.played,dates:p.dates})),Number.MIN_VALUE);
+ add('⚡ Sihirli İkili','asist/maç',[...pairs.values()].filter(p=>p.played>=2).map(p=>({name:p.name,value:p.assists/p.played,dates:p.dates})),Number.MIN_VALUE);
  const magic=records[records.length-1];
  if(magic?.title==='⚡ Sihirli İkili')magic.description='Maç başına birbirine en çok asist yapan ikili.';
  const totalGoals=matches.filter(m=>m.red_score!=null&&m.white_score!=null&&Number.isFinite(Number(m.red_score))&&Number.isFinite(Number(m.white_score))).map(m=>({name:'Kırmızı '+m.red_score+' – '+m.white_score+' Beyaz',value:Number(m.red_score)+Number(m.white_score),date:m.match_date}));

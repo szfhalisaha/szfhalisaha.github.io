@@ -1496,7 +1496,7 @@ function szfStatisticsRecords(){
   for(let i=0;i<players.length;i++)for(let j=i+1;j<players.length;j++){
    const duo=[players[i],players[j]].sort((a,b)=>String(a.id).localeCompare(String(b.id)));
    const key=duo.map(c=>c.id).join('|');
-   if(!pairs.has(key))pairs.set(key,{name:duo.map(c=>formatPersonName(c.display_name)).join(' & '),played:0,wins:0,dates:[],matchIds:new Set(),assists:0,outcomes:[]});
+   if(!pairs.has(key))pairs.set(key,{name:duo.map(c=>formatPersonName(c.display_name)).join(' & '),played:0,wins:0,dates:[],matchIds:new Set(),assists:0,outcomes:[],assistByMatch:new Map()});
    const p=pairs.get(key);p.played++;p.matchIds.add(String(m.id));if(result===color)p.wins++;p.dates.push(m.match_date);p.outcomes.push({date:matchDateText(m.match_date),result:result===color?'G':result==='draw'?'B':'M'});
   }
  }
@@ -1519,15 +1519,15 @@ function szfStatisticsRecords(){
   if(!x||!y||x===y)continue;
   const p=pairs.get([x,y].sort((a,b)=>a.localeCompare(b)).join('|'));
   if(!p||!p.matchIds.has(String(a.match_id)))continue;
-  p.assists++;countedGoals.add(String(g.id));
+  p.assists++;p.assistByMatch.set(String(a.match_id),(p.assistByMatch.get(String(a.match_id))||0)+1);countedGoals.add(String(g.id));
  }
  add('⚡ Sihirli İkili','asist/maç',[...pairs.values()].filter(p=>p.played>=2).map(p=>({name:p.name,value:p.assists/p.played,dates:p.dates})),Number.MIN_VALUE);
  const magic=records[records.length-1];
- if(magic?.title==='⚡ Sihirli İkili')magic.description='Maç başına birbirine en çok asist yapan ikili.';
+ if(magic?.title==='⚡ Sihirli İkili'){magic.description='Maç başına birbirine en çok asist yapan ikili.';for(const h of magic.holders){const p=[...pairs.values()].find(p=>p.name===h.name);if(p)h.assistMatches=[...p.matchIds].map(id=>({date:matchDateText(matchById.get(id).match_date),count:p.assistByMatch.get(id)||0}));}}
  const totalGoals=matches.filter(m=>m.red_score!=null&&m.white_score!=null&&Number.isFinite(Number(m.red_score))&&Number.isFinite(Number(m.white_score))).map(m=>({name:'Kırmızı '+m.red_score+' – '+m.white_score+' Beyaz',value:Number(m.red_score)+Number(m.white_score),date:m.match_date}));
  add('🥅 En gollü karşılaşma','gol',totalGoals);
  if(!records.length)return '<p class="soft">Henüz hesaplanabilecek tamamlanmış maç kaydı bulunmuyor.</p>';
- return '<p class="soft">Rekor sahibine dokunarak tarihleri görebilirsiniz.</p><div class="szf-record-list">'+records.map(r=>'<article class="szf-record-entry"><div class="szf-record-emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 3h10v8a5 5 0 0 1-10 0V3ZM7 5H3v2a4 4 0 0 0 4 4M17 5h4v2a4 4 0 0 1-4 4"/></svg></div><div class="szf-record-heading"><strong>'+esc(r.title)+'</strong></div><div class="szf-record-holders">'+r.holders.map(h=>'<details class="szf-record-holder"><summary><b>'+esc(formatPersonName(h.name))+'</b><span class="szf-record-chevron">⌄</span></summary><div class="szf-record-dates">'+(h.outcomes?.length?h.outcomes.map(o=>'<div class="szf-record-match-result">'+esc(o.date)+' <b class="szf-record-result-'+o.result+'">'+o.result+'</b></div>').join(''):h.dates.length?h.dates.map((d,i)=>'<div>'+esc(d)+(r.title==='🚀 Bir maçta en çok gol katkısı'&&!r.detail&&h.breakdowns[i]?' ('+esc(h.breakdowns[i])+')':'')+'</div>').join(''):'Tarih bilgisi bulunamadı.')+'</div></details>').join('')+'</div><div class="szf-record-score"><b>'+Number(r.value.toFixed(2)).toLocaleString('tr-TR')+'</b><small>'+esc(r.unit)+'</small></div>'+(r.detail?'<div class="szf-record-description">'+esc(r.detail)+'</div>':'')+(r.description?'<div class="szf-record-description">'+esc(r.description)+'</div>':'')+'</article>').join('')+'</div>';
+ return '<p class="soft">Rekor sahibine dokunarak tarihleri görebilirsiniz.</p><div class="szf-record-list">'+records.map(r=>'<article class="szf-record-entry"><div class="szf-record-emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 3h10v8a5 5 0 0 1-10 0V3ZM7 5H3v2a4 4 0 0 0 4 4M17 5h4v2a4 4 0 0 1-4 4"/></svg></div><div class="szf-record-heading"><strong>'+esc(r.title)+'</strong></div><div class="szf-record-holders">'+r.holders.map(h=>'<details class="szf-record-holder"><summary><b>'+esc(formatPersonName(h.name))+'</b><span class="szf-record-chevron">⌄</span></summary><div class="szf-record-dates">'+(h.assistMatches?.length?h.assistMatches.map(o=>'<div class="szf-record-match-result">'+esc(o.date)+' <b style="color:#e8c36a">'+o.count+' asist</b></div>').join(''):h.outcomes?.length?h.outcomes.map(o=>'<div class="szf-record-match-result">'+esc(o.date)+' <b class="szf-record-result-'+o.result+'">'+o.result+'</b></div>').join(''):h.dates.length?h.dates.map((d,i)=>'<div>'+esc(d)+(r.title==='🚀 Bir maçta en çok gol katkısı'&&!r.detail&&h.breakdowns[i]?' ('+esc(h.breakdowns[i])+')':'')+'</div>').join(''):'Tarih bilgisi bulunamadı.')+'</div></details>').join('')+'</div><div class="szf-record-score"><b>'+Number(r.value.toFixed(2)).toLocaleString('tr-TR')+'</b><small>'+esc(r.unit)+'</small></div>'+(r.detail?'<div class="szf-record-description">'+esc(r.detail)+'</div>':'')+(r.description?'<div class="szf-record-description">'+esc(r.description)+'</div>':'')+'</article>').join('')+'</div>';
 }
 
 function szfGoldenGlove(){

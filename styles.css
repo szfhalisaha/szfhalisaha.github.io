@@ -1532,3 +1532,21 @@ button.szf-result-pill:hover,button.szf-result-pill:focus-visible{transform:tran
 .szf-stats-body .szf-record-chevron{flex-shrink:0;font-size:19px;color:#b6cdb9}
 .szf-stats-body .szf-record-dates{font-size:13px;padding-left:0}
 @media(max-width:550px){.szf-stats-body .szf-record-entry{padding:14px 13px 8px}.szf-stats-body .szf-record-heading strong{font-size:14px}.szf-stats-body .szf-record-score b{font-size:27px}.szf-stats-body .szf-record-holder summary b{font-size:18px}.szf-stats-body .szf-record-score small{font-size:11px}}
+
+/* Centered trophy awards */
+.szf-stats-body .szf-record-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.szf-stats-body .szf-record-entry{position:relative;text-align:center;padding:22px 16px 20px;border:1px solid #75633e;border-radius:18px;background:radial-gradient(ellipse at top,#294534 0%,#142e20 65%);box-shadow:inset 0 1px 0 #c8a65a33;min-width:0}
+.szf-stats-body .szf-record-emblem{display:grid;place-items:center;width:52px;height:52px;margin:0 auto 12px;border:1px solid #a88b50;border-radius:50%;color:#e8c36a;background:#e8c36a12}
+.szf-stats-body .szf-record-emblem svg{width:29px;height:29px}
+.szf-stats-body .szf-record-heading{display:block;padding:0;margin:0 0 12px;border:0}
+.szf-stats-body .szf-record-heading strong{font-size:13px;letter-spacing:.7px;text-transform:uppercase;color:#b6cdb9}
+.szf-stats-body .szf-record-holder{border:0}
+.szf-stats-body .szf-record-holder summary{justify-content:center;padding:5px 0;gap:6px}
+.szf-stats-body .szf-record-holder summary b{font-size:21px;line-height:1.25;font-weight:800;color:#fff}
+.szf-stats-body .szf-record-chevron{font-size:15px;color:#b6cdb9}
+.szf-stats-body .szf-record-score{display:flex;flex-direction:column;align-items:center;gap:5px;margin:14px auto 0;color:#e8c36a}
+.szf-stats-body .szf-record-score b{font-size:44px;font-weight:850;line-height:1;letter-spacing:-1px;color:#e8c36a}
+.szf-stats-body .szf-record-score small{font-size:13px;color:#b6cdb9}
+.szf-stats-body .szf-record-description{border-top:1px solid #75633e66;padding-top:12px;margin:14px 0 0;font-size:12px}
+.szf-stats-body .szf-record-dates{padding:6px 0 8px;text-align:center}
+@media(max-width:650px){.szf-stats-body .szf-record-list{grid-template-columns:1fr;gap:12px}.szf-stats-body .szf-record-entry{padding:20px 14px}.szf-stats-body .szf-record-holder summary b{font-size:20px}.szf-stats-body .szf-record-score b{font-size:42px}}

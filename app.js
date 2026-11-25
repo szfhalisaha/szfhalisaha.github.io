@@ -1509,6 +1509,7 @@ function szfStatisticsRecords(){
   records.push({title:'💀 En başarısız ikili',value:min,unit:'%',holders});
  }
  for(const record of records.filter(r=>['🤝 En başarılı ikili','💀 En başarısız ikili'].includes(r.title)))for(const holder of record.holders){holder.outcomes=eligible.find(p=>p.name===holder.name)?.outcomes||[];}
+ for(const record of records.filter(r=>['🎖️ En yüksek galibiyet yüzdesi','🔥 En uzun galibiyet serisi','💀 En uzun mağlubiyet serisi'].includes(r.title)))for(const holder of record.holders){const c=cards.find(c=>c.display_name===holder.name);if(!c)continue;const results=playerStreakData(c.id).results;holder.outcomes=results.filter(res=>holder.dates.includes(matchDateText(res.date))&&['G','M','B'].includes(res.outcome)&&(record.title!=='🔥 En uzun galibiyet serisi'||res.outcome==='G')&&(record.title!=='💀 En uzun mağlubiyet serisi'||res.outcome==='M')).map(res=>({date:matchDateText(res.date),result:res.outcome}));}
  const eventPlayer=e=>String(e.player_id||linkedPlayerId(extras.guests.find(g=>String(g.id)===String(e.guest_id))||{})||'');
  const goalEvents=new Map(extras.events.filter(e=>e.kind==='goal').map(e=>[String(e.id),e]));
  const countedGoals=new Set();

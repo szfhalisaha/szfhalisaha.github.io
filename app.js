@@ -1541,12 +1541,12 @@ function szfPlayerDuel(){
  if(!players.length)return '<p class="empty">Karşılaştırılacak oyuncu bulunamadı.</p>';
  const ids=new Set(players.map(p=>String(p.id)));
  const myPlayer=players.find(p=>String(p.id)===String(user?.id));
- if(myPlayer)szfDuelLeft=String(myPlayer.id);
+ if(myPlayer&&!szfProfileDuel)szfDuelLeft=String(myPlayer.id);
  else if(!ids.has(String(szfDuelLeft)))szfDuelLeft='';
  if(!ids.has(String(szfDuelRight))||szfDuelRight===szfDuelLeft)szfDuelRight='';
  const optionList=chosen=>'<option value="">Oyuncu seç</option>'+players.map(p=>'<option value="'+attrs(p.id)+'" '+(String(p.id)===String(chosen)?'selected':'')+'>'+esc(formatPersonName(p.display_name))+'</option>').join('');
  const first=players.find(p=>String(p.id)===szfDuelLeft),second=players.find(p=>String(p.id)===szfDuelRight);
- const select='<div class="szf-duel-pickers"><label>Oyuncu 1<select class="text-input" data-szf-duel="left" '+(myPlayer?'disabled':'')+'>'+optionList(szfDuelLeft)+'</select></label><span class="szf-duel-vs">VS</span><label>Oyuncu 2<select class="text-input" data-szf-duel="right">'+optionList(szfDuelRight)+'</select></label></div>';
+ const select='<div class="szf-duel-pickers"><label>Oyuncu 1<select class="text-input" data-szf-duel="left" '+(myPlayer&&!szfProfileDuel?'disabled':'')+'>'+optionList(szfDuelLeft)+'</select></label><span class="szf-duel-vs">VS</span><label>Oyuncu 2<select class="text-input" data-szf-duel="right">'+optionList(szfDuelRight)+'</select></label></div>';
  if(!first||!second||String(first.id)===String(second.id))return select+'<p class="soft">Karşılaştırmak için iki farklı oyuncu seç.</p>';
  const finished=new Map(leagueMatches.filter(m=>m.status==='completed').map(m=>[String(m.id),m]));
  const entryA=new Map(playerMatchEntries(first.id).filter(e=>finished.has(String(e.match_id))).map(e=>[String(e.match_id),e]));
@@ -1737,6 +1737,32 @@ function szfJerseyBack(c){
  </button>`;
 }
 
+let szfProfileDuel=false;
+function szfProfileRelations(c){
+ const finished=new Map(leagueMatches.filter(m=>m.status==='completed').map(m=>[String(m.id),m]));
+ const entries=new Map(playerMatchEntries(c.id).map(e=>[String(e.match_id),e]));
+ const rivals=[],mates=[];
+ for(const p of currentCards()){
+  if(String(p.id)===String(c.id))continue;
+  let rn=0,rl=0,tn=0,tw=0;
+  const others=new Map(playerMatchEntries(p.id).map(e=>[String(e.match_id),e]));
+  for(const [mid,e] of entries){
+   const m=finished.get(mid),o=others.get(mid);
+   if(!m||!o||!['red','white'].includes(e.team_color)||!['red','white'].includes(o.team_color))continue;
+   const valid=[m.red_score,m.white_score].every(v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v)));
+   const result=valid?(Number(m.red_score)>Number(m.white_score)?'red':Number(m.red_score)<Number(m.white_score)?'white':'draw'):m.result;
+   if(!['red','white','draw'].includes(result))continue;
+   if(e.team_color===o.team_color){tn++;if(result===e.team_color)tw++;}
+   else{rn++;if(result===o.team_color)rl++;}
+  }
+  if(rn>=3&&rl>0)rivals.push({p,n:rn,k:rl});
+  if(tn>=3&&tw>0)mates.push({p,n:tn,k:tw});
+ }
+ const best=a=>a.sort((x,y)=>y.k/y.n-x.k/x.n||y.k-x.k||y.n-x.n||String(x.p.display_name).localeCompare(String(y.p.display_name),'tr'))[0];
+ const tile=(x,label,unit,color)=>'<button type="button" class="btn ghost" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;white-space:normal;min-width:0;padding:12px 5px;text-align:center" '+(x?'data-profile-duel="'+attrs(x.p.id)+'" data-profile-owner="'+attrs(c.id)+'"':'disabled')+'><small>'+label+'</small>'+(x?'<strong>'+esc(formatPersonName(x.p.display_name))+'</strong><strong style="color:'+color+';font-size:20px">%'+Math.round(100*x.k/x.n)+'</strong><small>'+x.n+' maç · '+x.k+' '+unit+'</small>':'<small>Henüz yeterli veri yok</small>')+'</button>';
+ return '<section class="szf-streaks" style="margin-top:18px"><h3>Rakipler ve Takım Arkadaşları</h3><div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">'+tile(best(rivals),'💀 Kâbus Rakip','mağlubiyet','#ef6464')+tile(best(mates),'🤝 Uğurlu Takım Arkadaşı','galibiyet','#42b883')+'</div></section>';
+}
+
 function detail(c){
  if(!c)return renderPlayers();
  const badges=achievementData(c),streak=playerStreakData(c.id);
@@ -1744,7 +1770,7 @@ function detail(c){
  const history=last.length?last.map(r=>`<button type="button" data-match-scoreboard="${attrs(r.match_id)}" class="szf-result-pill ${r.outcome==='G'?'win':r.outcome==='M'?'loss':'draw'}" title="${attrs(matchDateText(r.date))} · Skor tabelasını aç">${r.outcome}</button>`).join(''):'<span class="soft">Henüz sonuçlanmış maç bulunmuyor.</span>';
  return `<div class="section-head"><button class="btn small ghost" data-back="1">← Oyunculara dön</button></div><div class="detail-layout"><div class="detail-sidebar"><div class="szf-jersey-switch" data-jersey-switch><div class="szf-jersey-front">${cardHTML(c,true)}</div><div class="szf-jersey-reverse">${szfJerseyBack(c)}</div></div><p class="szf-jersey-hint">Karta dokun · Formayı gör / karta dön</p></div><div class="szf-achievements"><h2>${esc(formatPersonName(c.display_name))}</h2><p class="soft">${esc(posName[c.position]||c.position)} · ${rankTier(c).toLocaleUpperCase('tr')} kart</p>
  <section class="szf-streaks"><h3>🔥 Galibiyet Serileri</h3><div class="szf-streak-grid"><div><small>Mevcut seri</small><strong>${streak.current} galibiyet</strong></div><div><small>En uzun seri</small><strong>${streak.best} galibiyet</strong></div></div><p class="soft">Son 5 maç (eskiden yeniye)</p><div class="szf-results">${history}</div><p class="micro">G: Galibiyet · B: Beraberlik · M: Mağlubiyet. Oynamadığın maçlar seriyi etkilemez.</p></section>
- <div class="szf-achievements-heading"><h3>🏅 Başarı Rozetleri</h3><span>${badges.filter(b=>b.value>=b.target).length} / ${badges.length} rozet</span></div><div class="szf-achievement-categories">${[{title:"⚽ Maç ve Katılım",names:["İlk Maç","Deneyimli","Saha Müdavimi","Demir Adam","Efsane"]},{title:"⚽ Gol Rozetleri",names:["İlk Gol","Golcü","Keskin Nişancı","Gol Makinesi","Hat-Trick","Beşlik"]},{title:"🎯 Asist Rozetleri",names:["İlk Asist","Asist Ustası","Oyun Beyni","Maestro","Oyun Kurucu","Orkestra Şefi"]},{title:"🏆 Galibiyet ve Seriler",names:["İlk Zafer","Kazanan","Galibiyet Avcısı","Şampiyon","Formda","Durdurulamaz","Yenilmez"]},{title:"👑 Bireysel Ödüller",names:["Maçın Adamı","Yıldız Oyuncu","Süperstar","Efsanelerin Efsanesi"]},{title:"🧤 Kalecilik",names:["File Bekçisi","Panter","Duvar","Efsane Eldiven"]}].sort((a,b)=>c.position==="KL"?["⚽ Maç ve Katılım","🏆 Galibiyet ve Seriler","🧤 Kalecilik","⚽ Gol Rozetleri","🎯 Asist Rozetleri","👑 Bireysel Ödüller"].indexOf(a.title)-["⚽ Maç ve Katılım","🏆 Galibiyet ve Seriler","🧤 Kalecilik","⚽ Gol Rozetleri","🎯 Asist Rozetleri","👑 Bireysel Ödüller"].indexOf(b.title):["⚽ Maç ve Katılım","🏆 Galibiyet ve Seriler","⚽ Gol Rozetleri","🎯 Asist Rozetleri","👑 Bireysel Ödüller","🧤 Kalecilik"].indexOf(a.title)-["⚽ Maç ve Katılım","🏆 Galibiyet ve Seriler","⚽ Gol Rozetleri","🎯 Asist Rozetleri","👑 Bireysel Ödüller","🧤 Kalecilik"].indexOf(b.title)).map(group=>{const items=group.names.map(name=>badges.find(b=>b.name===name)).filter(Boolean);return items.length?`<section class="szf-achievement-category"><h4 style="margin:18px 0 10px">${group.title} <small style="opacity:.7">${items.filter(b=>b.value>=b.target).length}/${items.length}</small></h4><div class="szf-achievements-grid">${items.map(b=>{const unlocked=b.value>=b.target;return `<div class="szf-achievement ${unlocked?'unlocked':'locked'}" title="${attrs(b.name+': '+b.description)}" aria-label="${attrs(b.name+': '+b.description)}" tabindex="0"><div class="szf-achievement-icon">${unlocked?b.emoji:'🔒'}</div><div class="szf-achievement-name">${esc(b.name)}</div><div class="szf-achievement-progress">${b.name==="Hat-Trick"?"Tek maçta 3 gol":b.name==="Beşlik"?"Tek maçta 5 gol":b.name==="Oyun Kurucu"?"Tek maçta 3 asist":b.name==="Orkestra Şefi"?"Tek maçta 5 asist":`${Math.min(b.value,b.target)} / ${b.target} ${esc(b.unit)}`}</div></div>`}).join("")}</div></section>`:""}).join("")}</div><p class="micro">Rozetler maç, gol, asist, galibiyet serileri ve sonuçlandırılmış Maçın Adamı verilerinden otomatik hesaplanır.</p></div></div>`;
+ <div class="szf-achievements-heading"><h3>🏅 Başarı Rozetleri</h3><span>${badges.filter(b=>b.value>=b.target).length} / ${badges.length} rozet</span></div><div class="szf-achievement-categories">${[{title:"⚽ Maç ve Katılım",names:["İlk Maç","Deneyimli","Saha Müdavimi","Demir Adam","Efsane"]},{title:"⚽ Gol Rozetleri",names:["İlk Gol","Golcü","Keskin Nişancı","Gol Makinesi","Hat-Trick","Beşlik"]},{title:"🎯 Asist Rozetleri",names:["İlk Asist","Asist Ustası","Oyun Beyni","Maestro","Oyun Kurucu","Orkestra Şefi"]},{title:"🏆 Galibiyet ve Seriler",names:["İlk Zafer","Kazanan","Galibiyet Avcısı","Şampiyon","Formda","Durdurulamaz","Yenilmez"]},{title:"👑 Bireysel Ödüller",names:["Maçın Adamı","Yıldız Oyuncu","Süperstar","Efsanelerin Efsanesi"]},{title:"🧤 Kalecilik",names:["File Bekçisi","Panter","Duvar","Efsane Eldiven"]}].sort((a,b)=>c.position==="KL"?["⚽ Maç ve Katılım","🏆 Galibiyet ve Seriler","🧤 Kalecilik","⚽ Gol Rozetleri","🎯 Asist Rozetleri","👑 Bireysel Ödüller"].indexOf(a.title)-["⚽ Maç ve Katılım","🏆 Galibiyet ve Seriler","🧤 Kalecilik","⚽ Gol Rozetleri","🎯 Asist Rozetleri","👑 Bireysel Ödüller"].indexOf(b.title):["⚽ Maç ve Katılım","🏆 Galibiyet ve Seriler","⚽ Gol Rozetleri","🎯 Asist Rozetleri","👑 Bireysel Ödüller","🧤 Kalecilik"].indexOf(a.title)-["⚽ Maç ve Katılım","🏆 Galibiyet ve Seriler","⚽ Gol Rozetleri","🎯 Asist Rozetleri","👑 Bireysel Ödüller","🧤 Kalecilik"].indexOf(b.title)).map(group=>{const items=group.names.map(name=>badges.find(b=>b.name===name)).filter(Boolean);return items.length?`<section class="szf-achievement-category"><h4 style="margin:18px 0 10px">${group.title} <small style="opacity:.7">${items.filter(b=>b.value>=b.target).length}/${items.length}</small></h4><div class="szf-achievements-grid">${items.map(b=>{const unlocked=b.value>=b.target;return `<div class="szf-achievement ${unlocked?'unlocked':'locked'}" title="${attrs(b.name+': '+b.description)}" aria-label="${attrs(b.name+': '+b.description)}" tabindex="0"><div class="szf-achievement-icon">${unlocked?b.emoji:'🔒'}</div><div class="szf-achievement-name">${esc(b.name)}</div><div class="szf-achievement-progress">${b.name==="Hat-Trick"?"Tek maçta 3 gol":b.name==="Beşlik"?"Tek maçta 5 gol":b.name==="Oyun Kurucu"?"Tek maçta 3 asist":b.name==="Orkestra Şefi"?"Tek maçta 5 asist":`${Math.min(b.value,b.target)} / ${b.target} ${esc(b.unit)}`}</div></div>`}).join("")}</div></section>`:""}).join("")}</div><p class="micro">Rozetler maç, gol, asist, galibiyet serileri ve sonuçlandırılmış Maçın Adamı verilerinden otomatik hesaplanır.</p>${szfProfileRelations(c)}</div></div>`;
 }
 
 function vestStats(playerId){
@@ -2601,8 +2627,9 @@ function bindContent(){
   $('rivalryCompare')?.addEventListener('click',()=>{if(!rivalryLeft||!rivalryRight||rivalryLeft===rivalryRight)return;rivalryCompared=true;render()});
  }
 
+ document.querySelectorAll('[data-profile-duel]').forEach(el=>el.addEventListener('click',()=>{szfProfileDuel=true;szfDuelLeft=el.dataset.profileOwner;szfDuelRight=el.dataset.profileDuel;selectedPlayer=null;view='statistics';selectedStatsTab='duel';render();window.scrollTo(0,0)}));
  document.querySelectorAll('[data-szf-duel]').forEach(el=>el.addEventListener('change',()=>{if(el.dataset.szfDuel==='left')szfDuelLeft=el.value;else szfDuelRight=el.value;render()}));
- document.querySelectorAll('[data-stats-tab]').forEach(btn=>btn.addEventListener('click',()=>{if(btn.dataset.statsTab==='duel'&&selectedStatsTab!=='duel')szfDuelRight='';selectedStatsTab=btn.dataset.statsTab;render()}));
+ document.querySelectorAll('[data-stats-tab]').forEach(btn=>btn.addEventListener('click',()=>{if(btn.dataset.statsTab==='duel'&&selectedStatsTab!=='duel'){szfProfileDuel=false;szfDuelRight='';}selectedStatsTab=btn.dataset.statsTab;render()}));
  document.querySelector('[data-stats-sort]')?.addEventListener('change',el=>{statsSortMode[el.target.dataset.statsSort]=el.target.value;render()});
  document.querySelectorAll('[data-stats-sort-head]').forEach(btn=>btn.addEventListener('click',()=>{statsSortMode[btn.dataset.statsSortFor]=btn.dataset.statsSortHead;render()}));
  refreshHomeCountdown();
@@ -3416,7 +3443,7 @@ async function initialize(){
 
  // Render public shell before any external authentication/network requests.
  try{render()}catch(e){console.error('Initial render failed',e)}
- $('nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(!b)return;view=b.dataset.view==='teams'?'matches':b.dataset.view;if(view==='assessment'){focusAssessmentFirst();}selectedMatchTab='upcoming';selectedPlayer=null;render()});
+ $('nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(!b)return;szfProfileDuel=false;view=b.dataset.view==='teams'?'matches':b.dataset.view;if(view==='assessment'){focusAssessmentFirst();}selectedMatchTab='upcoming';selectedPlayer=null;render()});
  $('refreshBtn').addEventListener('click',refresh);
   $('topProfileBtn').addEventListener('click',()=>{if(!user)return;view='account';selectedPlayer=null;render();window.scrollTo({top:0,behavior:'smooth'})});
  $('topAuthBtn').addEventListener('click',()=>user?signOut():openAuth());

@@ -1454,7 +1454,8 @@ function szfStatisticsRecords(){
    if(lossDates.length)lossStreaks.push({name:c.display_name,value:lossDates.length,dates:[...lossDates]});
   }
  }
- add('🔥 En uzun galibiyet serisi','maç',winStreaks);
+ const winRates=cards.map(c=>({name:c.display_name,...playerWinStats(c.id)})).filter(x=>x.played>=2).map(x=>({name:x.name,value:x.pct,dates:playerMatchEntries(cards.find(c=>c.display_name===x.name)?.id).map(e=>matchById.get(String(e.match_id))?.match_date).filter(Boolean)}));
+ add('🎖️ En yüksek galibiyet yüzdesi','%',winRates);
  const mvps=[];
  for(const c of cards){
   const dates=[];
@@ -1475,8 +1476,7 @@ function szfStatisticsRecords(){
   if(dates.length>=2)mvps.push({name:c.display_name,value:dates.length,dates});
  }
  add('🌟 En çok Maçın Adamı','kez',mvps,2);
- const winRates=cards.map(c=>({name:c.display_name,...playerWinStats(c.id)})).filter(x=>x.played>=2).map(x=>({name:x.name,value:x.pct,dates:playerMatchEntries(cards.find(c=>c.display_name===x.name)?.id).map(e=>matchById.get(String(e.match_id))?.match_date).filter(Boolean)}));
- add('🎖️ En yüksek galibiyet yüzdesi','%',winRates);
+ add('🔥 En uzun galibiyet serisi','maç',winStreaks);
  add('💀 En uzun mağlubiyet serisi','maç',lossStreaks);
  const roster=new Map();
  for(const c of cards)for(const e of playerMatchEntries(c.id)){

@@ -1496,8 +1496,8 @@ function szfStatisticsRecords(){
   for(let i=0;i<players.length;i++)for(let j=i+1;j<players.length;j++){
    const duo=[players[i],players[j]].sort((a,b)=>String(a.id).localeCompare(String(b.id)));
    const key=duo.map(c=>c.id).join('|');
-   if(!pairs.has(key))pairs.set(key,{name:duo.map(c=>formatPersonName(c.display_name)).join(' & '),played:0,wins:0,dates:[]});
-   const p=pairs.get(key);p.played++;if(result===color)p.wins++;p.dates.push(m.match_date);
+   if(!pairs.has(key))pairs.set(key,{name:duo.map(c=>formatPersonName(c.display_name)).join(' & '),played:0,wins:0,dates:[],matchIds:new Set(),assists:0});
+   const p=pairs.get(key);p.played++;p.matchIds.add(String(m.id));if(result===color)p.wins++;p.dates.push(m.match_date);
   }
  }
  const eligible=[...pairs.values()].filter(p=>p.played>=3);
@@ -1508,10 +1508,25 @@ function szfStatisticsRecords(){
   const holders=worst.map(p=>({name:p.name,dates:[...new Set(p.dates.map(d=>matchDateText(d)))]}));
   records.push({title:'💀 En başarısız ikili',value:min,unit:'%',holders});
  }
+ const eventPlayer=e=>String(e.player_id||linkedPlayerId(extras.guests.find(g=>String(g.id)===String(e.guest_id))||{})||'');
+ const goalEvents=new Map(extras.events.filter(e=>e.kind==='goal').map(e=>[String(e.id),e]));
+ const countedGoals=new Set();
+ for(const a of extras.events.filter(e=>e.kind==='assist')){
+  const g=goalEvents.get(String(a.goal_event_id||''));
+  if(!g||String(g.match_id)!==String(a.match_id)||countedGoals.has(String(g.id)))continue;
+  const x=eventPlayer(a),y=eventPlayer(g);
+  if(!x||!y||x===y)continue;
+  const p=pairs.get([x,y].sort((a,b)=>a.localeCompare(b)).join('|'));
+  if(!p||!p.matchIds.has(String(a.match_id)))continue;
+  p.assists++;countedGoals.add(String(g.id));
+ }
+ add('⚡ Sihirli İkili','asist/maç',eligible.map(p=>({name:p.name,value:p.assists/p.played,dates:p.dates})),Number.MIN_VALUE);
+ const magic=records[records.length-1];
+ if(magic?.title==='⚡ Sihirli İkili')magic.description='Maç başına birbirine en çok asist yapan ikili.';
  const totalGoals=matches.filter(m=>m.red_score!=null&&m.white_score!=null&&Number.isFinite(Number(m.red_score))&&Number.isFinite(Number(m.white_score))).map(m=>({name:'Kırmızı '+m.red_score+' – '+m.white_score+' Beyaz',value:Number(m.red_score)+Number(m.white_score),date:m.match_date}));
  add('🥅 En gollü karşılaşma','gol',totalGoals);
  if(!records.length)return '<p class="soft">Henüz hesaplanabilecek tamamlanmış maç kaydı bulunmuyor.</p>';
- return '<p class="soft">Rekorlar tamamlanmış maçlardan hesaplanır; eşit rekor sahipleri birlikte gösterilir. Rekor sahibine dokunarak tarihleri görebilirsiniz.</p><div class="szf-record-list">'+records.map(r=>'<div class="szf-record-entry"><div class="szf-record-heading"><strong>'+esc(r.title)+'</strong><span>'+Number(r.value.toFixed(2)).toLocaleString('tr-TR')+' '+esc(r.unit)+(r.detail?' ('+esc(r.detail)+')':'')+'</span></div><div class="szf-record-holders">'+r.holders.map(h=>'<details class="szf-record-holder"><summary><b>'+esc(formatPersonName(h.name))+'</b><span class="szf-record-chevron">⌄</span></summary><div class="szf-record-dates">'+(h.dates.length?h.dates.map((d,i)=>'<div>'+esc(d)+(r.title==='🚀 Bir maçta en çok gol katkısı'&&!r.detail&&h.breakdowns[i]?' ('+esc(h.breakdowns[i])+')':'')+'</div>').join(''):'Tarih bilgisi bulunamadı.')+'</div></details>').join('')+'</div></div>').join('')+'</div>';
+ return '<p class="soft">Rekorlar tamamlanmış maçlardan hesaplanır; eşit rekor sahipleri birlikte gösterilir. Rekor sahibine dokunarak tarihleri görebilirsiniz.</p><div class="szf-record-list">'+records.map(r=>'<div class="szf-record-entry"><div class="szf-record-heading"><strong>'+esc(r.title)+'</strong><span>'+Number(r.value.toFixed(2)).toLocaleString('tr-TR')+' '+esc(r.unit)+(r.detail?' ('+esc(r.detail)+')':'')+'</span></div>'+(r.description?'<div class="soft" style="font-size:11px;margin:2px 0 6px">'+esc(r.description)+'</div>':'')+'<div class="szf-record-holders">'+r.holders.map(h=>'<details class="szf-record-holder"><summary><b>'+esc(formatPersonName(h.name))+'</b><span class="szf-record-chevron">⌄</span></summary><div class="szf-record-dates">'+(h.dates.length?h.dates.map((d,i)=>'<div>'+esc(d)+(r.title==='🚀 Bir maçta en çok gol katkısı'&&!r.detail&&h.breakdowns[i]?' ('+esc(h.breakdowns[i])+')':'')+'</div>').join(''):'Tarih bilgisi bulunamadı.')+'</div></details>').join('')+'</div></div>').join('')+'</div>';
 }
 
 function szfGoldenGlove(){

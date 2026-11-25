@@ -1506,9 +1506,9 @@ function szfStatisticsRecords(){
   const min=Math.min(...eligible.map(p=>100*p.wins/p.played));
   const worst=eligible.filter(p=>Math.abs(100*p.wins/p.played-min)<0.000001).map(p=>({name:p.name,value:min,dates:p.dates}));
   const holders=worst.map(p=>({name:p.name,dates:[...new Set(p.dates.map(d=>matchDateText(d)))]}));
-  records.push({title:'💀 En başarısız ikili',value:min,unit:'%',holders});
+  records.push({title:'💔 En başarısız ikili',value:min,unit:'%',holders});
  }
- for(const record of records.filter(r=>['🤝 En başarılı ikili','💀 En başarısız ikili'].includes(r.title)))for(const holder of record.holders){holder.outcomes=eligible.find(p=>p.name===holder.name)?.outcomes||[];}
+ for(const record of records.filter(r=>['🤝 En başarılı ikili','💔 En başarısız ikili'].includes(r.title)))for(const holder of record.holders){holder.outcomes=eligible.find(p=>p.name===holder.name)?.outcomes||[];}
  for(const record of records.filter(r=>['🎖️ En yüksek galibiyet yüzdesi','🔥 En uzun galibiyet serisi','💀 En uzun mağlubiyet serisi'].includes(r.title)))for(const holder of record.holders){const c=cards.find(c=>c.display_name===holder.name);if(!c)continue;const results=playerStreakData(c.id).results;holder.outcomes=results.filter(res=>holder.dates.includes(matchDateText(res.date))&&['G','M','B'].includes(res.outcome)&&(record.title!=='🔥 En uzun galibiyet serisi'||res.outcome==='G')&&(record.title!=='💀 En uzun mağlubiyet serisi'||res.outcome==='M')).map(res=>({date:matchDateText(res.date),result:res.outcome}));}
  const eventPlayer=e=>String(e.player_id||linkedPlayerId(extras.guests.find(g=>String(g.id)===String(e.guest_id))||{})||'');
  const goalEvents=new Map(extras.events.filter(e=>e.kind==='goal').map(e=>[String(e.id),e]));

@@ -965,7 +965,7 @@ function szfPostMatchColumnists(match,data){
   const pool=voices[writer],comment=pool[(seed+i)%pool.length];
   return '<p><strong>'+esc(writer)+':</strong> “'+esc(comment)+'”</p>';
  }).join('');
- return '<section class="szf-news-third"><div class="szf-news-kicker">✍️ MAÇ SONU · KÖŞE YAZARLARI</div>'+columns+'<small>Yazar isimleri ve yorumları mizahi parodidir; gerçek alıntı değildir.</small></section>';
+ return '<section class="szf-news-third"><div class="szf-news-kicker">✍️ MAÇ SONU · KÖŞE YAZARLARI</div>'+columns+'</section>';
 }
 function szfNewspaperMarkup(id){
  const m=leagueMatches.find(x=>String(x.id)===String(id)),d=szfNewspaperData(m);
@@ -1262,7 +1262,7 @@ function szfPreviewPaper(match){
  const newsSection=(title,body)=>'<section class="szf-preview-news-section"><div class="szf-news-kicker">'+title+'</div>'+body+'</section>';
  const starBody=stars.length?stars.map((p,i)=>'<p><strong>'+esc(name(p))+'</strong> — '+esc(starText(p,i))+'</p>').join(''):'<p>Kadro netleşince öne çıkan oyuncular belirlenecek.</p>';
  const oddsBody=complete?'<div class="szf-preview-odds"><b>🔴 %'+chance+'</b><b>⚪ %'+(100-chance)+'</b></div><div class="szf-preview-bar"><span style="width:'+chance+'%"></span></div><small>Oyuncu puanları ve son 5 maç formuna göre tahmin.</small>':'<p>Takımlar kesinleşince yüzdeler burada görünecek.</p>';
- const writerBody=writers.map(w=>'<p><strong>'+esc(w[0])+'</strong>: “'+esc(w[1])+'”</p>').join('')+'<small>Yazar isimleri ve yorumları parodidir.</small>';
+ const writerBody=writers.map(w=>'<p><strong>'+esc(w[0])+'</strong>: “'+esc(w[1])+'”</p>').join('');
  return '<article class="szf-news-paper szf-preview-edition"><header class="szf-news-topline"><span>SZF AIRPORT HALI SAHA</span><span>'+esc(matchDateText(match.match_date))+'</span></header><div class="szf-news-masthead">SZF <span>SPOR</span></div><div class="szf-news-slogan">SAHANIN NABZI · TAKIMLARIN GÜNDEMİ</div><div class="szf-news-strip">MAÇ ÖNÜ ÖZEL SAYISI</div><h1>'+esc(headline)+'</h1><p class="szf-news-deck">Haftanın karşılaşması yaklaşırken gözler oyuncuların formuna, rekorlara ve kulislerdeki atışmalara çevrildi.</p><div class="szf-news-columns">'+newsSection('⭐ KİLİT OYUNCULAR',starBody)+newsSection('📊 KAZANMA OLASILIĞI',oddsBody)+'</div><div class="szf-news-columns">'+newsSection('🚨 REKOR ALARMI',recordNotes.map(note=>'<p>'+esc(note)+'</p>').join(''))+newsSection('🤫 KULİS',gossip)+'</div><section class="szf-news-third">'+newsSection('✍️ KÖŞE YAZARLARI',writerBody)+'</section><div class="szf-news-bottom"><strong>MAÇ ÖNCESİ</strong><span>Son sözü sahadaki mücadele söyleyecek!</span></div><footer>SZF SPOR · MAÇ ÖNÜ ÖZEL SAYISI · İSTATİSTİKLER: RESMÎ MAÇ KAYITLARI</footer></article>';
 }
 /* v260 — Maç önü gazetesi, başka cihazda değiştirilen kadroyu da izler.

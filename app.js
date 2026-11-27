@@ -940,17 +940,19 @@ function szfNewsScoreComment(m,d){
  return options[seed%options.length];
 }
 /* v262 — Maç sonu köşe yazarları: maçın gerçek skoruna ve MVP sonucuna bağlı parodi yorumlar. */
+const szfSportsWriters=["Serdar Ali Çekirdekler","Uğur Karayollukçu","Mehmet Demirgöl","Rıdvan Dilim","Sergen Alçın","Nihat Çaycı","Sinan Yengin","Uğur Menemen","Şansal Küçüka","Ömer Üfürdül","Ali Gece","Emre Özkan","Cem Düzdar","Serhat Sakın","Kaya Anahtarcıoğlu","Abdülkerim Durur","Rasim Ozan Samsunlu","Levent Düzemen","Güntekin Ret","Önder Üzen","Ümit Uzat","Emre Dar","Ilgaz Pınar","Yağız Şampuancıoğlu","Batuhan Akdeniz"];
+const szfRefereeWriters=["Erman Torpiloğlu","Ahmet Çakmaz","Fırat Karanlıkus","Bünyamin Tozar","Mustafa Çullu","Bülent Kaldırım"];
 function szfRotatingWriters(match,names){
  const start=Date.parse('2026-11-30T00:00:00+03:00');
  const date=new Date(match.match_date).getTime();
  if(date<start)return null;
  const ordered=[...leagueMatches.filter(m=>new Date(m.match_date).getTime()>=start&&String(m.id)!==String(match.id)),match].sort((a,b)=>new Date(a.match_date)-new Date(b.match_date)||String(a.id).localeCompare(String(b.id)));
  const index=ordered.findIndex(m=>String(m.id)===String(match.id));
- return [0,1,2].map(i=>names[(index*3+i)%names.length]);
+ return [names[(index*2)%names.length],names[(index*2+1)%names.length],szfRefereeWriters[index%szfRefereeWriters.length]];
 }
 function szfPostMatchColumnists(match,data){
  if(!match||!data||new Date(match.match_date).getTime()<Date.parse('2026-11-23T00:00:00+03:00'))return '';
- const names=['Ahmet Çakmaz','Uğur Karayollukçu','Rıdvan Dilim','Erman Torpiloğlu','Uğur Menemen','Şansal Küçüka','Serdar Ali Çekirdekler','Mehmet Demirgöl','Ömer Üfürdül','Sinan Yengin'];
+ const names=szfSportsWriters;
  const seed=[...String(match.id)].reduce((n,c)=>n+c.charCodeAt(0),0);
  const selected=szfRotatingWriters(match,names)||[names[seed%10],names[(seed+3)%10],names[(seed+7)%10]];
  const r=Number(data.red),w=Number(data.white),draw=r===w;
@@ -970,7 +972,7 @@ function szfPostMatchColumnists(match,data){
   'Sinan Yengin':[`Bana kimse masal anlatmasın! Tabela ${r}-${w} yazıyor. ${draw?'İki taraf da kazanamamış!':loser+' kaybetmiş, mesele bu!'}`,`${star} öne çıkmış, tebrik ederim! Ama geri kalanlar da sorumluluk alacak, başka yolu yok!`]
  };
  const columns=selected.map((writer,i)=>{
-  const pool=voices[writer],comment=pool[(seed+i)%pool.length];
+  const pool=voices[writer]||(szfRefereeWriters.includes(writer)?[`Skor ${r}-${w}. Hakem kararlarını değerlendirmek için pozisyonların görüntülerini görmek gerekir.`]:[`Skor ${r}-${w}. ${star} öne çıktı; takımın performansını da sonuçla birlikte değerlendirmek gerekir.`]),comment=pool[(seed+i)%pool.length];
   return '<p><strong>'+esc(writer)+':</strong> “'+esc(comment)+'”</p>';
  }).join('');
  return '<section class="szf-news-third"><div class="szf-news-kicker">✍️ MAÇ SONU · KÖŞE YAZARLARI</div>'+columns+'</section>';
@@ -1205,7 +1207,7 @@ function szfPreviewPaper(match){
  if(losing.length)recordNotes.push(name(losing[0])+' '+losing[0].loss+' maçtır galibiyete hasret; kötü gidişatı bitirebilecek mi?');
  if(!recordNotes.length)recordNotes.push('Henüz öne çıkan bir seri veya gol rekoru yok; yeni hikâyeyi bu maç yazabilir.');
  const taunts=['“Bu hafta rakibe topu ancak maçtan sonra veririz!”','“Onlar plan yapadursun, biz golleri sayarız!”','“Maçtan sonra bahane değil skor konuşulsun!”','“Sahada görüşürüz, gazeteye değil tabelaya bakın!”'];
- const columnists=['Ahmet Çakmaz','Uğur Karayollukçu','Rıdvan Dilim','Erman Torpiloğlu','Uğur Menemen','Şansal Küçüka','Serdar Ali Çekirdekler','Mehmet Demirgöl','Ömer Üfürdül','Sinan Yengin'];
+ const columnists=szfSportsWriters;
  const index=new Date(match.match_date).getDate()%10;
  const writerNames=szfRotatingWriters(match,columnists)||[columnists[index],columnists[(index+3)%10],columnists[(index+7)%10]];
  // Rekor haberinde geçen oyuncuları köşe yazılarında tekrar etmeyelim.
@@ -1230,7 +1232,7 @@ function szfPreviewPaper(match){
    'Ömer Üfürdül':[`${n} bugün doğru zamanda doğru koşuyu yaparsa savunmanın ezberini bozar. Benim dikkat edeceğim nokta bu.`,`${n} için kilit mesele alan paylaşımı. Bir adım erken çıkarsa rakibi zor durumda bırakır.`],
    'Sinan Yengin':[`Ben ${n} konusunda iddialıyım! Bu maçta bir şey yapacaksa şimdi yapsın; sonra konuşmanın anlamı yok!`,`Bana masal anlatmayın! ${n} bugün sorumluluk alacak, almazsa eleştiriyi de duyacak!`]
   };
-  const pool=voices[writer]||[`${n} bu maçın dikkat edilmesi gereken isimlerinden.`];
+  const pool=voices[writer]||(szfRefereeWriters.includes(writer)?['Temaslarda ölçülü olmak ve oyun kurallarını tutarlı uygulamak önemli.']:[`${n} bu maçın dikkat edilmesi gereken isimlerinden.`]);
   return pool[(seed+i)%pool.length];
  };
  const writers=writerNames.map((w,i)=>[w,writerComment(w,subjects[i]||null,i)]);

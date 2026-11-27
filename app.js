@@ -957,6 +957,7 @@ function szfRotatingWriters(match,names){
   selected.forEach(n=>counts.set(n,counts.get(n)+1));previous=new Set(selected);
  }
 }
+const szfExtraWriterVoices={"Sergen Alçın":["Ya kardeşim, kadro değil sahadaki iş önemli.","Bana sonucu getiren hamleyi gösterin, gerisi hikâye."],"Nihat Çaycı":["Bakın arkadaşlar, mücadele çok önemli!","Bu işin hakkını veren oyuncuya ayrı parantez açmak lazım."],"Ali Gece":["Oyunun ritmini kolektif hareket belirleyecek.","Futbolu yalnızca skor üzerinden okumayalım."],"Emre Özkan":["Takımların geçişlerdeki karar kalitesi belirleyici olabilir.","Sonucu değerlendirirken takım yerleşimini de hesaba katmak lazım."],"Cem Düzdar":["Futbol birlikte düşünme meselesidir.","Tabela oyunun tamamını anlatmaz."],"Serhat Sakın":["Arkadaş, sahaya çıkıyorsan sorumluluk alacaksın!","Ben mücadele görmek isterim, isimlerin arkasına saklanmayın!"],"Kaya Anahtarcıoğlu":["Basit tercihleri doğru yapan avantaj sağlar.","Özgüven kadar takım uyumu da önemli."],"Abdülkerim Durur":["Kardeşim, önce mücadele edeceksin!","Sahada alın teri olmadan başarı gelmez."],"Rasim Ozan Samsunlu":["Bu maç çok konuşulacak, ben size söyleyeyim!","Bu sonucun yankısı büyük olur!"],"Levent Düzemen":["Takım disiplini ve oyun ciddiyeti şart.","Sorumluluk alanların hakkını teslim etmek gerekir."],"Güntekin Ret":["Şimdi asıl soru şu: plan sahaya nasıl yansıyacak?","Bu tabloyu bireysel ve kolektif açıdan değerlendirelim."],"Önder Üzen":["Destek açıları ve oyuncular arası mesafeler kritik.","Oyuncuların birbirine sunduğu pas seçenekleri de değerlendirilmeli."],"Ümit Uzat":["Teknik adam gözüyle söylüyorum, herkes görevini yapacak.","Organizasyon olmadan bireysel kalite yetmez."],"Emre Dar":["Bu maçtan çok konuşulacak isimler çıkabilir!","İddian varsa sahada göstereceksin!"],"Ilgaz Pınar":["Rakibin bıraktığı alanları kullanmak önemli olacak.","Topa sahip olmakla oyunu kontrol etmek aynı şey değil."],"Yağız Şampuancıoğlu":["Beklentileri somut kadro verileriyle karşılaştıralım.","Performansın devamlılığı önümüzdeki haftalar için önemli."],"Batuhan Akdeniz":["Abi, futbolcu dediğin fırsat geldiğinde sorumluluk alır!","Sahada cesaret göstereceksin abi, bu iş böyle."],"Fırat Karanlıkus":["Temasın niteliği ve doğal hareket ayrı değerlendirilmeli.","Görüntü olmadan kesin karar vermek doğru olmaz."],"Bünyamin Tozar":["Hakemin görüş açısı ve pozisyona yakınlığı önemli.","Benzer temaslarda aynı kriter uygulanmalı."],"Mustafa Çullu":["Oyun kuralları kişiye göre değişmez.","Pozisyonun bütününü görmeden ihlal hükmü vermem."],"Bülent Kaldırım":["Müdahalenin şiddeti ve topa oynama ihtimali önemli.","Hakemin tutarlılığı oyunun güvenini sağlar."]};
 function szfPostMatchColumnists(match,data){
  if(!match||!data||new Date(match.match_date).getTime()<Date.parse('2026-11-23T00:00:00+03:00'))return '';
  const names=szfSportsWriters;
@@ -979,7 +980,7 @@ function szfPostMatchColumnists(match,data){
   'Sinan Yengin':[`Bana kimse masal anlatmasın! Tabela ${r}-${w} yazıyor. ${draw?'İki taraf da kazanamamış!':loser+' kaybetmiş, mesele bu!'}`,`${star} öne çıkmış, tebrik ederim! Ama geri kalanlar da sorumluluk alacak, başka yolu yok!`]
  };
  const columns=selected.map((writer,i)=>{
-  const pool=voices[writer]||(szfRefereeWriters.includes(writer)?[`Skor ${r}-${w}. Hakem kararlarını değerlendirmek için pozisyonların görüntülerini görmek gerekir.`]:[`Skor ${r}-${w}. ${star} öne çıktı; takımın performansını da sonuçla birlikte değerlendirmek gerekir.`]),comment=pool[(seed+i)%pool.length];
+  const pool=voices[writer]||[szfRefereeWriters.includes(writer)?`Skor ${r}-${w}. ${szfExtraWriterVoices[writer]?.[1]||""}`:`Skor ${r}-${w}; ${star} öne çıktı. ${szfExtraWriterVoices[writer]?.[1]||""}`],comment=pool[(seed+i)%pool.length];
   return '<p><strong>'+esc(writer)+':</strong> “'+esc(comment)+'”</p>';
  }).join('');
  return '<section class="szf-news-third"><div class="szf-news-kicker">✍️ MAÇ SONU · KÖŞE YAZARLARI</div>'+columns+'</section>';
@@ -1239,7 +1240,7 @@ function szfPreviewPaper(match){
    'Ömer Üfürdül':[`${n} bugün doğru zamanda doğru koşuyu yaparsa savunmanın ezberini bozar. Benim dikkat edeceğim nokta bu.`,`${n} için kilit mesele alan paylaşımı. Bir adım erken çıkarsa rakibi zor durumda bırakır.`],
    'Sinan Yengin':[`Ben ${n} konusunda iddialıyım! Bu maçta bir şey yapacaksa şimdi yapsın; sonra konuşmanın anlamı yok!`,`Bana masal anlatmayın! ${n} bugün sorumluluk alacak, almazsa eleştiriyi de duyacak!`]
   };
-  const pool=voices[writer]||(szfRefereeWriters.includes(writer)?['Temaslarda ölçülü olmak ve oyun kurallarını tutarlı uygulamak önemli.']:[`${n} bu maçın dikkat edilmesi gereken isimlerinden.`]);
+  const pool=voices[writer]||[szfRefereeWriters.includes(writer)?szfExtraWriterVoices[writer]?.[0]:`${n}: ${szfExtraWriterVoices[writer]?.[0]||""}`];
   return pool[(seed+i)%pool.length];
  };
  const writers=writerNames.map((w,i)=>[w,writerComment(w,subjects[i]||null,i)]);

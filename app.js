@@ -940,11 +940,19 @@ function szfNewsScoreComment(m,d){
  return options[seed%options.length];
 }
 /* v262 — Maç sonu köşe yazarları: maçın gerçek skoruna ve MVP sonucuna bağlı parodi yorumlar. */
+function szfRotatingWriters(match,names){
+ const start=Date.parse('2026-11-30T00:00:00+03:00');
+ const date=new Date(match.match_date).getTime();
+ if(date<start)return null;
+ const ordered=[...leagueMatches.filter(m=>new Date(m.match_date).getTime()>=start&&String(m.id)!==String(match.id)),match].sort((a,b)=>new Date(a.match_date)-new Date(b.match_date)||String(a.id).localeCompare(String(b.id)));
+ const index=ordered.findIndex(m=>String(m.id)===String(match.id));
+ return [0,1,2].map(i=>names[(index*3+i)%names.length]);
+}
 function szfPostMatchColumnists(match,data){
  if(!match||!data||new Date(match.match_date).getTime()<Date.parse('2026-11-23T00:00:00+03:00'))return '';
  const names=['Ahmet Çakmaz','Uğur Karayollukçu','Rıdvan Dilim','Erman Torpiloğlu','Uğur Menemen','Şansal Küçüka','Serdar Ali Çekirdekler','Mehmet Demirgöl','Ömer Üfürdül','Sinan Yengin'];
  const seed=[...String(match.id)].reduce((n,c)=>n+c.charCodeAt(0),0);
- const selected=[names[seed%10],names[(seed+3)%10],names[(seed+7)%10]];
+ const selected=szfRotatingWriters(match,names)||[names[seed%10],names[(seed+3)%10],names[(seed+7)%10]];
  const r=Number(data.red),w=Number(data.white),draw=r===w;
  const winner=draw?'iki takım':r>w?'Kırmızı takım':'Beyaz takım';
  const loser=draw?'iki takım':r>w?'Beyaz takım':'Kırmızı takım';
@@ -1199,7 +1207,7 @@ function szfPreviewPaper(match){
  const taunts=['“Bu hafta rakibe topu ancak maçtan sonra veririz!”','“Onlar plan yapadursun, biz golleri sayarız!”','“Maçtan sonra bahane değil skor konuşulsun!”','“Sahada görüşürüz, gazeteye değil tabelaya bakın!”'];
  const columnists=['Ahmet Çakmaz','Uğur Karayollukçu','Rıdvan Dilim','Erman Torpiloğlu','Uğur Menemen','Şansal Küçüka','Serdar Ali Çekirdekler','Mehmet Demirgöl','Ömer Üfürdül','Sinan Yengin'];
  const index=new Date(match.match_date).getDate()%10;
- const writerNames=[columnists[index],columnists[(index+3)%10],columnists[(index+7)%10]];
+ const writerNames=szfRotatingWriters(match,columnists)||[columnists[index],columnists[(index+3)%10],columnists[(index+7)%10]];
  // Rekor haberinde geçen oyuncuları köşe yazılarında tekrar etmeyelim.
  const mentioned=new Set([...goalHolders,...winning.slice(0,1).map(name),...losing.slice(0,1).map(name),...stars.map(name)].map(n=>n.toLocaleLowerCase('tr-TR')));
  const eligible=roster.filter(p=>!mentioned.has(name(p).toLocaleLowerCase('tr-TR')));

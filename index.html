@@ -39,7 +39,8 @@
 .matches-page .szf-history-compact .match-new-body .match-new-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .matches-page .szf-history-compact .match-new-body .match-new-actions>*{max-width:100%}
 @media(max-width:640px){.matches-page .szf-history-compact{width:100%;max-width:100%}.matches-page .szf-history-compact .szf-history-toggle{grid-template-columns:minmax(0,1fr) auto;row-gap:5px;padding:12px!important}.matches-page .szf-history-compact .szf-history-toggle>strong{grid-column:2;grid-row:1;font-size:19px}.matches-page .szf-history-compact .szf-history-toggle>span:last-child{grid-column:1 / -1;text-align:left;font-size:11px;opacity:.75}.matches-page .szf-history-compact.szf-history-open>.match-new-body{padding:12px!important}}
-</style></head>
+</style><style>.v153-options{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:4px!important}.v153-options .v185-choice{min-width:0!important;padding:8px 2px!important}</style>
+</head>
 <body>
   <div id="toast" role="status" aria-live="polite"></div>
   <div class="shell">
@@ -71,7 +72,7 @@
   <dialog id="resetDialog" class="modal"><form id="resetForm" method="dialog"><button type="button" class="close" id="closeReset" aria-label="Kapat">×</button><div class="modal-logo">🔐</div><h2>Yeni şifre belirle</h2><p class="soft">E-postandaki bağlantıyla geldin. Yeni şifreni yaz.</p><label>Yeni şifre<input id="newPassword" type="password" required minlength="8" autocomplete="new-password" /></label><div id="resetError" class="auth-error hidden"></div><button type="submit" id="resetSubmit" class="btn lime wide">Şifremi değiştir</button></form></dialog>
   <script src="config.js?v=164"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" async id="supabaseLibrary"></script>
-  <script src="app.js?v=312" defer></script>
+  <script src="app.js?v=313" defer></script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=308").catch(()=>{}));}</script>
 </body>
 </html>

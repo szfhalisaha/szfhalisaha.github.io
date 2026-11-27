@@ -51,7 +51,8 @@ function szfRebuildMvpBonuses(){
  const awards=new Map();
  // 29 October exhibition vote is excluded. 3 November and later qualify.
  const firstEligible=Date.parse('2026-11-03T00:00:00+03:00');
- for(const match of leagueMatches){
+ const recentMatches=leagueMatches.filter(m=>m.status==='completed').sort((a,b)=>new Date(b.match_date)-new Date(a.match_date)||String(b.id).localeCompare(String(a.id))).slice(0,5);
+ for(const match of recentMatches){
   if(new Date(match.match_date).getTime()<firstEligible)continue;
   const state=mvpStates[String(match.id)];
   if(!state?.finished||Number(state.vote_count||0)<1||!Array.isArray(state.winners))continue;
@@ -1336,7 +1337,7 @@ function renderHome(){
   const v=mvpStates[String(m.id)];const people=weeklyPlayers.filter(p=>String(p.match_id)===String(m.id));const guests=extras.guests.filter(g=>String(g.match_id)===String(m.id));
   const localEligible=people.some(x=>String(x.player_id)===String(user?.id))||guests.some(g=>String(g.linked_user_id)===String(user?.id));
   const opts=[...people.map(x=>({key:'p:'+x.player_id,name:currentCards().find(p=>String(p.id)===String(x.player_id))?.display_name||'Oyuncu'})),...guests.filter(g=>!g.linked_user_id||!people.some(p=>String(p.player_id)===String(g.linked_user_id))).map(g=>({key:'g:'+g.id,name:guestDisplayName(g)}))].filter(x=>x.key!=='p:'+user?.id&&!guests.some(g=>x.key==='g:'+g.id&&String(g.linked_user_id)===String(user?.id)));
-  return `<section class="szf-home-mvp"><h2>🏆 Maçın Adamını Seç</h2><p>${esc(m.title||'Haftalık Maç')} · ${esc(matchDateText(m.match_date))} · Oylama 24 saat açıktır. Oy sayıları gizlidir.</p><p class="szf-v200-mvp-prize"><span>✦ MVP ÖDÜLÜ</span> Oylama sona erdiğinde Maçın Adamı seçilen oyuncunun tüm özelliklerine <b>+1 güç bonusu</b> eklenir (toplam en fazla +3).</p>${v.voted?'<strong>Oyun kaydedildi.</strong>':(v.eligible||localEligible)?`<div class="szf-mvp-options">${opts.map(x=>`<label class="szf-mvp-option"><input type="radio" name="mvp-${attrs(m.id)}" value="${attrs(x.key)}"><span>${esc(formatPersonName(x.name))}</span></label>`).join('')}</div><button class="btn lime" data-mvp="${attrs(m.id)}">Oyumu Onayla</button>`:'<p class="soft">Yalnızca maçın katılımcıları oy verebilir.</p>'}</section>`;
+  return `<section class="szf-home-mvp"><h2>🏆 Maçın Adamını Seç</h2><p>${esc(m.title||'Haftalık Maç')} · ${esc(matchDateText(m.match_date))} · Oylama 24 saat açıktır. Oy sayıları gizlidir.</p><p class="szf-v200-mvp-prize"><span>✦ MVP ÖDÜLÜ</span> Oylama sona erdiğinde Maçın Adamı seçilen oyuncunun tüm özelliklerine <b>+1 güç bonusu</b> eklenir (sonraki 5 oynanan maç boyunca geçerli, toplam en fazla +3).</p>${v.voted?'<strong>Oyun kaydedildi.</strong>':(v.eligible||localEligible)?`<div class="szf-mvp-options">${opts.map(x=>`<label class="szf-mvp-option"><input type="radio" name="mvp-${attrs(m.id)}" value="${attrs(x.key)}"><span>${esc(formatPersonName(x.name))}</span></label>`).join('')}</div><button class="btn lime" data-mvp="${attrs(m.id)}">Oyumu Onayla</button>`:'<p class="soft">Yalnızca maçın katılımcıları oy verebilir.</p>'}</section>`;
  }).join('')}
  ${szfLatestNewspaperHome()}
  
